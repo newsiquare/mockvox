@@ -3,8 +3,6 @@ import os
 from datetime import datetime
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware import Middleware
-from starlette.middleware.contentsecuritypolicy import ContentSecurityPolicyMiddleware
 from .config import get_settings
 
 settings = get_settings()
@@ -13,8 +11,7 @@ MAX_UPLOAD_SIZE = settings.MAX_UPLOAD_SIZE*1024*1024
 app = FastAPI(
     title="语音克隆API",
     description="接收并存储语音样本的API服务",
-    version="0.0.1",
-    middleware=[Middleware(ContentSecurityPolicyMiddleware, max_upload_size=MAX_UPLOAD_SIZE)]
+    version="0.0.1"
 )
 
 # 配置CORS

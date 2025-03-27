@@ -3,15 +3,29 @@ import os
 from datetime import datetime
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware import Middleware
+from starlette.middleware.base import BaseHTTPMiddleware
+
 from config import get_settings
 
 settings = get_settings()
 MAX_UPLOAD_SIZE = settings.MAX_UPLOAD_SIZE*1024*1024
 
+class SizeLimitMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        content_length = int(request.headers.get("content-length", 0))
+        if content_length > MAX_UPLOAD_SIZE:
+            return JSONResponse(
+                status_code=413,
+                content={"detail": "文件大小超过限制"}
+            )
+        return await call_next(request)
+
 app = FastAPI(
     title="语音克隆API",
     description="接收并存储语音样本的API服务",
-    version="0.0.1"
+    version="0.0.1",
+    middleware=[Middleware(SizeLimitMiddleware)]
 )
 
 # 配置CORS

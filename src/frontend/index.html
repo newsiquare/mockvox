@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能语音克隆 - 录音器</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="recorder-container">
+        <!-- 音频波形可视化 -->
+        <canvas class="wave-container" id="audioWave"></canvas>
+        
+        <!-- 控制按钮组 -->
+        <div class="control-container">
+            <button class="mic-button" id="recordButton" aria-label="录音控制"></button>
+            <button class="stop-button" id="stopButton" aria-label="停止录音">⏹</button>
+        </div>
+
+        <!-- 状态显示区 -->
+        <div class="status-box">
+            <div id="timeDisplay" aria-live="polite">00:00</div>
+            <div id="status" aria-live="assertive">点击麦克风开始录音</div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,6 +1,5 @@
 import numpy as np
 
-
 # This function is obtained from librosa.
 def get_rms(
     y,

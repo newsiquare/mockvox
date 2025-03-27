@@ -2,15 +2,16 @@
 import os
 from datetime import datetime
 from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi.responses import JSONResponse
+from fastapi.requests import Request
 from fastapi.middleware.cors import CORSMiddleware
-from requests import Request
 from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from config import get_settings
+from config import get_config
 
-settings = get_settings()
-MAX_UPLOAD_SIZE = settings.MAX_UPLOAD_SIZE*1024*1024
+cfg = get_config()
+MAX_UPLOAD_SIZE = cfg.MAX_UPLOAD_SIZE*1024*1024
 
 class SizeLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -88,8 +89,8 @@ if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
         "main:app",
-        host="0.0.0.0",
-        port=5000,
+        host=cfg.MAIN_HOST,
+        port=cfg.MAIN_PORT,
         reload=True,
         ssl_certfile=None,
         ssl_keyfile=None

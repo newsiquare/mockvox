@@ -1,5 +1,5 @@
 import pytest
-from bot import get_settings
+from config import get_config
 def test_global_config():
-    settings = get_settings()
-    assert settings.NAME == 'bot'
+    cfg = get_config()
+    assert cfg.NAME == 'bot'

@@ -15,7 +15,7 @@ ssh-keygen -t ed25519 -C "xxx@xx.com"
 公司Gitlab仓库使用的不是标准SSH端口22, 所以你还需要在 {~}\.ssh\config 文件中增加：
 
 ```bash
-# Windows 的~宿主目录一般位于 C:\Users\your_username 目录下
+# Windows 的~宿主目录一般位于 C:\Users\your_username目录，~\.ssh\config文件中增加：
 Host gitlab.datainside.com.cn
 	Port 20022
 	User {your login name}

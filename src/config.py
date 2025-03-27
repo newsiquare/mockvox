@@ -7,6 +7,9 @@ class Settings(BaseSettings):
     NAME: str = Field("bot", env="NAME")
     VERSION: str = Field("0.0.1", env="VERSION")
 
+    # 上传文件大小限制10M
+    MAX_UPLOAD_SIZE = int = Field(10, env="MAX_UPLOAD_SIZE")
+
     # Slice
     THRESHOLD: int = Field(-34, env="THRESHOLD")
     MIN_LENGTH: int = Field(4000, env="MIN_LENGTH")

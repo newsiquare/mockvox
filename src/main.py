@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from .config import get_settings
+from config import get_settings
 
 settings = get_settings()
 MAX_UPLOAD_SIZE = settings.MAX_UPLOAD_SIZE*1024*1024

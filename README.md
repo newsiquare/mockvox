@@ -25,4 +25,14 @@ Host gitlab.datainside.com.cn
 克隆本项目:
 ```bash
 git clone git@gitlab.datainside.com.cn:drz/bot.git
+cd bot
+```
+虚拟环境
+```bash
+# 创建虚拟环境
+conda create -n bot python=3.11 -y
+# 激活虚拟环境
+conda activate bot
+# 安装依赖项
+pip install .
 ```

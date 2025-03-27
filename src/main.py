@@ -1,4 +1,3 @@
-# main.py
 import os
 from datetime import datetime
 from fastapi import FastAPI, File, UploadFile, HTTPException
@@ -9,6 +8,8 @@ from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from config import get_config
+from worker import process_file_task
+from utils import logger
 
 cfg = get_config()
 MAX_UPLOAD_SIZE = cfg.MAX_UPLOAD_SIZE*1024*1024
@@ -40,8 +41,8 @@ app.add_middleware(
 )
 
 # 文件存储配置
-UPLOAD_DIR = "data/uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+UPLOAD_PATH = cfg.UPLOAD_PATH
+os.makedirs(UPLOAD_PATH, exist_ok=True)
 ALLOWED_EXTENSIONS = {'wav'}
 
 def allowed_file(filename: str) -> bool:
@@ -66,22 +67,59 @@ async def upload_audio(file: UploadFile = File(..., description="音频文件，
         file_ext = file.filename.split('.')[-1]
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         filename = f"recording_{timestamp}.{file_ext}"
-        save_path = os.path.join(UPLOAD_DIR, filename)
+        save_path = os.path.join(UPLOAD_PATH, filename)
 
         # 保存文件
-        contents = await file.read()
         with open(save_path, 'wb') as f:
-            f.write(contents)
+            while chunk := await file.read(1024 * 1024):    # 1Mb chunks
+                f.write(chunk)
 
+        # 记录保存成功日志
+        logger.info(
+            "文件保存成功",
+            extra={
+                "action": "file_saved",
+                "filename": filename,
+                "filesize": file.size,
+                "content_type": file.content_type
+            }
+        )
+
+        # 发送异步任务
+        task = process_file_task.delay(file_name=filename)
+        # 确保任务对象有效
+        if not isinstance(task, AsyncResult):
+            logger.error("Celery任务提交返回异常对象", extra={"file_name": filename})
+            raise HTTPException(500, "Celery任务提交失败")
+
+        # 记录任务提交日志
+        logger.info(
+            "异步任务已提交",
+            extra={
+                "action": "task_submitted",
+                "task_id": task.id,
+                "file_name": filename
+            }
+        )
+
+        # 获取实际文件大小
+        actual_size = os.path.getsize(save_path)
+        
         return {
-            "message": "上传成功",
+            "message": "文件上传成功，已进入处理队列",
             "filename": filename,
             "path": save_path,
-            "duration_ms": len(contents) // 44  # 估算时长（44 bytes/ms）
+            "file_size": actual_size,
+            "duration_ms": actual_size // 44  # 使用实际文件大小计算
         }
 
     except HTTPException as he:
         raise he
+    
+    except ConnectionError as ce:
+        logger.critical("消息队列连接失败", exc_info=True)
+        raise HTTPException(503, "系统暂时不可用")
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"文件处理错误: {str(e)}")
 

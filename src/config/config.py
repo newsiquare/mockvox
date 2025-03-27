@@ -12,8 +12,9 @@ class Settings:
     MAIN_HOST: str = os.environ.get("MAIN_HOST", "0.0.0.0")
     MAIN_PORT: int = int(os.environ.get("MAIN_PORT", "5000"))  # 端口号转int
 
-    # 上传文件大小限制（单位：MB）
-    MAX_UPLOAD_SIZE: int = int(os.environ.get("MAX_UPLOAD_SIZE", "10"))
+    # 上传文件
+    MAX_UPLOAD_SIZE: int = int(os.environ.get("MAX_UPLOAD_SIZE", "10")) # (单位：MB)
+    UPLOAD_PATH: str = os.environ.get("UPLOAD_PATH","data/uploads")
 
     # Slice 配置（全部转为int类型）
     THRESHOLD: int = int(os.environ.get("THRESHOLD", "-34"))
@@ -21,6 +22,14 @@ class Settings:
     MIN_INTERVAL: int = int(os.environ.get("MIN_INTERVAL", "300"))
     HOP_SIZE: int = int(os.environ.get("HOP_SIZE", "10"))
     MAX_SIL_KEPT: int = int(os.environ.get("MAX_SIL_KEPT", "500"))
+
+    SLICED_ROOT_PATH: str = int(os.environ.get("SLICED_ROOT_PATH","data/sliced"))
+
+    # Redis 配置
+    REDIS_HOST: str = os.environ.get("REDIS_HOST", "127.0.0.1")
+    REDIS_PORT: int = int(os.environ.get("REDIS_PORT", "6379"))
+    REDIS_DB: int = int(os.environ.get("REDIS_DB","0"))
+    REDIS_PASSWORD: str = os.environ.get("REDIS_PASSWORD","")
 
     # Security（注意空字符串处理）
     SECRET_KEY: str = os.environ.get("SECRET_KEY", "")

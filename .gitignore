@@ -1,6 +1,6 @@
 # 本项目相关
-# 上传文件目录
-data/uploads/*
+# 数据文件
+data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

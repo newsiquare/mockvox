@@ -10,7 +10,7 @@ cfg = get_config()
 UPLOAD_PATH = cfg.UPLOAD_PATH
 os.makedirs(cfg.SLICED_ROOT_PATH, exist_ok=True)
 
-@app.task(name="process_file")
+@app.task(name="process_file", bind=True)
 def process_file_task(file_name: str):
     try:
         stem, ext = os.path.splitext(file_name)

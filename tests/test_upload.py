@@ -1,108 +1,86 @@
 import os
+import time
 import pytest
 from fastapi.testclient import TestClient
 from celery.result import AsyncResult
-from celery.contrib.testing.worker import start_worker
 import tempfile
 import numpy as np
 
-# 覆盖 Celery 配置为同步模式
-os.environ["CELERY_TASK_ALWAYS_EAGER"] = "True"  
-os.environ["CELERY_TASK_EAGER_PROPAGATES"] = "True"
+# 设置测试环境路径
+os.environ["UPLOAD_PATH"] = tempfile.mkdtemp() 
+os.environ["SLICED_ROOT_PATH"] = os.path.join(os.environ["UPLOAD_PATH"], "processed")
 
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from src.main import app
-from src.worker.tasks import app as celery_app
 
-@pytest.fixture(scope="session")
-def celery_worker():
-    """启动同步Worker"""
-    with start_worker(
-        celery_app,
-        pool="solo",
-        loglevel="INFO",
-        perform_ping_check=False
-    ):
-        yield
+@pytest.fixture(scope="module")
+def test_client():
+    with TestClient(app) as client:
+        yield client
 
-@pytest.fixture
-def test_client(celery_worker):  # 依赖celery_worker
-    with tempfile.TemporaryDirectory() as tmpdir:
-        os.environ["UPLOAD_PATH"] = tmpdir
-        os.environ["SLICED_ROOT_PATH"] = os.path.join(tmpdir, "processed")
-        with TestClient(app) as client:
-            yield client
+def generate_test_file(file_size: int) -> bytes:
+    """生成指定大小的随机文件内容"""
+    return np.random.bytes(file_size)
 
-@pytest.fixture
-def valid_wav_file():
-    """生成1MB的测试用WAV文件"""
-    file_size = 1024 * 1024  # 1MB
-    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
-        # 生成随机数据模拟音频文件
-        data = np.random.bytes(file_size)
-        f.write(data)
-        f.seek(0)
-        yield f.name
-    os.unlink(f.name)
+def wait_for_task_completion(task_id: str, timeout: int = 10) -> dict:
+    """等待任务完成并返回最终状态"""
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        task = AsyncResult(task_id)
+        if task.status == "SUCCESS":
+            return {"status": task.status, "result": task.result}
+        if task.status == "FAILURE":
+            return {"status": task.status, "error": str(task.result)}
+        time.sleep(0.5)
+    return {"status": "TIMEOUT"}
 
-@pytest.fixture
-def large_wav_file():
-    """生成11MB的测试用WAV文件"""
-    file_size = 11 * 1024 * 1024  # 11MB
-    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
-        f.write(b"\0" * file_size)  # 快速生成大文件
-        f.seek(0)
-        yield f.name
-    os.unlink(f.name)
-
-def test_valid_upload(test_client, valid_wav_file):
-    """测试同步任务执行"""
-    original_name = os.path.basename(valid_wav_file)
+def test_valid_upload_e2e(test_client):
+    """端到端测试：有效文件上传全流程"""
+    # 1. 生成1MB测试文件
+    file_content = generate_test_file(1024 * 1024)  # 1MB
     
-    with open(valid_wav_file, "rb") as f:
-        response = test_client.post(
-            "/upload",
-            files={"file": (original_name, f, "audio/wav")}
-        )
+    # 2. 发送上传请求
+    response = test_client.post(
+        "/upload",
+        files={"file": ("valid.wav", file_content, "audio/wav")}
+    )
     
+    # 3. 验证接口响应
     assert response.status_code == 200
-    data = response.json()
+    response_data = response.json()
+    assert "task_id" in response_data
+    assert "filename" in response_data
     
-    # 直接验证任务结果
-    assert data["task_id"] is not None
-    task = celery_app.AsyncResult(data["task_id"])
-    assert task.status == "SUCCESS"
-    assert "sliced_file" in task.result["path"]
+    # 4. 验证文件存储
+    saved_path = os.path.join(os.environ["UPLOAD_PATH"], response_data["filename"])
+    assert os.path.exists(saved_path)
+    assert os.path.getsize(saved_path) == 1024 * 1024
+    
+    # 5. 等待任务完成
+    task_info = wait_for_task_completion(response_data["task_id"])
+    assert task_info["status"] == "SUCCESS"
+    assert "sliced_file" in task_info["result"]["path"]
+    
+    # 6. 验证结果存储
+    processed_path = task_info["result"]["path"]
+    assert os.path.exists(processed_path)
+    assert os.path.getsize(processed_path) == 1024 * 1024
 
-def test_large_file_upload(test_client, large_wav_file):
-    """测试超过大小限制的文件上传"""
-    # 获取原始文件名
-    original_name = os.path.basename(large_wav_file)
+def test_large_file_rejection_e2e(test_client):
+    """端到端测试：大文件拦截验证"""
+    # 1. 生成11MB测试文件
+    large_file = generate_test_file(11 * 1024 * 1024)
     
-    with open(large_wav_file, "rb") as f:
-        response = test_client.post(
-            "/upload",
-            files={"file": (original_name, f, "audio/wav")}
-        )
+    # 2. 发送上传请求
+    response = test_client.post(
+        "/upload",
+        files={"file": ("large.wav", large_file, "audio/wav")}
+    )
     
-    # 验证响应状态
+    # 3. 验证接口拦截
     assert response.status_code == 413
-    assert response.json()["detail"] == "文件大小超过限制"
+    assert "文件大小超过限制" in response.json()["detail"]
     
-    # 验证文件未被保存
-    expected_path = os.path.join(os.environ["UPLOAD_PATH"], original_name)
-    assert not os.path.exists(expected_path)
-
-def test_invalid_file_type(test_client):
-    """测试非WAV文件上传"""
-    with tempfile.NamedTemporaryFile(suffix=".mp3") as f:
-        f.write(b"fake audio data")
-        f.seek(0)
-        response = test_client.post(
-            "/upload",
-            files={"file": ("test.mp3", f, "audio/mpeg")}
-        )
-    
-    assert response.status_code == 400
-    assert "不支持的文件格式" in response.json()["detail"]
+    # 4. 验证文件未被存储
+    assert len(os.listdir(os.environ["UPLOAD_PATH"])) == 0

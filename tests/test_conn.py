@@ -2,6 +2,7 @@ import pytest
 import redis
 from celery import Celery, states
 from celery.contrib.testing.worker import start_worker
+from celery.contrib.testing import tasks as testing_tasks
 import time
 from config import get_config, CeleryConfig
 
@@ -9,15 +10,25 @@ cfg = get_config()
 
 @pytest.fixture(scope="module")
 def celery_app():
+    """创建测试用Celery应用，动态注入测试任务"""
     app = Celery("test_worker")
     app.config_from_object(CeleryConfig)
     
-    # 添加测试任务
+    # 动态注册测试框架所需的任务
+    app.register_task(testing_tasks.ping)  # 注册celery.ping
+    
+    # 添加用户自定义测试任务
     @app.task(name="test_add")
     def add(x, y):
         return x + y
     
-    with start_worker(app, pool="solo", loglevel="INFO"):
+    # 启动Worker
+    with start_worker(
+        app,
+        pool="solo",
+        loglevel="INFO",
+        perform_ping_check=True
+    ):
         yield app
 
 def test_config_loaded(celery_app):
@@ -32,8 +43,7 @@ def test_redis_connection():
         host=cfg.REDIS_HOST,
         port=cfg.REDIS_PORT,
         db=cfg.REDIS_DB,
-        password=cfg.REDIS_PASSWORD,
-        socket_connect_timeout=5
+        password=cfg.REDIS_PASSWORD
     )
     assert r.ping(), "Redis连接失败"
 

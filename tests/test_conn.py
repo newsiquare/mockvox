@@ -6,7 +6,6 @@ from config import get_config, CeleryConfig
 
 cfg = get_config()
 
-# 创建测试用 Celery 应用
 @pytest.fixture(scope="module")
 def celery_app():
     app = Celery("test_worker")
@@ -17,18 +16,28 @@ def celery_app():
     def add(x, y):
         return x + y
     
-    # 启动测试worker（单进程模式）
+    # 使用独立进程启动Worker
     worker = app.Worker(
         hostname="tester@%%h",
         pool="solo",
-        loglevel="WARNING",
+        loglevel="DEBUG",  # 调试关键
         without_heartbeat=True,
         without_mingle=True,
-        without_gossip=True
+        without_gossip=True,
+        background=True 
     )
-    worker.start()
+    worker.start()  
+    
+    # 等待Worker就绪
+    start = time.time()
+    while not worker.consumer.ready() and time.time() - start < 10:
+        time.sleep(0.1)
+    
     yield app
-    worker.stop()
+    
+    # 强制终止Worker
+    worker.stop(in_sighandler=True)
+    worker.join() 
 
 def test_config_loaded(celery_app):
     """验证配置项是否正确加载"""
@@ -49,16 +58,20 @@ def test_redis_connection():
 
 def test_task_execution(celery_app):
     """验证任务提交与结果存储"""
+    
     # 提交任务
     result = celery_app.tasks["test_add"].delay(3, 4)
     
-    # 等待任务完成（最大等待5秒）
+    # 添加结果检查重试机制
+    max_wait = 5  
     start = time.time()
-    while not result.ready() and time.time() - start < 5:
-        time.sleep(0.1)
     
-    assert result.ready(), "任务超时未完成"
-    assert result.get() == 7, "任务结果错误"
+    while not result.ready():
+        if time.time() - start > max_wait:
+            assert False, f"任务超时未完成，最后状态: {result.state}"
+        time.sleep(0.5)
+    
+    assert result.get() == 7
     
     # 验证结果持久化
     r = redis.Redis(
@@ -71,6 +84,7 @@ def test_task_execution(celery_app):
 
 def test_retry_policy(celery_app):
     """验证任务重试策略"""
+    
     # 定义会失败的任务
     @celery_app.task(bind=True, name="test_retry", max_retries=3)
     def fail_task(self):
@@ -82,10 +96,14 @@ def test_retry_policy(celery_app):
     # 提交任务
     result = fail_task.delay()
     
-    # 等待重试完成
-    start = time.time()
-    while result.state == "PENDING" and time.time() - start < 5:
-        time.sleep(0.1)
-
-    assert result.state == "RETRY", "未触发重试机制"
+    # 动态跟踪状态
+    for _ in range(10):  # 最多检查10次
+        state = result.state
+        if state != "PENDING":
+            break
+        time.sleep(0.5)
+    else:
+        assert False, "任务状态未更新"
+    
+    assert state == "RETRY", "未触发重试机制"
     assert result.traceback, "缺少错误堆栈"

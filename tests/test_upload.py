@@ -2,6 +2,7 @@ import os
 import pytest
 from fastapi.testclient import TestClient
 from celery.result import AsyncResult
+from celery.contrib.testing.worker import start_worker
 import tempfile
 import numpy as np
 

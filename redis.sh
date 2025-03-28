@@ -61,8 +61,8 @@ main() {
     -v "$(pwd)/$REDIS_CONF_TEMPLATE:/app/redis.conf.template:ro" \
     -e "REDIS_PASSWORD=$REDIS_PASSWORD" \
     -e "REDIS_PORT=${REDIS_PORT:-6380}" \
+    -e "REDIS_MEMORY_LIMIT=${REDIS_MEMORY_LIMIT}" \
     --restart unless-stopped \
-    --memory="2g" \
     redis:7.0-alpine \
     sh -c "apk add gettext && envsubst < /app/redis.conf.template > /app/redis.conf && redis-server /app/redis.conf"
 

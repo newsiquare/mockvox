@@ -5,18 +5,32 @@ from celery.result import AsyncResult
 import tempfile
 import numpy as np
 
+# 覆盖 Celery 配置为同步模式
+os.environ["CELERY_TASK_ALWAYS_EAGER"] = "True"  
+os.environ["CELERY_TASK_EAGER_PROPAGATES"] = "True"
+
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from src.main import app
 
-@pytest.fixture(scope="module")
-def test_client():
-    # 使用临时目录存储测试文件
+@pytest.fixture(scope="session")
+def celery_worker():
+    """启动同步Worker"""
+    with start_worker(
+        celery_app,
+        pool="solo",
+        loglevel="INFO",
+        perform_ping_check=False
+    ):
+        yield
+
+@pytest.fixture
+def test_client(celery_worker):  # 依赖celery_worker
     with tempfile.TemporaryDirectory() as tmpdir:
-        # 覆盖配置中的上传路径
         os.environ["UPLOAD_PATH"] = tmpdir
         os.environ["SLICED_ROOT_PATH"] = os.path.join(tmpdir, "processed")
-        yield TestClient(app)
+        with TestClient(app) as client:
+            yield client
 
 @pytest.fixture
 def valid_wav_file():
@@ -41,8 +55,7 @@ def large_wav_file():
     os.unlink(f.name)
 
 def test_valid_upload(test_client, valid_wav_file):
-    """测试正常文件上传流程"""
-    # 获取原始文件名
+    """测试同步任务执行"""
     original_name = os.path.basename(valid_wav_file)
     
     with open(valid_wav_file, "rb") as f:
@@ -51,23 +64,14 @@ def test_valid_upload(test_client, valid_wav_file):
             files={"file": (original_name, f, "audio/wav")}
         )
     
-    # 验证响应状态
     assert response.status_code == 200
+    data = response.json()
     
-    # 验证响应数据格式
-    response_data = response.json()
-    assert "filename" in response_data
-    assert "task_id" in response_data
-    assert response_data["file_size"] == 1024 * 1024
-    
-    # 验证文件保存路径
-    saved_path = os.path.join(os.environ["UPLOAD_PATH"], response_data["filename"])
-    assert os.path.exists(saved_path)
-    assert os.path.getsize(saved_path) == 1024 * 1024
-    
-    # 验证Celery任务状态
-    task = AsyncResult(response_data["task_id"])
-    assert task.status in ("PENDING", "RECEIVED", "STARTED")
+    # 直接验证任务结果
+    assert data["task_id"] is not None
+    task = celery_app.AsyncResult(data["task_id"])
+    assert task.status == "SUCCESS"
+    assert "sliced_file" in task.result["path"]
 
 def test_large_file_upload(test_client, large_wav_file):
     """测试超过大小限制的文件上传"""

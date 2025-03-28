@@ -1,6 +1,6 @@
 import pytest
 import redis
-from celery import Celery, states
+from celery import Celery, states, shared_task
 from celery.contrib.testing.worker import start_worker
 import time
 from config import get_config, CeleryConfig

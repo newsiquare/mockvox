@@ -13,6 +13,7 @@ os.environ["CELERY_TASK_EAGER_PROPAGATES"] = "True"
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from src.main import app
+from src.worker.tasks import app as celery_app
 
 @pytest.fixture(scope="session")
 def celery_worker():

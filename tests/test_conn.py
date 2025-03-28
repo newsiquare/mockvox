@@ -10,7 +10,7 @@ cfg = get_config()
 @pytest.fixture(scope="module")
 def celery_app():
     app = Celery("test_worker")
-    app.config_from_object("CeleryConfig")
+    app.config_from_object(CeleryConfig)
     
     # 添加测试任务
     @app.task(name="test_add")

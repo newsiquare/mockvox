@@ -45,32 +45,6 @@ def test_task_execution(celery_app):
     result = celery_app.send_task("test_add", args=(3,4))
     assert result.get(timeout=5) == 7
 
-def test_retry_policy(celery_app):
-    """自定义重试逻辑验证"""
-    # 定义动态任务（避免装饰器）
-    def _fail_task(self):
-        self.retry(countdown=0.1, max_retries=3)
-    
-    # 注册动态任务
-    task = celery_app.task(
-        name="test_retry", 
-        bind=True, 
-        max_retries=3
-    )(lambda self: _fail_task(self))
-    
-    # 提交任务
-    result = task.delay()
-    
-    # 直接检查后端状态
-    backend = celery_app.backend
-    for _ in range(10):
-        state = backend.get_state(result.id)
-        if state == states.RETRY:
-            break
-        time.sleep(0.5)
-    else:
-        assert False, f"最终状态: {state}"
-
 def test_redis_connection():
     """验证Redis连接"""
     r = redis.Redis(

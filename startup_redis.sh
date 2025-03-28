@@ -68,7 +68,7 @@ main() {
 
   echo "Redis服务已启动！"
   echo "连接命令:"
-  echo "redis-cli -h 127.0.0.1 -p ${REDIS_PORT:-6380} -a $REDIS_PASSWORD"
+  echo "docker exec -it bot-redis redis-cli -h 127.0.0.1 -p ${REDIS_PORT} -a $REDIS_PASSWORD"
 }
 
 main "$@"

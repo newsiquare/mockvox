@@ -25,6 +25,7 @@ dependencies = [
     "pydantic_settings>=2.8.1",
     "uvicorn>=0.34.0",
     "python-multipart>=0.0.20",
+    "redis>=5.0.0",
     "celery>=5.1.0"
 ]
 

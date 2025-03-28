@@ -29,10 +29,11 @@ class Settings:
     REDIS_HOST: str = os.environ.get("REDIS_HOST", "127.0.0.1")
     REDIS_PORT: int = int(os.environ.get("REDIS_PORT", "6379"))
     REDIS_DB: int = int(os.environ.get("REDIS_DB","0"))
-    REDIS_PASSWORD: str = os.environ.get("REDIS_PASSWORD","")
+    REDIS_MEMORY_LIMIT: str = os.environ.get("REDIS_MEMORY_LIMIT","2GB")
+    REDIS_PASSWORD: str = os.environ.get("REDIS_PASSWORD")
 
-    # Security（注意空字符串处理）
-    SECRET_KEY: str = os.environ.get("SECRET_KEY", "")
+    # Security
+    SECRET_KEY: str = os.environ.get("SECRET_KEY")
     SECRET_KEY_EXPIRE_MINUTES: int = int(os.environ.get("SECRET_KEY_EXPIRE_MINUTES", "1440"))
 
 def get_config():

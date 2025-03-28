@@ -1,6 +1,7 @@
 import pytest
 import redis
-from celery import Celery
+from celery import Celery, states
+from celery.contrib.testing.worker import start_worker
 import time
 from config import get_config, CeleryConfig
 
@@ -16,28 +17,8 @@ def celery_app():
     def add(x, y):
         return x + y
     
-    # 使用独立进程启动Worker
-    worker = app.Worker(
-        hostname="tester@%%h",
-        pool="solo",
-        loglevel="DEBUG",  # 调试关键
-        without_heartbeat=True,
-        without_mingle=True,
-        without_gossip=True,
-        background=True 
-    )
-    worker.start()  
-    
-    # 等待Worker就绪
-    start = time.time()
-    while not worker.consumer.ready() and time.time() - start < 10:
-        time.sleep(0.1)
-    
-    yield app
-    
-    # 强制终止Worker
-    worker.stop(in_sighandler=True)
-    worker.join() 
+    with start_worker(app, pool="solo", loglevel="INFO"):
+        yield app
 
 def test_config_loaded(celery_app):
     """验证配置项是否正确加载"""
@@ -51,27 +32,15 @@ def test_redis_connection():
         host=cfg.REDIS_HOST,
         port=cfg.REDIS_PORT,
         db=cfg.REDIS_DB,
-        password=cfg.REDIS_PASSWORD,  
-        decode_responses=True
+        password=cfg.REDIS_PASSWORD,
+        socket_connect_timeout=5
     )
     assert r.ping(), "Redis连接失败"
 
 def test_task_execution(celery_app):
     """验证任务提交与结果存储"""
-    
-    # 提交任务
-    result = celery_app.tasks["test_add"].delay(3, 4)
-    
-    # 添加结果检查重试机制
-    max_wait = 5  
-    start = time.time()
-    
-    while not result.ready():
-        if time.time() - start > max_wait:
-            assert False, f"任务超时未完成，最后状态: {result.state}"
-        time.sleep(0.5)
-    
-    assert result.get() == 7
+    result = celery_app.send_task("test_add", args=(3, 4))
+    assert result.get(timeout=10) == 7
     
     # 验证结果持久化
     r = redis.Redis(
@@ -84,26 +53,19 @@ def test_task_execution(celery_app):
 
 def test_retry_policy(celery_app):
     """验证任务重试策略"""
-    
-    # 定义会失败的任务
     @celery_app.task(bind=True, name="test_retry", max_retries=3)
     def fail_task(self):
-        try:
-            raise ValueError("模拟错误")
-        except ValueError as exc:
-            raise self.retry(exc=exc, countdown=0.1)
+        raise self.retry(countdown=0.1, max_retries=3)
     
-    # 提交任务
+    # 提交并捕获重试
     result = fail_task.delay()
     
-    # 动态跟踪状态
-    for _ in range(10):  # 最多检查10次
-        state = result.state
-        if state != "PENDING":
+    # 等待状态变更
+    for _ in range(10):
+        if result.state == states.RETRY:
             break
         time.sleep(0.5)
     else:
-        assert False, "任务状态未更新"
+        assert False, "未触发重试机制"
     
-    assert state == "RETRY", "未触发重试机制"
     assert result.traceback, "缺少错误堆栈"

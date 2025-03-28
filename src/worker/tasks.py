@@ -1,12 +1,12 @@
 from celery import Celery
-from config import get_config
+from config import get_config, CeleryConfig
 import time
 import os
 
 app = Celery("worker")
-app.config_from_object("worker.config")
-cfg = get_config()
+app.config_from_object(CeleryConfig)
 
+cfg = get_config()
 UPLOAD_PATH = cfg.UPLOAD_PATH
 os.makedirs(cfg.SLICED_ROOT_PATH, exist_ok=True)
 
@@ -22,9 +22,9 @@ def process_file_task(file_name: str):
             stem
         )
         os.makedirs(sliced_path, exist_ok=True)
-        sliced_file = os.path.join(sliced_path, file_name)
         
         # TODO: 添加实际处理逻辑
+        sliced_file = os.path.join(sliced_path, file_name)
         with open(file_path, "rb") as src, open(sliced_file, "wb") as dst:
             while chunk := src.read(1024 * 1024):    # 1Mb chunks
                 dst.write(chunk)

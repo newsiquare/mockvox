@@ -1,4 +1,7 @@
 # 本项目相关
+# 临时 redis
+redis/data
+redis/redis.conf
 # 数据文件
 data/
 

@@ -108,9 +108,8 @@ async def upload_audio(file: UploadFile = File(..., description="音频文件，
         return {
             "message": "文件上传成功，已进入处理队列",
             "filename": filename,
-            "path": save_path,
-            "file_size": actual_size,
-            "duration_ms": actual_size // 44  # 使用实际文件大小计算
+            "task_id": task.id,
+            "file_size": actual_size
         }
 
     except HTTPException as he:
@@ -122,6 +121,16 @@ async def upload_audio(file: UploadFile = File(..., description="音频文件，
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"文件处理错误: {str(e)}")
+
+# 任务状态查询接口
+@app.get("/tasks/{task_id}")
+def get_task_status(task_id: str):
+    task = AsyncResult(task_id)
+    return {
+        "task_id": task_id,
+        "status": task.status,
+        "result": task.result
+    }
 
 if __name__ == "__main__":
     import uvicorn

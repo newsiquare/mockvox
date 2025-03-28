@@ -23,7 +23,7 @@ class Settings:
     HOP_SIZE: int = int(os.environ.get("HOP_SIZE", "10"))
     MAX_SIL_KEPT: int = int(os.environ.get("MAX_SIL_KEPT", "500"))
 
-    SLICED_ROOT_PATH: str = int(os.environ.get("SLICED_ROOT_PATH","data/sliced"))
+    SLICED_ROOT_PATH: str = os.environ.get("SLICED_ROOT_PATH","data/sliced")
 
     # Redis 配置
     REDIS_HOST: str = os.environ.get("REDIS_HOST", "127.0.0.1")

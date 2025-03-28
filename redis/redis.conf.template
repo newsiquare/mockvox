@@ -1,0 +1,7 @@
+port ${REDIS_PORT}
+dir /data
+bind 0.0.0.0
+requirepass ${REDIS_PASSWORD}
+appendonly yes
+maxmemory ${REDIS_MEMORY_LIMIT}
+maxmemory-policy allkeys-lru

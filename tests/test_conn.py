@@ -32,13 +32,11 @@ def celery_app():
         app,
         pool="solo",
         loglevel="INFO",
-        perform_ping_check=False,
-        without_heartbeat=True,
-        without_mingle=True,
-        without_gossip=True
+        perform_ping_check=False
     ):
         # 手动验证任务注册
         assert "celery.ping" in app.tasks
+        assert app.conf.task_serializer == "json"
         yield app
 
 def test_task_execution(celery_app):

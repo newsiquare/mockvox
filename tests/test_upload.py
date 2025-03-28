@@ -1,10 +1,13 @@
 import os
 import pytest
 from fastapi.testclient import TestClient
-from main import app
 from celery.result import AsyncResult
 import tempfile
 import numpy as np
+
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from src.main import app
 
 @pytest.fixture(scope="module")
 def test_client():

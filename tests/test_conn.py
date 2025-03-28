@@ -2,22 +2,26 @@ import pytest
 import redis
 from celery import Celery, states
 from celery.contrib.testing.worker import start_worker
-from celery.contrib.testing import tasks as testing_tasks
 import time
 from config import get_config, CeleryConfig
 
 cfg = get_config()
 
+# 自定义测试用ping任务（避免使用celery.contrib.testing的冲突实现）
+@shared_task(name="celery.ping")  # 必须使用此名称
+def ping():
+    return "pong"
+
 @pytest.fixture(scope="module")
 def celery_app():
-    """创建测试用Celery应用，动态注入测试任务"""
+    """创建隔离的测试Celery应用"""
     app = Celery("test_worker")
     app.config_from_object(CeleryConfig)
     
-    # 动态注册测试框架所需的任务
-    app.register_task(testing_tasks.ping)  # 注册celery.ping
+    # 手动添加测试任务
+    app.register_task(ping)  # 注册自定义ping任务
     
-    # 添加用户自定义测试任务
+    # 添加用户测试任务
     @app.task(name="test_add")
     def add(x, y):
         return x + y
@@ -27,8 +31,11 @@ def celery_app():
         app,
         pool="solo",
         loglevel="INFO",
-        perform_ping_check=True
+        perform_ping_check=False  # 禁用自动ping检查
     ):
+        # 手动执行ping验证
+        result = ping.delay()
+        assert result.get(timeout=5) == "pong"
         yield app
 
 def test_config_loaded(celery_app):

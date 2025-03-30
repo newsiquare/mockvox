@@ -3,8 +3,9 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR / ".env")  # 加载.env文件
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+print(BASE_DIR)
+load_dotenv(BASE_DIR / ".env", override=True)  # 加载.env文件
 
 class Settings:
     # Global

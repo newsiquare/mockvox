@@ -1,4 +1,3 @@
-import pytest
 from bot.config import get_config, celery_config
 
 def test_global_config():

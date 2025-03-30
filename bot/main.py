@@ -7,9 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from config import get_config
-from worker import process_file_task
-from utils import logger
+from bot.config import get_config
+from bot.worker import process_file_task
+from bot.utils import logger
 
 cfg = get_config()
 MAX_UPLOAD_SIZE = cfg.MAX_UPLOAD_SIZE*1024*1024

@@ -1,8 +1,8 @@
 import pytest
 import redis
-from celery import Celery, states
+from celery import Celery
 from celery.contrib.testing.worker import start_worker
-from config import get_config, CeleryConfig
+from bot.config import get_config, celery_config
 
 cfg = get_config()
 
@@ -21,7 +21,7 @@ def celery_app():
     """创建完全隔离的 Celery 测试环境"""
     # 创建独立应用实例
     app = Celery("test_worker")
-    app.config_from_object(CeleryConfig)
+    app.config_from_object(celery_config)
     
     # 手动注册任务（绕过装饰器系统）
     app.task(name="celery.ping", staticmethod=True)(TestTasks.ping)
@@ -50,7 +50,7 @@ def test_redis_connection():
     r = redis.Redis(
         host=cfg.REDIS_HOST,
         port=cfg.REDIS_PORT,
-        db=cfg.REDIS_DB,
+        db=cfg.REDIS_DB_BROKER,
         password=cfg.REDIS_PASSWORD
     )
     assert r.ping(), "Redis连接失败"

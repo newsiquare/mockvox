@@ -1,8 +1,10 @@
 # config.py
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()  # 加载 .env 文件到环境变量
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")  # 加载.env文件
 
 class Settings:
     # Global
@@ -27,8 +29,9 @@ class Settings:
 
     # Redis 配置
     REDIS_HOST: str = os.environ.get("REDIS_HOST", "127.0.0.1")
-    REDIS_PORT: int = int(os.environ.get("REDIS_PORT", "6379"))
-    REDIS_DB: int = int(os.environ.get("REDIS_DB","0"))
+    REDIS_PORT: str = os.environ.get("REDIS_PORT", "6379")
+    REDIS_DB_BROKER: str = os.environ.get("REDIS_DB_BROKER","0")
+    REDIS_DB_RESULT: str = os.environ.get("REDIS_DB_RESULT","1")
     REDIS_MEMORY_LIMIT: str = os.environ.get("REDIS_MEMORY_LIMIT","2GB")
     REDIS_PASSWORD: str = os.environ.get("REDIS_PASSWORD")
 

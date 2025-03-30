@@ -1,19 +1,18 @@
 from celery import Celery
-from config import get_config, CeleryConfig
-import time
+from bot.config import get_config, celery_config
 import os
-
-app = Celery("worker")
-app.config_from_object(CeleryConfig)
 
 cfg = get_config()
 UPLOAD_PATH = cfg.UPLOAD_PATH
 os.makedirs(cfg.SLICED_ROOT_PATH, exist_ok=True)
 
+app = Celery("worker")
+app.config_from_object(celery_config)
+
 @app.task(name="process_file", bind=True)
-def process_file_task(file_name: str):
+def process_file_task(self, file_name: str):
     try:
-        stem, ext = os.path.splitext(file_name)
+        stem, _ = os.path.splitext(file_name)
         file_path = os.path.join(UPLOAD_PATH, file_name)
         
         # 处理逻辑示例
@@ -34,3 +33,9 @@ def process_file_task(file_name: str):
     except Exception as e:
         # 错误重试逻辑
         raise self.retry(exc=e, countdown=60, max_retries=3)
+    
+# 在 tasks.py 底部添加
+if __name__ == "__main__":
+    print("当前生效配置:")
+    print("Broker URL:", app.conf.broker_url)
+    print("Result Backend:", app.conf.result_backend)

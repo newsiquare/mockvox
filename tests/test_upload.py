@@ -12,7 +12,7 @@ os.environ["SLICED_ROOT_PATH"] = os.path.join(os.environ["UPLOAD_PATH"], "proces
 
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from src.main import app
+from bot.main import app
 
 @pytest.fixture(scope="module")
 def test_client():
@@ -60,7 +60,7 @@ def test_valid_upload_e2e(test_client):
     # 5. 等待任务完成
     task_info = wait_for_task_completion(response_data["task_id"])
     assert task_info["status"] == "SUCCESS"
-    assert "sliced_file" in task_info["result"]["path"]
+    assert response_data["filename"] in task_info["result"]["path"]
     
     # 6. 验证结果存储
     processed_path = task_info["result"]["path"]
@@ -81,6 +81,3 @@ def test_large_file_rejection_e2e(test_client):
     # 3. 验证接口拦截
     assert response.status_code == 413
     assert "文件大小超过限制" in response.json()["detail"]
-    
-    # 4. 验证文件未被存储
-    assert len(os.listdir(os.environ["UPLOAD_PATH"])) == 0

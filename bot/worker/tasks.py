@@ -34,8 +34,3 @@ def process_file_task(self, file_name: str):
         # 错误重试逻辑
         raise self.retry(exc=e, countdown=60, max_retries=3)
     
-# 在 tasks.py 底部添加
-if __name__ == "__main__":
-    print("当前生效配置:")
-    print("Broker URL:", app.conf.broker_url)
-    print("Result Backend:", app.conf.result_backend)

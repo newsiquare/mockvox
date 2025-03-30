@@ -6,6 +6,7 @@ from fastapi.requests import Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
+from celery.result import AsyncResult
 
 from bot.config import get_config
 from bot.worker import process_file_task

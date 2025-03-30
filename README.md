@@ -39,8 +39,10 @@ pip install -e .[dev]
 # 复制环境变量文件
 cp .env.sample .env
 # 运行 docker+redis (如果是第一次运行，需要从 docker镜像库拉取redis镜像，请确保您的网络能够正常拉取docker镜像。)
+chmod +x startup_redis.sh
 ./startup_redis.sh
 # 检查 redis 运行状态
+chmod +x check_redis.sh
 ./check_redis.sh
 # 运行 celcery worker
 celery -A bot.worker.tasks worker --loglevel=info --concurrency=4

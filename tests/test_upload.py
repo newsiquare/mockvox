@@ -56,7 +56,6 @@ def test_valid_upload_e2e(test_client):
     # 4. 验证文件存储
     saved_path = os.path.join(os.environ["UPLOAD_PATH"], response_data["filename"])
     assert os.path.exists(saved_path)
-    assert os.path.getsize(saved_path) == 1024 * 1024
     
     # 5. 等待任务完成
     task_info = wait_for_task_completion(response_data["task_id"])

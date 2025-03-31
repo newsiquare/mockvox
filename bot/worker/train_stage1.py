@@ -38,7 +38,7 @@ def process_file_task(self, file_name: str):
             for chunk, start, end in slicer.slice(audio):  # start和end是帧数
                 tmp_max = np.abs(chunk).max()
                 if(tmp_max>1):chunk/=tmp_max
-                chunk = (chunk / tmp_max * (_max * alpha)) + (1 - alpha) * chunk
+                chunk = (chunk / tmp_max * (cfg.MAX_NORMALIZED * cfg.ALPHA_MIX)) + (1 - cfg.ALPHA_MIX) * chunk
                 wavfile.write(
                     "%010d_%010d.wav" % (start, end),
                     32000,

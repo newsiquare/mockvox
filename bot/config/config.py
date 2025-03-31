@@ -24,6 +24,8 @@ class Settings:
     MIN_INTERVAL: int = int(os.environ.get("MIN_INTERVAL", "300"))
     HOP_SIZE: int = int(os.environ.get("HOP_SIZE", "10"))
     MAX_SIL_KEPT: int = int(os.environ.get("MAX_SIL_KEPT", "500"))
+    MAX_NORMALIZED: float = float(os.environ.get("MAX_NORMALIZED","0.9"))
+    ALPHA_MIX: float = float(os.environ.get("ALPHA_MIX","0.25"))
 
     SLICED_ROOT_PATH: str = os.environ.get("SLICED_ROOT_PATH","data/sliced")
 

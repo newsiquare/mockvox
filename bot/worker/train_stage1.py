@@ -1,4 +1,5 @@
 import os, traceback
+import numpy as np
 from scipy.io import wavfile
 from bot.config import get_config, celery_config
 from bot.core import Slicer, load_audio

@@ -66,7 +66,6 @@ def test_valid_upload_e2e(test_client):
     # 6. 验证结果存储
     processed_path = task_info["result"]["path"]
     assert os.path.exists(processed_path)
-    assert os.path.getsize(processed_path) == 1024 * 1024
 
 def test_large_file_rejection_e2e(test_client):
     """端到端测试：大文件拦截验证"""

@@ -8,7 +8,7 @@ import numpy as np
 from bot.core import load_audio 
 
 # 设置测试环境
-TEST_FILE = './liuyx.wav'
+TEST_FILE = 'liuyx.WAV'
 os.environ["UPLOAD_PATH"] = tempfile.mkdtemp() 
 os.environ["SLICED_ROOT_PATH"] = os.path.join(os.environ["UPLOAD_PATH"], "processed")
 

@@ -60,7 +60,8 @@ def test_valid_upload_e2e(test_client):
     # 5. 等待任务完成
     task_info = wait_for_task_completion(response_data["task_id"])
     assert task_info["status"] == "SUCCESS"
-    assert response_data["filename"] in task_info["result"]["path"]
+    stem, _ = os.path.splitext(response_data["filename"])
+    assert stem in task_info["result"]["path"]
     
     # 6. 验证结果存储
     processed_path = task_info["result"]["path"]

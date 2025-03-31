@@ -8,8 +8,8 @@ from bot.config import BASE_DIR, get_config
 
 cfg = get_config()
 
-# 设置测试环境
-TEST_FILE = os.path.join(BASE_DIR, 'liuyx.WAV')
+# 设置测试文件
+TEST_FILE = os.path.join(BASE_DIR, 'tests/liuyx.WAV')
 
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))

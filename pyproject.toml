@@ -29,7 +29,7 @@ dependencies = [
     "python-multipart>=0.0.20",
     "redis>=5.0.0",
     "celery>=5.1.0",
-    "ffmpeg>=1.4",
+    "ffmpeg-python>=0.2.0",
     "scipy>=1.15.2"
 ]
 

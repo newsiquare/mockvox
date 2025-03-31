@@ -5,7 +5,6 @@ from fastapi.testclient import TestClient
 from celery.result import AsyncResult
 import tempfile
 import numpy as np
-from bot.core import load_audio 
 
 # 设置测试环境
 TEST_FILE = 'liuyx.WAV'
@@ -40,7 +39,7 @@ def wait_for_task_completion(task_id: str, timeout: int = 10) -> dict:
 def test_valid_upload_e2e(test_client):
     """端到端测试：有效文件上传全流程"""
     # 1. 读取测试文件
-    file_content = load_audio(TEST_FILE, 16000)
+    file_content = open(TEST_FILE, 'rb').read()
     
     # 2. 发送上传请求
     response = test_client.post(

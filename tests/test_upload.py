@@ -40,7 +40,7 @@ def wait_for_task_completion(task_id: str, timeout: int = 10) -> dict:
 def test_valid_upload_e2e(test_client):
     """端到端测试：有效文件上传全流程"""
     # 1. 读取测试文件
-    file_content = load_audio(TEST_FILE, 32000)
+    file_content = load_audio(TEST_FILE, 16000)
     
     # 2. 发送上传请求
     response = test_client.post(

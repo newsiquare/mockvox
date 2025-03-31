@@ -53,7 +53,7 @@ chmod +x startup_redis.sh
 chmod +x check_redis.sh
 ./check_redis.sh
 # 运行 celcery worker
-celery -A bot.worker.tasks worker --loglevel=info --concurrency=4
+celery -A bot.worker.worker worker --loglevel=info --concurrency=4
 # 打开另一个终端，运行 web server
 cd bot
 conda activate bot

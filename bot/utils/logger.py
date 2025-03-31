@@ -1,4 +1,8 @@
 import logging
+from bot.config import BASE_DIR
+import os
+
+log_file = os.path.join(BASE_DIR, "api.log")
 
 # 配置日志记录
 logging.basicConfig(
@@ -6,7 +10,7 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler("api.log")
+        logging.FileHandler(log_file)
     ]
 )
-logger = logging.getLogger(__name__)
+BotLogger = logging.getLogger(__name__)

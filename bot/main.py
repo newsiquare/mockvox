@@ -10,7 +10,7 @@ from celery.result import AsyncResult
 
 from bot.config import get_config
 from bot.worker import process_file_task
-from bot.utils import logger
+from bot.utils import BotLogger
 
 cfg = get_config()
 MAX_UPLOAD_SIZE = cfg.MAX_UPLOAD_SIZE*1024*1024
@@ -76,7 +76,7 @@ async def upload_audio(file: UploadFile = File(..., description="音频文件，
                 f.write(chunk)
 
         # 记录保存成功日志
-        logger.info(
+        BotLogger.info(
             "文件保存成功",
             extra={
                 "action": "file_saved",
@@ -90,11 +90,11 @@ async def upload_audio(file: UploadFile = File(..., description="音频文件，
         task = process_file_task.delay(file_name=filename)
         # 确保任务对象有效
         if not isinstance(task, AsyncResult):
-            logger.error("Celery任务提交返回异常对象", extra={"file_name": filename})
+            BotLogger.error("Celery任务提交返回异常对象", extra={"file_name": filename})
             raise HTTPException(500, "Celery任务提交失败")
 
         # 记录任务提交日志
-        logger.info(
+        BotLogger.info(
             "异步任务已提交",
             extra={
                 "action": "task_submitted",
@@ -102,22 +102,18 @@ async def upload_audio(file: UploadFile = File(..., description="音频文件，
                 "file_name": filename
             }
         )
-
-        # 获取实际文件大小
-        actual_size = os.path.getsize(save_path)
         
         return {
             "message": "文件上传成功，已进入处理队列",
             "filename": filename,
-            "task_id": task.id,
-            "file_size": actual_size
+            "task_id": task.id
         }
 
     except HTTPException as he:
         raise he
     
     except ConnectionError as ce:
-        logger.critical("消息队列连接失败", exc_info=True)
+        BotLogger.critical("消息队列连接失败", exc_info=True)
         raise HTTPException(503, "系统暂时不可用")
 
     except Exception as e:

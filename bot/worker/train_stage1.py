@@ -39,8 +39,9 @@ def process_file_task(self, file_name: str):
                 tmp_max = np.abs(chunk).max()
                 if(tmp_max>1):chunk/=tmp_max
                 chunk = (chunk / tmp_max * (cfg.MAX_NORMALIZED * cfg.ALPHA_MIX)) + (1 - cfg.ALPHA_MIX) * chunk
+                sliced_file = os.path.join(sliced_path, "%010d_%010d.wav" % (start, end))
                 wavfile.write(
-                    "%010d_%010d.wav" % (start, end),
+                    sliced_file,
                     32000,
                     # chunk.astype(np.float32),
                     (chunk * 32767).astype(np.int16),

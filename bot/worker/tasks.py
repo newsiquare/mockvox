@@ -1,15 +1,14 @@
-from celery import Celery
+import os, traceback
+from scipy.io import wavfile
 from bot.config import get_config, celery_config
-import os
+from bot.core import Slicer, load_audio
+from .worker import app
 
 cfg = get_config()
 UPLOAD_PATH = cfg.UPLOAD_PATH
 os.makedirs(cfg.SLICED_ROOT_PATH, exist_ok=True)
 
-app = Celery("worker")
-app.config_from_object(celery_config)
-
-@app.task(name="process_file", bind=True)
+@app.task(name="train_stage1", bind=True)
 def process_file_task(self, file_name: str):
     try:
         stem, _ = os.path.splitext(file_name)
@@ -23,12 +22,33 @@ def process_file_task(self, file_name: str):
         os.makedirs(sliced_path, exist_ok=True)
         
         # TODO: 添加实际处理逻辑
-        sliced_file = os.path.join(sliced_path, file_name)
-        with open(file_path, "rb") as src, open(sliced_file, "wb") as dst:
-            while chunk := src.read(1024 * 1024):    # 1Mb chunks
-                dst.write(chunk)
+        slicer = Slicer(
+            sr=32000,  # 长音频采样率
+            threshold=      int(cfg.THRESHOLD),     # 音量小于这个值视作静音的备选切割点
+            min_length=     int(cfg.MIN_LENGTH),    # 每段最小多长，如果第一段太短一直和后面段连起来直到超过这个值
+            min_interval=   int(cfg.MIN_INTERVAL),  # 最短切割间隔
+            hop_size=       int(cfg.HOP_SIZE),      # 怎么算音量曲线，越小精度越大计算量越高（不是精度越大效果越好）
+            max_sil_kept=   int(cfg.MAX_SIL_KEPT),  # 切完后静音最多留多长
+        )
+
+        try:
+            audio = load_audio(file_path, 32000)
+
+            for chunk, start, end in slicer.slice(audio):  # start和end是帧数
+                tmp_max = np.abs(chunk).max()
+                if(tmp_max>1):chunk/=tmp_max
+                chunk = (chunk / tmp_max * (_max * alpha)) + (1 - alpha) * chunk
+                wavfile.write(
+                    "%010d_%010d.wav" % (start, end),
+                    32000,
+                    # chunk.astype(np.float32),
+                    (chunk * 32767).astype(np.int16),
+                )
+
+        except:
+            print(inp_path,"->fail->", traceback.format_exc())
         
-        return {"status": "success", "path": sliced_file}
+        return {"status": "success", "path": sliced_path}
     
     except Exception as e:
         # 错误重试逻辑

@@ -34,6 +34,13 @@ conda activate bot
 pip install -e .[dev]
 ```
 #### 运行本项目
+安装ffmpeg(这里仅提供了ubuntu安装脚本)。
+```bash
+sudo apt update
+sudo apt install ffmpeg
+## 检查安装
+ffmpeg -version
+```
 请确保您的运行环境中已经安装了docker。
 ```bash
 # 复制环境变量文件

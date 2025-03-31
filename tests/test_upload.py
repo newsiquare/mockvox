@@ -3,13 +3,13 @@ import time
 import pytest
 from fastapi.testclient import TestClient
 from celery.result import AsyncResult
-import tempfile
 import numpy as np
+from bot.config import BASE_DIR, get_config
+
+cfg = get_config()
 
 # 设置测试环境
-TEST_FILE = 'liuyx.WAV'
-os.environ["UPLOAD_PATH"] = tempfile.mkdtemp() 
-os.environ["SLICED_ROOT_PATH"] = os.path.join(os.environ["UPLOAD_PATH"], "processed")
+TEST_FILE = os.path.join(BASE_DIR, 'liuyx.WAV')
 
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -54,7 +54,7 @@ def test_valid_upload_e2e(test_client):
     assert "filename" in response_data
     
     # 4. 验证文件存储
-    saved_path = os.path.join(os.environ["UPLOAD_PATH"], response_data["filename"])
+    saved_path = os.path.join(cfg.UPLOAD_PATH, response_data["filename"])
     assert os.path.exists(saved_path)
     
     # 5. 等待任务完成

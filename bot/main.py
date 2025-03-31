@@ -67,7 +67,7 @@ async def upload_audio(file: UploadFile = File(..., description="音频文件，
         # 生成安全文件名
         file_ext = file.filename.split('.')[-1]
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        filename = f"recording_{timestamp}.{file_ext}"
+        filename = f"{timestamp}.{file_ext}"
         save_path = os.path.join(UPLOAD_PATH, filename)
 
         # 保存文件

@@ -36,6 +36,7 @@ pip install -e .[dev]
 #### 运行本项目
 安装ffmpeg(这里仅提供了ubuntu安装脚本)。
 ```bash
+# 安装ffmpeg
 sudo apt update
 sudo apt install ffmpeg
 ## 检查安装

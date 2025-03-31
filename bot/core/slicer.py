@@ -1,6 +1,7 @@
 import numpy as np
 import os, traceback
 import ffmpeg
+from bot.utils import i18n
 
 def load_audio(file, sr):
     try:

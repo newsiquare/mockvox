@@ -78,10 +78,9 @@ async def upload_audio(file: UploadFile = File(..., description="音频文件，
         # 记录保存成功日志
 
         BotLogger.info(
-            "文件保存成功",
+            "文件已保存",
             extra={
                 "action": "file_saved",
-                # 修改字段名称，添加前缀避免冲突
                 "file_name": filename,          
                 "file_size": file.size,         
                 "content_type": file.content_type  
@@ -92,14 +91,14 @@ async def upload_audio(file: UploadFile = File(..., description="音频文件，
         task = process_file_task.delay(file_name=filename)
         # 确保任务对象有效
         if not isinstance(task, AsyncResult):
-            BotLogger.error("Celery任务提交返回异常对象", extra={"file_name": filename})
+            BotLogger.error(f"Celery任务提交异常 | {filename}")
             raise HTTPException(500, "Celery任务提交失败")
 
         # 记录任务提交日志
         BotLogger.info(
             "异步任务已提交",
             extra={
-                "action": "task_submitted",
+                "action": "stage1_task_submitted",
                 "task_id": task.id,
                 "file_name": filename
             }

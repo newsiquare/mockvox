@@ -4,6 +4,7 @@ from scipy.io import wavfile
 from bot.config import get_config, celery_config
 from bot.core import Slicer, load_audio
 from .worker import celeryApp
+from bot.utils import BotLogger
 
 cfg = get_config()
 UPLOAD_PATH = cfg.UPLOAD_PATH
@@ -15,14 +16,13 @@ def process_file_task(self, file_name: str):
         stem, _ = os.path.splitext(file_name)
         file_path = os.path.join(UPLOAD_PATH, file_name)
         
-        # 处理逻辑示例
+        # 文件切割
         sliced_path = os.path.join(
             cfg.SLICED_ROOT_PATH, 
             stem
         )
         os.makedirs(sliced_path, exist_ok=True)
         
-        # TODO: 添加实际处理逻辑
         slicer = Slicer(
             sr=32000,  # 长音频采样率
             threshold=      int(cfg.THRESHOLD),     # 音量小于这个值视作静音的备选切割点
@@ -48,11 +48,19 @@ def process_file_task(self, file_name: str):
                 )
 
         except:
-            print(file_path,"->fail->", traceback.format_exc())
+            BotLogger.error(f"文件切割异常 | {file_path} | {traceback.format_exc()}")
+
+        BotLogger.info(
+            "文件已切割",
+            extra={
+                "action": "file_sliced",
+                "task_id": self.request.id,
+                "path": sliced_path
+            }
+        )
         
         return {"status": "success", "path": sliced_path}
     
     except Exception as e:
-        # 错误重试逻辑
         raise self.retry(exc=e, countdown=60, max_retries=3)
     

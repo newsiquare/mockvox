@@ -6,6 +6,11 @@ class CeleryConfig:
     broker_url = f"redis://:{cfg.REDIS_PASSWORD}@{cfg.REDIS_HOST}:{cfg.REDIS_PORT}/{cfg.REDIS_DB_BROKER}"
     result_backend = f"redis://:{cfg.REDIS_PASSWORD}@{cfg.REDIS_HOST}:{cfg.REDIS_PORT}/{cfg.REDIS_DB_RESULT}"
     
+    # 结果保留24小时
+    result_expires = 60 * 60 * 24
+    # 保持结果持久化直到过期
+    result_persistent = True
+    
     # 序列化配置
     task_serializer = 'json'
     result_serializer = 'json'

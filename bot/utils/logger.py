@@ -12,7 +12,7 @@ class ConditionalFormatter(logging.Formatter):
                     '[action=%(action)s] [file name=%(file_name)s] ' \
                     '[file size=%(file_size)s] [content_type=%(content_type)s] - %(message)s'
             elif record.action == "task_submitted":
-                self.__style._fmt = '%(asctime)s - %(name)s - %(levelname)s - ' \
+                self._style._fmt = '%(asctime)s - %(name)s - %(levelname)s - ' \
                     '[action=%(action)s] [task id=%(task_id)s ' \
                     '[file name]=%(file_name)s - %(message)s'
             else: pass

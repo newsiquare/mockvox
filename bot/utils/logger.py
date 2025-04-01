@@ -15,6 +15,7 @@ class ConditionalFormatter(logging.Formatter):
                 self.__style._fmt = '%(asctime)s - %(name)s - %(levelname)s - ' \
                     '[action=%(action)s] [task id=%(task_id)s ' \
                     '[file name]=%(file_name)s - %(message)s'
+            else: pass
         else:
             # 默认格式
             self._style._fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'

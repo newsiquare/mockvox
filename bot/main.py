@@ -26,8 +26,8 @@ class SizeLimitMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 app = FastAPI(
-    title="语音克隆API",
-    description="接收并存储语音样本的API服务",
+    title="FakeVoi API",
+    description="FakeVoi的API服务",
     version="0.0.1",
     middleware=[Middleware(SizeLimitMiddleware)]
 )

@@ -18,7 +18,7 @@ class Settings:
     MAX_UPLOAD_SIZE: int = int(os.environ.get("MAX_UPLOAD_SIZE", "10")) # (单位：MB)
     UPLOAD_PATH: str = os.environ.get("UPLOAD_PATH","data/uploads")
 
-    # Slice 配置（全部转为int类型）
+    # Slice 配置
     THRESHOLD: int = int(os.environ.get("THRESHOLD", "-34"))
     MIN_LENGTH: int = int(os.environ.get("MIN_LENGTH", "4000"))
     MIN_INTERVAL: int = int(os.environ.get("MIN_INTERVAL", "300"))

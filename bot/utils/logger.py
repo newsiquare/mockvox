@@ -4,23 +4,31 @@ from bot.config import BASE_DIR
 import os
 
 class ConditionalFormatter(logging.Formatter):
-    def format(self, record):
-        if hasattr(record, 'action'):
-            # 动态生成日志格式
-            if record.action == "file_saved":
-                self._style._fmt = '%(asctime)s - %(name)s - %(levelname)s - ' \
-                    '[action=%(action)s] [file name=%(file_name)s] ' \
-                    '[file size=%(file_size)s] [content_type=%(content_type)s] - %(message)s'
-            elif record.action == "task_submitted":
-                self._style._fmt = '%(asctime)s - %(name)s - %(levelname)s - ' \
-                    '[action=%(action)s] [task id=%(task_id)s ' \
-                    '[file name]=%(file_name)s - %(message)s'
-            else: pass
-        else:
-            # 默认格式
-            self._style._fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    _FORMATS = {
+        "file_saved": (
+            '%(asctime)s - %(name)s - %(levelname)s - '
+            '[action=%(action)s] [file_name=%(file_name)s] '
+            '[file_size=%(file_size)s] [content_type=%(content_type)s] - %(message)s'
+        ),
+        "task_submitted": (
+            '%(asctime)s - %(name)s - %(levelname)s - '
+            '[action=%(action)s] [task_id=%(task_id)s] '
+            '[file_name=%(file_name)s] - %(message)s'
+        ),
+        "default": '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    }
+
+    def format(self, record):        
+        fmt_template = self._FORMATS.get(
+            getattr(record, 'action', None), 
+            self._FORMATS['default']
+        )
         
-        return super().format(record)
+        formatter = logging.Formatter(
+            fmt=fmt_template,
+            datefmt=self.datefmt
+        )
+        return formatter.format(record)
 
 log_dir = os.path.join(BASE_DIR, "logs")
 os.makedirs(log_dir, exist_ok=True)
@@ -30,7 +38,6 @@ BotLogger = logging.getLogger("BotLog")
 BotLogger.setLevel(logging.INFO)
 
 if not BotLogger.handlers:
-    # 定义日志格式
     formatter = ConditionalFormatter(
         datefmt='%Y-%m-%d %H:%M:%S %Z'
     )
@@ -40,7 +47,7 @@ if not BotLogger.handlers:
 
     file_handler = RotatingFileHandler(
         filename=log_file,
-        maxBytes=5 * 1024 * 1024,  # 5MB
+        maxBytes=5 * 1024 * 1024,  # 5MB日志文件限制，循环10个文件
         backupCount=10,
         encoding='utf-8'
     )

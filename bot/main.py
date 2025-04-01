@@ -130,8 +130,8 @@ def get_task_status(task_id: str):
     task = AsyncResult(task_id)
     return {
         "task_id": task_id,
-        "status": task.status,
-        "path": task.path
+        "status": task.status if task.status else "UNKNOWN",
+        "path": task.result.get("path") if task.ready() else None
     }
 
 if __name__ == "__main__":

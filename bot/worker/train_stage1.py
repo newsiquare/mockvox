@@ -3,13 +3,13 @@ import numpy as np
 from scipy.io import wavfile
 from bot.config import get_config, celery_config
 from bot.core import Slicer, load_audio
-from .worker import app
+from .worker import celeryApp
 
 cfg = get_config()
 UPLOAD_PATH = cfg.UPLOAD_PATH
 os.makedirs(cfg.SLICED_ROOT_PATH, exist_ok=True)
 
-@app.task(name="train_stage1", bind=True)
+@celeryApp.task(name="train_stage1", bind=True)
 def process_file_task(self, file_name: str):
     try:
         stem, _ = os.path.splitext(file_name)

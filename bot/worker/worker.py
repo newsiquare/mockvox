@@ -1,7 +1,7 @@
 from celery import Celery
 from bot.config import celery_config
 
-app = Celery("worker")
-app.config_from_object(celery_config)
+celeryApp = Celery("worker")
+celeryApp.config_from_object(celery_config)
 
-app.autodiscover_tasks()
+celeryApp.autodiscover_tasks()

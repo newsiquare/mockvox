@@ -9,7 +9,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from celery.result import AsyncResult
 
 from bot.config import get_config
-from bot.worker import process_file_task
+from bot.worker import celeryApp, process_file_task
 from bot.utils import BotLogger
 
 cfg = get_config()
@@ -127,7 +127,7 @@ async def upload_audio(file: UploadFile = File(..., description="音频文件，
          response_description="",
          tags=[""])
 def get_task_status(task_id: str):
-    task = AsyncResult(task_id)
+    task = celeryApp.AsyncResult(task_id)
     return {
         "task_id": task_id,
         "status": task.result.get("status") if task.ready() else "UNKNOWN",

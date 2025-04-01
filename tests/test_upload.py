@@ -51,16 +51,16 @@ def test_valid_upload_e2e(test_client):
     assert response.status_code == 200
     response_data = response.json()
     assert "task_id" in response_data
-    assert "filename" in response_data
+    assert "file_name" in response_data
     
     # 4. 验证文件存储
-    saved_path = os.path.join(cfg.UPLOAD_PATH, response_data["filename"])
+    saved_path = os.path.join(cfg.UPLOAD_PATH, response_data["file_name"])
     assert os.path.exists(saved_path)
     
     # 5. 等待任务完成
     task_info = wait_for_task_completion(response_data["task_id"])
     assert task_info["status"] == "SUCCESS"
-    stem, _ = os.path.splitext(response_data["filename"])
+    stem, _ = os.path.splitext(response_data["file_name"])
     assert stem in task_info["result"]["path"]
     
     # 6. 验证结果存储

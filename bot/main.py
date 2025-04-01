@@ -131,7 +131,7 @@ def get_task_status(task_id: str):
     return {
         "task_id": task_id,
         "status": task.status,
-        "result": task.result
+        "path": task.path
     }
 
 if __name__ == "__main__":

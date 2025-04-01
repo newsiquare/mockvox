@@ -49,7 +49,6 @@ def test_valid_upload_e2e(test_client):
     
     # 3. 验证接口响应
     response_data = response.json()
-    print(response_data)
     assert response.status_code == 200
     assert "task_id" in response_data
     assert "file_name" in response_data

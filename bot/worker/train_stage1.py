@@ -22,7 +22,7 @@ def process_file_task(self, file_name: str):
             stem
         )
 
-        slice_audio(file_path, sliced_path)
+        sliced_files = slice_audio(file_path, sliced_path)
 
         BotLogger.info(
             "文件已切割",
@@ -41,7 +41,7 @@ def process_file_task(self, file_name: str):
         )
         raise self.retry(exc=e, countdown=60, max_retries=3)
 
-def slice_audio(input_path: str, output_dir: str) -> str:
+def slice_audio(input_path: str, output_dir: str) -> List[str]:
     """音频文件切割函数
     
     Args:
@@ -71,6 +71,7 @@ def slice_audio(input_path: str, output_dir: str) -> str:
         audio = load_audio(input_path, 32000)
         os.makedirs(output_dir, exist_ok=True)
 
+        sliced_files = []
         for chunk, start, end in slicer.slice(audio):
             # 音量归一化处理
             tmp_max = np.abs(chunk).max()
@@ -81,6 +82,7 @@ def slice_audio(input_path: str, output_dir: str) -> str:
                 output_dir,
                 f"{start:010d}_{end:010d}.wav"  
             )
+            sliced_files.append(sliced_file)
             
             wavfile.write(
                 sliced_file,
@@ -88,7 +90,7 @@ def slice_audio(input_path: str, output_dir: str) -> str:
                 (chunk * 32767).astype(np.int16)
             )
 
-        return output_dir
+        return sliced_files
 
     except Exception as e:
         BotLogger.error(

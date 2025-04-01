@@ -41,7 +41,7 @@ def process_file_task(self, file_name: str):
         )
         raise self.retry(exc=e, countdown=60, max_retries=3)
 
-def slice_audio(input_path: str, output_dir: str) -> List[str]:
+def slice_audio(input_path: str, output_dir: str) -> list[str]:
     """音频文件切割函数
     
     Args:
@@ -49,7 +49,7 @@ def slice_audio(input_path: str, output_dir: str) -> List[str]:
         output_dir: 切片输出目录
         
     Returns:
-        切片输出目录路径
+        切片输出文件名(数组)
         
     Raises:
         FileNotFoundError: 文件不存在

@@ -76,13 +76,15 @@ async def upload_audio(file: UploadFile = File(..., description="音频文件，
                 f.write(chunk)
 
         # 记录保存成功日志
+
         BotLogger.info(
             "文件保存成功",
             extra={
                 "action": "file_saved",
-                "filename": filename,
-                "filesize": file.size,
-                "content_type": file.content_type
+                # 修改字段名称，添加前缀避免冲突
+                "file_name": filename,          
+                "file_size": file.size,         
+                "content_type": file.content_type  
             }
         )
 
@@ -105,7 +107,7 @@ async def upload_audio(file: UploadFile = File(..., description="音频文件，
         
         return {
             "message": "文件上传成功，已进入处理队列",
-            "filename": filename,
+            "file_name": filename,
             "task_id": task.id
         }
 

@@ -9,7 +9,7 @@ ssh-keygen -t ed25519 -C "xxx@xx.com"
 ```
 然后将 id_ed25519.pub 加入到 gitlab 工作台的SSH Keys中：点击头像 -> Edit profile -> SSH Keys -> Add new key
 
-公司Gitlab仓库使用的不是标准SSH端口22, 而是端口20022, 所以您还需要在 {~}\.ssh\config 文件中增加：
+公司Gitlab仓库使用的不是标准SSH端口22, 而是端口20022, 所以您还需要在 ~\\.ssh\config 文件中增加：
 
 ```bash
 # Windows 的~宿主目录一般位于 C:\Users\your_username目录，~\.ssh\config文件中增加：
@@ -21,7 +21,7 @@ Host gitlab.datainside.com.cn
 
 #### 克隆本项目
 ```bash
-git clone git@gitlab.datainside.com.cn:drz/bot.git
+git clone git@gitlab.datainside.com.cn:fakevoi/bot.git
 cd bot
 ```
 #### 虚拟环境

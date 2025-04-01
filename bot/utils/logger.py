@@ -6,11 +6,15 @@ import os
 class ConditionalFormatter(logging.Formatter):
     def format(self, record):
         if hasattr(record, 'action'):
+            # 动态生成日志格式
             if record.action == "file_saved":
-                # 动态生成日志格式
                 self._style._fmt = '%(asctime)s - %(name)s - %(levelname)s - ' \
-                    '[action=%(action)s] [filename=%(filename)s] ' \
-                    '[filesize=%(filesize)s] [content_type=%(content_type)s] - %(message)s'
+                    '[action=%(action)s] [file name=%(file_name)s] ' \
+                    '[file size=%(file_size)s] [content_type=%(content_type)s] - %(message)s'
+            if record.action == "task_submitted":
+                self.__style._fmt = '%(asctime)s - %(name)s - %(levelname)s - ' \
+                    '[action=%(action)s] [task id=%(task_id)s ' \
+                    '[file name]=%(file_name)s - %(message)s'
         else:
             # 默认格式
             self._style._fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'

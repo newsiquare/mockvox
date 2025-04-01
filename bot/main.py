@@ -123,7 +123,7 @@ async def upload_audio(file: UploadFile = File(..., description="音频文件，
 @app.get("/tasks/{task_id}",
          summary="获取任务执行结果",
          response_description="",
-         tags=[""]))
+         tags=[""])
 def get_task_status(task_id: str):
     task = AsyncResult(task_id)
     return {

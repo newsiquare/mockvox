@@ -3,6 +3,7 @@
 redis/data
 # 数据文件
 data/
+logs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

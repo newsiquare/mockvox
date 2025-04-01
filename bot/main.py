@@ -120,7 +120,10 @@ async def upload_audio(file: UploadFile = File(..., description="音频文件，
         raise HTTPException(status_code=500, detail=f"文件处理错误: {str(e)}")
 
 # 任务状态查询接口
-@app.get("/tasks/{task_id}")
+@app.get("/tasks/{task_id}",
+         summary="获取任务执行结果",
+         response_description="",
+         tags=[""]))
 def get_task_status(task_id: str):
     task = AsyncResult(task_id)
     return {

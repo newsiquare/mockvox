@@ -1,0 +1,2 @@
+bot/**/*.bin filter=lfs diff=lfs merge=lfs -text
+bot/**/*.pt filter=lfs diff=lfs merge=lfs -text

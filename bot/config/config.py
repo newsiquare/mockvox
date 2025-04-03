@@ -4,10 +4,10 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-UPLOAD_PATH = os.path.join(BASE_DIR, "upload")
 DATA_DIR = os.path.join(BASE_DIR, "data")
 PRETRAINED_DIR = os.path.join(BASE_DIR, "pretrained")
 LOG_DIR = os.path.join(BASE_DIR, "log")
+UPLOAD_PATH = os.path.join(DATA_DIR, "upload")
 SLICED_ROOT_PATH = os.path.join(DATA_DIR, "sliced")
 DENOISED_ROOT_PATH = os.path.join(DATA_DIR, "denoised")
 

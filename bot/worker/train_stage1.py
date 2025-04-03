@@ -116,10 +116,7 @@ def slice_audio(input_path: str, output_dir: str) -> List[str]:
 
 def batch_denoise(file_list: List[str], output_dir: str) -> List[str]:
     try:
-        denoiser = AudioDenoiser(
-            model_name="alextomcat/speech_frcrn_ans_cirm_16k",
-            local_files_only=True
-        )        
+        denoiser = AudioDenoiser(model_name="iic/speech_frcrn_ans_cirm_16k")        
         os.makedirs(output_dir, exist_ok=True)
 
         denoised_files = []        

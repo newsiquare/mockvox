@@ -1,27 +1,24 @@
 import os, traceback
 import numpy as np
+import time
 from scipy.io import wavfile
-from bot.config import get_config, celery_config
-from bot.core import Slicer, load_audio
+from bot.config import get_config, celery_config, UPLOAD_PATH, SLICED_ROOT_PATH, DENOISED_ROOT_PATH
+from bot.core import Slicer, load_audio, AudioDenoiser
 from .worker import celeryApp
 from bot.utils import BotLogger
+from typing import List
 
 cfg = get_config()
-UPLOAD_PATH = cfg.UPLOAD_PATH
-os.makedirs(cfg.SLICED_ROOT_PATH, exist_ok=True)
+os.makedirs(SLICED_ROOT_PATH, exist_ok=True)
 
 @celeryApp.task(name="train_stage1", bind=True)
-def process_file_task(self, file_name: str):
+def process_file_task(self, file_name: str, ifDenoise: bool):
     try:
         stem, _ = os.path.splitext(file_name)
         file_path = os.path.join(UPLOAD_PATH, file_name)
         
         # 文件切割
-        sliced_path = os.path.join(
-            cfg.SLICED_ROOT_PATH, 
-            stem
-        )
-
+        sliced_path = os.path.join(SLICED_ROOT_PATH, stem)
         sliced_files = slice_audio(file_path, sliced_path)
 
         BotLogger.info(
@@ -32,8 +29,26 @@ def process_file_task(self, file_name: str):
                 "path": sliced_path
             }
         )
+
+        # 降噪
+        if(ifDenoise):
+            denoised_path = os.path.join(DENOISED_ROOT_PATH, stem)
+            denoised_files = batch_denoise(sliced_files, denoised_path)
         
-        return {"status": "success", "path": sliced_path}
+            BotLogger.info(
+                "已降噪",
+                extra={
+                    "action": "file_denoised",
+                    "task_id": self.request.id,
+                    "path": denoised_path
+                }
+            )
+        
+        return {
+            "status": "success", 
+            "path": denoised_path, 
+            "time":time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+        }
     
     except Exception as e:
         BotLogger.error(
@@ -41,7 +56,7 @@ def process_file_task(self, file_name: str):
         )
         raise self.retry(exc=e, countdown=60, max_retries=3)
 
-def slice_audio(input_path: str, output_dir: str) -> list[str]:
+def slice_audio(input_path: str, output_dir: str) -> List[str]:
     """音频文件切割函数
     
     Args:
@@ -98,4 +113,25 @@ def slice_audio(input_path: str, output_dir: str) -> list[str]:
             extra={"action": "slice_error"}
         )
         raise RuntimeError(f"音频切割失败: {str(e)}") from e
+
+def batch_denoise(file_list: List[str], output_dir: str) -> List[str]:
+    try:
+        denoiser = AudioDenoiser(
+            model_name="alextomcat/speech_frcrn_ans_cirm_16k",
+            local_files_only=True
+        )        
+        os.makedirs(output_dir, exist_ok=True)
+
+        denoised_files = []        
+        for file in file_list:
+            denoised_file = denoiser.denoise(file, output_dir=output_dir)
+            denoised_files.append(denoised_file)
+
+        return denoised_files
+    
+    except Exception as e:
+        BotLogger.error(
+            f"降噪异常 | 路径: {denoised_path} | 错误: {str(e)}",
+            extra={"action": "denoise_error"}
+        )
     

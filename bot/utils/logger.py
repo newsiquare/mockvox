@@ -1,6 +1,6 @@
 import logging
 from logging.handlers import RotatingFileHandler
-from bot.config import BASE_DIR
+from bot.config import LOG_DIR
 import os
 
 class ConditionalFormatter(logging.Formatter):
@@ -20,6 +20,11 @@ class ConditionalFormatter(logging.Formatter):
             '[action=%(action)s] [task_id=%(task_id)s] '
             '[path=%(path)s] - %(message)s'
         ),
+        "file_denoised": (
+            '%(asctime)s - %(name)s - %(levelname)s - '
+            '[action=%(action)s] [task_id=%(task_id)s] '
+            '[path=%(path)s] - %(message)s'
+        ),
         "default": '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     }
 
@@ -35,9 +40,8 @@ class ConditionalFormatter(logging.Formatter):
         )
         return formatter.format(record)
 
-log_dir = os.path.join(BASE_DIR, "logs")
-os.makedirs(log_dir, exist_ok=True)
-log_file = os.path.join(log_dir, "bot.log")
+os.makedirs(LOG_DIR, exist_ok=True)
+log_file = os.path.join(LOG_DIR, "bot.log")
 
 BotLogger = logging.getLogger("BotLog")
 BotLogger.setLevel(logging.INFO)
@@ -52,7 +56,7 @@ if not BotLogger.handlers:
 
     file_handler = RotatingFileHandler(
         filename=log_file,
-        maxBytes=5 * 1024 * 1024,  # 5MB日志文件限制，循环10个文件
+        maxBytes=5 * 1024 * 1024,  # 5MB 日志文件限制，循环10个文件
         backupCount=10,
         encoding='utf-8'
     )
@@ -61,4 +65,4 @@ if not BotLogger.handlers:
     BotLogger.addHandler(console_handler)
     BotLogger.addHandler(file_handler)
 
-    BotLogger.propagate = False
+    BotLogger.propagate = False # 禁止向上传递

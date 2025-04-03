@@ -4,7 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 from celery.result import AsyncResult
 import numpy as np
-from bot.config import BASE_DIR, get_config
+from bot.config import BASE_DIR, get_config, UPLOAD_PATH
 
 cfg = get_config()
 
@@ -54,7 +54,7 @@ def test_valid_upload_e2e(test_client):
     assert "file_name" in response_data
     
     # 4. 验证文件存储
-    saved_path = os.path.join(cfg.UPLOAD_PATH, response_data["file_name"])
+    saved_path = os.path.join(UPLOAD_PATH, response_data["file_name"])
     assert os.path.exists(saved_path)
     
     # 5. 等待任务完成

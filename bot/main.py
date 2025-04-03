@@ -8,7 +8,7 @@ from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from celery.result import AsyncResult
 
-from bot.config import get_config
+from bot.config import get_config, UPLOAD_PATH
 from bot.worker import celeryApp, process_file_task
 from bot.utils import BotLogger
 
@@ -42,7 +42,6 @@ app.add_middleware(
 )
 
 # 文件存储配置
-UPLOAD_PATH = cfg.UPLOAD_PATH
 os.makedirs(UPLOAD_PATH, exist_ok=True)
 ALLOWED_EXTENSIONS = {'wav'}
 
@@ -88,7 +87,7 @@ async def upload_audio(file: UploadFile = File(..., description="音频文件，
         )
 
         # 发送异步任务
-        task = process_file_task.delay(file_name=filename)
+        task = process_file_task.delay(file_name=filename, ifDenoise=True)
         # 确保任务对象有效
         if not isinstance(task, AsyncResult):
             BotLogger.error(f"Celery任务提交异常 | {filename}")
@@ -130,7 +129,8 @@ def get_task_status(task_id: str):
     return {
         "task_id": task_id,
         "status": task.result.get("status") if task.ready() else "UNKNOWN",
-        "path": task.result.get("path") if task.ready() else None
+        "path": task.result.get("path") if task.ready() else None,
+        "time": task.result.get("time") if task.ready() else None
     }
 
 if __name__ == "__main__":

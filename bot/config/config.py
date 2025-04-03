@@ -4,6 +4,13 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+UPLOAD_PATH = os.path.join(BASE_DIR, "upload")
+DATA_DIR = os.path.join(BASE_DIR, "data")
+PRETRAINED_DIR = os.path.join(BASE_DIR, "pretrained")
+LOG_DIR = os.path.join(BASE_DIR, "log")
+SLICED_ROOT_PATH = os.path.join(DATA_DIR, "sliced")
+DENOISED_ROOT_PATH = os.path.join(DATA_DIR, "denoised")
+
 load_dotenv(BASE_DIR / ".env", override=True)  # 加载.env文件
 
 class Settings:
@@ -16,7 +23,6 @@ class Settings:
 
     # 上传文件
     MAX_UPLOAD_SIZE: int = int(os.environ.get("MAX_UPLOAD_SIZE", "10")) # (单位：MB)
-    UPLOAD_PATH: str = os.environ.get("UPLOAD_PATH","data/uploads")
 
     # Slice 配置
     THRESHOLD: int = int(os.environ.get("THRESHOLD", "-34"))
@@ -26,8 +32,6 @@ class Settings:
     MAX_SIL_KEPT: int = int(os.environ.get("MAX_SIL_KEPT", "500"))
     MAX_NORMALIZED: float = float(os.environ.get("MAX_NORMALIZED","0.9"))
     ALPHA_MIX: float = float(os.environ.get("ALPHA_MIX","0.25"))
-
-    SLICED_ROOT_PATH: str = os.environ.get("SLICED_ROOT_PATH","data/sliced")
 
     # Redis 配置
     REDIS_HOST: str = os.environ.get("REDIS_HOST", "127.0.0.1")

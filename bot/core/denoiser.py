@@ -1,25 +1,23 @@
 import torch
-import torchaudio
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-import os
-from bot.config import PRETRAINED_DIR, DATA_DIR
+from bot.config import DENOISED_ROOT_PATH
 
 class AudioDenoiser:
     def __init__(self,
-                 model_name: str = 'iic/speech_frcrn_ans_cirm_16k',
+                 model_name: str = 'damo/speech_frcrn_ans_cirm_16k',
                  device: Optional[str] = None): 
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
         self.ans = pipeline(
-            Tasks.acoustic_noise_suppression,
-            model=model_name)       
+            task=Tasks.acoustic_noise_suppression,
+            model=model_name)
 
     def denoise(self, 
             input_path: str,
-            output_dir: str = os.path.join(DATA_DIR, "denoised")) -> str:
+            output_dir: str = DENOISED_ROOT_PATH) -> str:
         """
         全流程降噪处理 (torchaudio版)
         :param input_path: 输入音频路径
@@ -35,6 +33,17 @@ class AudioDenoiser:
         output_file = Path(input_path).name
                 
         # 执行降噪
-        result = self.ans(input_path, output_path / output_file, device=self.device)
+        self.ans(input_path, output_path=output_path / output_file, device=self.device)
         
         return str(output_file)
+    
+if __name__ == '__main__':
+    import os
+    from bot.config import PRETRAINED_DIR
+    denoise_model = os.path.join(PRETRAINED_DIR, 'damo/speech_frcrn_ans_cirm_16k')
+    denoise_model = denoise_model if os.path.exists(denoise_model) else 'damo/speech_frcrn_ans_cirm_16k'
+    denoiser = AudioDenoiser(denoise_model)
+
+    file = '/home/drz/mycode/bot/data/sliced/20250406091646/0000610880_0001048320.wav'
+    output_dir = '/home/drz/mycode/bot/data/denoised/20250406091646'
+    denoised_file = denoiser.denoise(file, output_dir=output_dir)

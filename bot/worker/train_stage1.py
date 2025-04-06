@@ -2,7 +2,7 @@ import os, traceback
 import numpy as np
 import time
 from scipy.io import wavfile
-from bot.config import get_config, celery_config, UPLOAD_PATH, SLICED_ROOT_PATH, DENOISED_ROOT_PATH
+from bot.config import get_config, PRETRAINED_DIR, UPLOAD_PATH, SLICED_ROOT_PATH, DENOISED_ROOT_PATH
 from bot.core import Slicer, load_audio, AudioDenoiser
 from .worker import celeryApp
 from bot.utils import BotLogger
@@ -116,14 +116,15 @@ def slice_audio(input_path: str, output_dir: str) -> List[str]:
 
 def batch_denoise(file_list: List[str], output_dir: str) -> List[str]:
     try:
-        denoiser = AudioDenoiser(model_name="iic/speech_frcrn_ans_cirm_16k")        
+        denoise_model = os.path.join(PRETRAINED_DIR, 'damo/speech_frcrn_ans_cirm_16k')
+        denoise_model = denoise_model if os.path.exists(denoise_model) else 'damo/speech_frcrn_ans_cirm_16k'
+        denoiser = AudioDenoiser(model_name=denoise_model)        
         os.makedirs(output_dir, exist_ok=True)
 
         denoised_files = []        
         for file in file_list:
             denoised_file = denoiser.denoise(file, output_dir=output_dir)
             denoised_files.append(denoised_file)
-
         return denoised_files
     
     except Exception as e:

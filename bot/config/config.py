@@ -10,6 +10,7 @@ LOG_DIR = os.path.join(BASE_DIR, "log")
 UPLOAD_PATH = os.path.join(DATA_DIR, "upload")
 SLICED_ROOT_PATH = os.path.join(DATA_DIR, "sliced")
 DENOISED_ROOT_PATH = os.path.join(DATA_DIR, "denoised")
+ASR_PATH = os.path.join(DATA_DIR, "asr")
 
 load_dotenv(BASE_DIR / ".env", override=True)  # 加载.env文件
 

@@ -1,4 +1,5 @@
-from .config import get_config, Settings, BASE_DIR, PRETRAINED_DIR, DATA_DIR, LOG_DIR, UPLOAD_PATH, SLICED_ROOT_PATH, DENOISED_ROOT_PATH
+from .config import get_config, Settings, BASE_DIR, PRETRAINED_DIR, DATA_DIR, LOG_DIR, UPLOAD_PATH, SLICED_ROOT_PATH, DENOISED_ROOT_PATH, \
+                    ASR_PATH
 from .celery import celery_config
 
 __all__ = [
@@ -11,4 +12,5 @@ __all__ = [
     "UPLOAD_PATH",
     "SLICED_ROOT_PATH",
     "DENOISED_ROOT_PATH",
-    "celery_config"]
+    "celery_config",
+    "ASR_PATH"]

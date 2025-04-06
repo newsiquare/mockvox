@@ -2,11 +2,12 @@ import os, traceback
 import numpy as np
 import time
 from scipy.io import wavfile
-from bot.config import get_config, PRETRAINED_DIR, UPLOAD_PATH, SLICED_ROOT_PATH, DENOISED_ROOT_PATH
-from bot.core import Slicer, load_audio, AudioDenoiser
+from bot.config import get_config, PRETRAINED_DIR, UPLOAD_PATH, SLICED_ROOT_PATH, DENOISED_ROOT_PATH, ASR_PATH
+from bot.core import Slicer, load_audio, AudioDenoiser, AutoSpeechRecognition
 from .worker import celeryApp
 from bot.utils import BotLogger
 from typing import List
+from pathlib import Path
 
 cfg = get_config()
 os.makedirs(SLICED_ROOT_PATH, exist_ok=True)
@@ -43,10 +44,26 @@ def process_file_task(self, file_name: str, ifDenoise: bool):
                     "path": denoised_path
                 }
             )
+
+        # 语音识别
+        asr_path = os.path.join(ASR_PATH, stem)
+        if(ifDenoise):
+            asr_results = batch_asr(denoised_files, asr_path)
+        else:
+            asr_results = batch_asr(sliced_files, asr_path)
+
+        BotLogger.info(
+            "语音已识别",
+            extra={
+                "action": "asr",
+                "task_id": self.request.id,
+                "path": asr_path
+            }
+        )
         
         return {
             "status": "success", 
-            "path": denoised_path, 
+            "results": asr_results, 
             "time":time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
         }
     
@@ -84,7 +101,7 @@ def slice_audio(input_path: str, output_dir: str) -> List[str]:
         )
 
         audio = load_audio(input_path, 32000)
-        os.makedirs(output_dir, exist_ok=True)
+        Path(output_dir).mkdir(parents=True, exist_ok=True)
 
         sliced_files = []
         for chunk, start, end in slicer.slice(audio):
@@ -115,11 +132,23 @@ def slice_audio(input_path: str, output_dir: str) -> List[str]:
         raise RuntimeError(f"音频切割失败: {str(e)}") from e
 
 def batch_denoise(file_list: List[str], output_dir: str) -> List[str]:
+    """批量降噪函数
+    
+    Args:
+        file_list: 切片文件名数组
+        output_dir: 降噪输出目录
+        
+    Returns:
+        降噪输出文件名(数组)
+        
+    Raises:
+        RuntimeError: 降噪处理失败
+    """
     try:
         denoise_model = os.path.join(PRETRAINED_DIR, 'damo/speech_frcrn_ans_cirm_16k')
         denoise_model = denoise_model if os.path.exists(denoise_model) else 'damo/speech_frcrn_ans_cirm_16k'
-        denoiser = AudioDenoiser(model_name=denoise_model)        
-        os.makedirs(output_dir, exist_ok=True)
+        denoiser = AudioDenoiser(model_name=denoise_model)     
+        Path(output_dir).mkdir(parents=True, exist_ok=True)   
 
         denoised_files = []        
         for file in file_list:
@@ -131,5 +160,37 @@ def batch_denoise(file_list: List[str], output_dir: str) -> List[str]:
         BotLogger.error(
             f"降噪异常 | 路径: {output_dir} | 错误: {str(e)}",
             extra={"action": "denoise_error"}
-        )
+        )    
+
+def batch_asr(file_list: List[str], output_dir: str):
+    """批量识别函数
     
+    Args:
+        file_list: 降噪文件名数组
+        output_dir: 语音识别输出目录
+        
+    Returns:
+        语音识别结果(数组)
+        
+    Raises:
+        RuntimeError: 识别处理失败
+    """
+    try:
+        asr_model = os.path.join(PRETRAINED_DIR, 'iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch')
+        asr_model = asr_model if os.path.exists(asr_model) else 'iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
+        asr = AutoSpeechRecognition(model_name=asr_model)
+        Path(output_dir).mkdir(parents=True, exist_ok=True)
+
+        results = []
+        with open('output.txt', 'w', encoding='utf-8') as f:
+            for file in file_list:
+                result = asr.speech_recognition(input_path=file)
+                f.writelines(result + '\n')
+                results += result        
+        return results
+
+    except Exception as e:
+        BotLogger.error(
+            f"语音识别异常 | 路径: {output_dir} | 错误: {str(e)}",
+            extra={"action": "asr_error"}
+        )

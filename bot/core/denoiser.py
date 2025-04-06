@@ -19,7 +19,7 @@ class AudioDenoiser:
             input_path: str,
             output_dir: str = DENOISED_ROOT_PATH) -> str:
         """
-        全流程降噪处理 (torchaudio版)
+        降噪处理
         :param input_path: 输入音频路径
         :param output_dir: 输出目录
         :return: 处理后的文件路径
@@ -36,14 +36,3 @@ class AudioDenoiser:
         self.ans(input_path, output_path=output_path / output_file, device=self.device)
         
         return str(output_file)
-    
-if __name__ == '__main__':
-    import os
-    from bot.config import PRETRAINED_DIR
-    denoise_model = os.path.join(PRETRAINED_DIR, 'damo/speech_frcrn_ans_cirm_16k')
-    denoise_model = denoise_model if os.path.exists(denoise_model) else 'damo/speech_frcrn_ans_cirm_16k'
-    denoiser = AudioDenoiser(denoise_model)
-
-    file = '/home/drz/mycode/bot/data/sliced/20250406091646/0000610880_0001048320.wav'
-    output_dir = '/home/drz/mycode/bot/data/denoised/20250406091646'
-    denoised_file = denoiser.denoise(file, output_dir=output_dir)

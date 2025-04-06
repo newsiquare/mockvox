@@ -25,6 +25,11 @@ class ConditionalFormatter(logging.Formatter):
             '[action=%(action)s] [task_id=%(task_id)s] '
             '[path=%(path)s] - %(message)s'
         ),
+        "asr": (
+            '%(asctime)s - %(name)s - %(levelname)s - '
+            '[action=%(action)s] [task_id=%(task_id)s] '
+            '[path=%(path)s] - %(message)s'
+        ),
         "default": '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     }
 

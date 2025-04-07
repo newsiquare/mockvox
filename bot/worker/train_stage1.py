@@ -66,7 +66,7 @@ def process_file_task(self, file_name: str, ifDenoise: bool):
         return {
             "status": "success", 
             "results": asr_results, 
-            "path": path_result,
+            "path": Path(path_result).name,
             "time":time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
         }
     
@@ -184,7 +184,7 @@ def batch_asr(file_list: List[str], output_dir: str):
         asr_model = asr_model if os.path.exists(asr_model) else 'iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
         punc_model = os.path.join(PRETRAINED_DIR, 'iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch')
         punc_model = punc_model if os.path.exists(punc_model) else 'iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch'
-        
+
         asr = AutoSpeechRecognition(asr_model_name=asr_model, punc_model_name=punc_model)
         Path(output_dir).mkdir(parents=True, exist_ok=True)
         output_file = os.path.join(output_dir, "output.txt")

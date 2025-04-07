@@ -1,5 +1,4 @@
 import os
-from datetime import datetime
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.requests import Request
@@ -10,7 +9,7 @@ from celery.result import AsyncResult
 
 from bot.config import get_config, UPLOAD_PATH
 from bot.worker import celeryApp, process_file_task
-from bot.utils import BotLogger
+from bot.utils import BotLogger, generate_unique_filename
 
 cfg = get_config()
 MAX_UPLOAD_SIZE = cfg.MAX_UPLOAD_SIZE*1024*1024
@@ -63,10 +62,8 @@ async def upload_audio(file: UploadFile = File(..., description="音频文件，
         if file.size > MAX_UPLOAD_SIZE:
             raise HTTPException(413, "文件大小超过限制")
 
-        # 生成安全文件名
-        file_ext = file.filename.split('.')[-1]
-        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        filename = f"{timestamp}.{file_ext}"
+        # 生成唯一文件名
+        filename = generate_unique_filename(file.filename)
         save_path = os.path.join(UPLOAD_PATH, filename)
 
         # 保存文件

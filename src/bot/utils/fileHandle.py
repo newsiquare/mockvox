@@ -17,7 +17,7 @@ def generate_unique_filename(original_name: str, user_id: str = None) -> str:
     file_ext = original_name.split('.')[-1] if '.' in original_name else 'data'
     
     # 生成四元组唯一因子
-    timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S%f")  # 包含微秒
+    timestamp = datetime.now().astimezone().strftime("%Y%m%d%H%M%S%f")  # 包含微秒
     random_str = uuid.uuid4().hex[:6]  # 取UUID前6位
     system_pid = os.getpid()  # 进程ID
     network_addr = uuid.getnode()  # 网卡MAC地址哈希

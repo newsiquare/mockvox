@@ -4,7 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 from celery.result import AsyncResult
 import numpy as np
-from bot.config import BASE_DIR, get_config, UPLOAD_PATH
+from bot.config import BASE_DIR, get_config, UPLOAD_PATH, ASR_PATH
 
 cfg = get_config()
 
@@ -64,7 +64,7 @@ def test_valid_upload_e2e(test_client):
     assert stem in task_info["result"]["path"]
     
     # 6. 验证结果存储
-    processed_path = task_info["result"]["path"]
+    processed_path = os.path.join(ASR_PATH, task_info["result"]["path"])
     assert os.path.exists(processed_path)
 
 def test_large_file_rejection_e2e(test_client):

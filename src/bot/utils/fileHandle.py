@@ -1,6 +1,7 @@
 import uuid
 from hashlib import md5
 from datetime import datetime
+import os
 
 def generate_unique_filename(original_name: str, user_id: str = None) -> str:
     """生成全局唯一文件名

@@ -55,7 +55,7 @@ priority = "supplemental"
 # Tools settings -------------------------------------------------------------------------------------------------------
 [tool.setuptools]  # configuration specific to the `setuptools` build backend.
 packages = { find = { where = ["src"], include = ["*"] } }
-package-dir = {"bot" = "src/bot"}
+package-dir = {"" = "src"}
 
 [tool.setuptools.dynamic]
 version = { attr = "bot.__version__" }

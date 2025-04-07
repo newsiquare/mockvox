@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
+requires = ["setuptools>=61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 # Project settings -----------------------------------------------------------------------------------------------------
@@ -38,17 +38,24 @@ dependencies = [
 # Optional dependencies ------------------------------------------------------------------------------------------------
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0.0",
-    "pytest-mock>=3.14.0"
+    "pytest",
+    "pytest-mock"
+]
+audio =  [
+    "modelscope[audio]"
 ]
 docs = [
-
 ]
+
+[[tool.poetry.source]]
+name = "modelscope-oss"
+url = "https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html"
+priority = "supplemental"
 
 # Tools settings -------------------------------------------------------------------------------------------------------
 [tool.setuptools]  # configuration specific to the `setuptools` build backend.
-packages = { find = { where = ["."], include = ["bot", "bot.*"] } }
-package-data = { "bot" = ["**/*.yaml", "../tests/*.py"], "univi.assets" = ["*.jpg"] }
+packages = { find = { where = ["bot"], include = ["*"] } }
+package-dir = {"bot" = "bot"}
 
 [tool.setuptools.dynamic]
 version = { attr = "bot.__version__" }

@@ -163,7 +163,8 @@ def batch_denoise(file_list: List[str], output_dir: str) -> List[str]:
         BotLogger.error(
             f"降噪异常 | 路径: {output_dir} | 错误: {str(e)}",
             extra={"action": "denoise_error"}
-        )    
+        )
+        raise RuntimeError(f"降噪失败: {str(e)}") from e
 
 def batch_asr(file_list: List[str], output_dir: str):
     """批量识别函数
@@ -181,7 +182,10 @@ def batch_asr(file_list: List[str], output_dir: str):
     try:
         asr_model = os.path.join(PRETRAINED_DIR, 'iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch')
         asr_model = asr_model if os.path.exists(asr_model) else 'iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
-        asr = AutoSpeechRecognition(model_name=asr_model)
+        punc_model = os.path.join(PRETRAINED_DIR, 'iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch')
+        punc_model = punc_model if os.path.exists(punc_model) else 'iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch'
+        
+        asr = AutoSpeechRecognition(asr_model_name=asr_model, punc_model_name=punc_model)
         Path(output_dir).mkdir(parents=True, exist_ok=True)
         output_file = os.path.join(output_dir, "output.txt")
 
@@ -198,3 +202,4 @@ def batch_asr(file_list: List[str], output_dir: str):
             f"语音识别异常 | 路径: {output_dir} | 错误: {str(e)}",
             extra={"action": "asr_error"}
         )
+        raise RuntimeError(f"语音识别失败: {str(e)}") from e

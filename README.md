@@ -31,9 +31,13 @@ conda create -n bot python=3.11 -y
 # 激活虚拟环境
 conda activate bot
 # 安装依赖项(开发环境)
-pip install -e .[dev]
+pip install -e .[dev,audio]
+# 安装依赖项(生产环境)
+pip install .[audio]
+
 ```
-#### 运行本项目
+## 运行本项目
+#### 安装ffmpeg
 安装ffmpeg(这里仅提供了ubuntu安装脚本)。
 ```bash
 # 安装ffmpeg
@@ -42,7 +46,16 @@ sudo apt install ffmpeg
 ## 检查安装
 ffmpeg -version
 ```
-请确保您的运行环境中已经安装了docker。
+#### 安装预训练模型
+```bash
+# 语音降噪模型
+modelscope download damo/speech_frcrn_ans_cirm_16k
+# 语音识别模型
+modelscope download iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch
+# 标点恢复模型
+modelscope download iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch
+```
+本项目需要在docker环境中运行redis, 请确保您的运行环境中已经安装了docker。
 ```bash
 # 复制环境变量文件
 cp .env.sample .env

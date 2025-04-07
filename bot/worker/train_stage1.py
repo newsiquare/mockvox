@@ -49,8 +49,10 @@ def process_file_task(self, file_name: str, ifDenoise: bool):
         asr_path = os.path.join(ASR_PATH, stem)
         if(ifDenoise):
             asr_results = batch_asr(denoised_files, asr_path)
+            path_result = denoised_path
         else:
             asr_results = batch_asr(sliced_files, asr_path)
+            path_result = sliced_path
 
         BotLogger.info(
             "语音已识别",
@@ -64,6 +66,7 @@ def process_file_task(self, file_name: str, ifDenoise: bool):
         return {
             "status": "success", 
             "results": asr_results, 
+            "path": path_result,
             "time":time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
         }
     

@@ -129,6 +129,7 @@ def get_task_status(task_id: str):
     return {
         "task_id": task_id,
         "status": task.result.get("status") if task.ready() else "UNKNOWN",
+        "results": task.result.get("results") if task.ready() else None,
         "path": task.result.get("path") if task.ready() else None,
         "time": task.result.get("time") if task.ready() else None
     }

@@ -39,9 +39,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0.0",
-    "pytest-mock>=3.14.0",
-    "pydantic>=2.10.6",
-    "pydantic_settings>=2.8.1",
+    "pytest-mock>=3.14.0"
 ]
 docs = [
 

@@ -61,6 +61,7 @@ package-dir = {"bot" = "bot"}
 version = { attr = "bot.__version__" }
 
 [tool.pytest.ini_options]
+pythonpath = ["."]
 addopts = "--doctest-modules --durations=30 --color=yes"
 markers = [
     "slow: skip slow tests unless --slow is set",

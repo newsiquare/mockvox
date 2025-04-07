@@ -1,5 +1,6 @@
 import torch
 from pathlib import Path
+import os
 from typing import Optional
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
@@ -30,7 +31,7 @@ class AudioDenoiser:
         # 创建输出目录
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
-        output_file = Path(input_path).name
+        output_file = os.path.join(output_path, Path(input_path).name)
                 
         # 执行降噪
         self.ans(input_path, output_path=output_path / output_file, device=self.device)

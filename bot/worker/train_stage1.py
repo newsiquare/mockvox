@@ -183,9 +183,10 @@ def batch_asr(file_list: List[str], output_dir: str):
         asr_model = asr_model if os.path.exists(asr_model) else 'iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
         asr = AutoSpeechRecognition(model_name=asr_model)
         Path(output_dir).mkdir(parents=True, exist_ok=True)
+        output_file = os.path.join(output_dir, "output.txt")
 
         results = []
-        with open('output.txt', 'w', encoding='utf-8') as f:
+        with open(output_file, 'w', encoding='utf-8') as f:
             for file in file_list:
                 result = asr.speech_recognition(input_path=file)
                 f.writelines(f"{item}\n" for item in result)

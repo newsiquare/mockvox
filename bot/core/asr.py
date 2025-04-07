@@ -22,12 +22,3 @@ class AutoSpeechRecognition:
             input_path: str) -> List:
         result = self.asr(input=input_path)
         return result
-
-if __name__ == '__main__':
-    asr_model = os.path.join(PRETRAINED_DIR, 'iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch')
-    asr_model = asr_model if os.path.exists(asr_model) else 'iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
-    asr = AutoSpeechRecognition(model_name=asr_model)
-    
-    result = asr.speech_recognition(input_path=os.path.join(DENOISED_ROOT_PATH, '20250407110552/0000000000_0000407680.wav'))
-    print(type(result), result)
-

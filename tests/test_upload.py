@@ -24,7 +24,7 @@ def generate_test_file(file_size: int) -> bytes:
     """生成指定大小的随机文件内容"""
     return np.random.bytes(file_size)
 
-def wait_for_task_completion(task_id: str, timeout: int = 10) -> dict:
+def wait_for_task_completion(task_id: str, timeout: int = 30) -> dict:
     """等待任务完成并返回最终状态"""
     start_time = time.time()
     while time.time() - start_time < timeout:

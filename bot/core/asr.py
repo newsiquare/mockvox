@@ -1,7 +1,7 @@
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from bot.config import PRETRAINED_DIR, DENOISED_ROOT_PATH
-from typing import Optional
+from typing import Optional, List
 import torch
 import os
 
@@ -19,7 +19,7 @@ class AutoSpeechRecognition:
             device=self.device)
         
     def speech_recognition(self, 
-            input_path: str) -> list:
+            input_path: str) -> List:
         result = self.asr(input=input_path)
         return result
 

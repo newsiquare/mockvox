@@ -188,8 +188,8 @@ def batch_asr(file_list: List[str], output_dir: str):
         with open('output.txt', 'w', encoding='utf-8') as f:
             for file in file_list:
                 result = asr.speech_recognition(input_path=file)
-                f.writelines(result + '\n')
-                results += result        
+                f.writelines(f"{item}\n" for item in result)
+                results.extend(result)
         return results
 
     except Exception as e:

@@ -65,7 +65,7 @@ class DataProcessor:
                 inputs[i] = inputs[i].to(self.device)
                 
             # 获取隐藏层特征
-            res = self.mlm(​**​inputs, output_hidden_states=True)
+            res = self.mlm(**inputs, output_hidden_states=True)
             res = torch.cat(res["hidden_states"][-3:-2], -1)[0].cpu()[1:-1]
 
         # 验证对齐关系

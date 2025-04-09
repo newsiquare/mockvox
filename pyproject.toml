@@ -34,9 +34,9 @@ dependencies = [
     "torchvision>=0.21.0",
     "modelscope>=1.24.1",
     "transformers>=4.51.0",
-    "cn2an>=0.5.23",
-    "pypinyin>=0.40.0",
-    "g2pw>=0.1.1"
+    "pypinyin>=0.54.0",
+    "opencc>=1.1.9",
+    "jieba_fast"
 ]
 
 # Optional dependencies ------------------------------------------------------------------------------------------------

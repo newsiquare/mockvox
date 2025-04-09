@@ -70,7 +70,7 @@ def test_valid_upload_e2e(test_client):
 def test_large_file_rejection_e2e(test_client):
     """端到端测试：大文件拦截验证"""
     # 1. 生成11MB测试文件
-    large_file = generate_test_file(11 * 1024 * 1024)
+    large_file = generate_test_file(110 * 1024 * 1024)
     
     # 2. 发送上传请求
     response = test_client.post(

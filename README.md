@@ -56,7 +56,7 @@ modelscope download --model 'iic/speech_paraformer-large_asr_nat-zh-cn-16k-commo
 # 标点恢复模型
 modelscope download --model 'iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch' --local_dir './pretrained/iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch'
 # GPT-SoVITS
-modelscope download --model 'AI-ModelScope/GPT-SoVITS' --local_dir './pretrained/GPT-SoVITS'
+modelscope download --model 'AI-ModelScope/GPT-SoVITS' --local_dir './pretrained/AI-ModelScope/GPT-SoVITS'
 ```
 本项目需要在docker环境中运行redis, 请确保您的运行环境中已经安装了docker。
 ```bash

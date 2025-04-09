@@ -46,14 +46,17 @@ sudo apt install ffmpeg
 ## 检查安装
 ffmpeg -version
 ```
-#### 安装预训练模型
+#### 下载预训练模型
+**注意** 保持当前目录为项目根目录。
 ```bash
 # 语音降噪模型
-modelscope download damo/speech_frcrn_ans_cirm_16k
+modelscope download --model 'damo/speech_frcrn_ans_cirm_16k' --local_dir './pretrained/damo/speech_frcrn_ans_cirm_16k'
 # 语音识别模型
-modelscope download iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch
+modelscope download --model 'iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch' --local_dir './pretrained/iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
 # 标点恢复模型
-modelscope download iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch
+modelscope download --model 'iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch' --local_dir './pretrained/iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch'
+# GPT-SoVITS
+modelscope download --model 'AI-ModelScope/GPT-SoVITS' --local_dir './pretrained/GPT-SoVITS'
 ```
 本项目需要在docker环境中运行redis, 请确保您的运行环境中已经安装了docker。
 ```bash

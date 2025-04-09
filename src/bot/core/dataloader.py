@@ -1,7 +1,7 @@
 import os
 from typing import Optional
-from modelscope import snapshot_download
 from transformers import AutoTokenizer, AutoModelForMaskedLM
+from bot.config import PRETRAINED_DIR
 
 class TextNormalization:
     def __init__(self, 
@@ -10,9 +10,9 @@ class TextNormalization:
         ):
         """
             先下载GPT-SoVITS预训练模型：
-            ~bash$ modelscope download AI-ModelScope/GPT-SoVITS
+            ~/{项目根目录}$ modelscope download --model 'AI-ModelScope/GPT-SoVITS' --local_dir './pretrained/GPT-SoVITS'
         """
-        model_dir = snapshot_download("AI-ModelScope/GPT-SoVITS", local_files_only=True)
+        model_dir = os.path.join(PRETRAINED_DIR, 'GPT-SoVITS/chinese-roberta-wwm-ext-large')
         self.tokenizer = AutoTokenizer(model_dir)
         self.mlm = AutoModelForMaskedLM(model_dir)
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")

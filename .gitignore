@@ -3,7 +3,9 @@
 redis/data
 # 数据文件
 data/
-logs/
+log/
+# 预训练模型
+pretrained/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

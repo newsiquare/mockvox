@@ -9,7 +9,8 @@ class AutoSpeechRecognition:
     def __init__(self,
                  asr_model_name: str = 'iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch',
                  punc_model_name: str = 'iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch',
-                 device: Optional[str] = None): 
+                 device: Optional[str] = None
+        ): 
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         # 语音识别管道
         self.asr = pipeline(

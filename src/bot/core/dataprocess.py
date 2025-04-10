@@ -8,7 +8,8 @@ from typing import Optional
 from modelscope import snapshot_download
 from transformers import AutoTokenizer, AutoModelForMaskedLM
 from bot.config import PRETRAINED_DIR, PROCESS_PATH, ASR_PATH
-from bot.text import Normalizer
+from bot.text import Normalizer, symbols
+from bot.utils import BotLogger
 from pathlib import Path
 import torch
 from typing import List
@@ -22,6 +23,7 @@ special = [
 
 class DataProcessor:
     def __init__(self, 
+                language='zh',
                 bert_model="chinese-roberta-wwm-ext-large",
                 device: Optional[str] = None
         ):
@@ -42,7 +44,9 @@ class DataProcessor:
         bert_dir = os.path.join(model_dir, 'chinese-roberta-wwm-ext-large')
         self.tokenizer = AutoTokenizer.from_pretrained(bert_dir)
         self.mlm = AutoModelForMaskedLM.from_pretrained(bert_dir)
-        
+        self.language = language
+        self.normalizer = Normalizer(language, mixed=False)
+
         # 设备配置（优先使用GPU）
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.mlm.to(self.device)
@@ -124,7 +128,7 @@ class DataProcessor:
                 text = line['text'].replace("%", "-").replace("￥", ",")
                 
                 # 文本标准化处理
-                phones, word2ph, norm_text = self.normalize(text, 'zh')
+                phones, word2ph, norm_text = self.normalize(text)
                 
                 # 保存BERT特征
                 bert_file = "%s/%s.pt" % (bert_dir, line['key'])
@@ -154,7 +158,7 @@ class DataProcessor:
 
         return results
 
-    def normalize(self, text, language):
+    def normalize(self, text):
         """
         文本标准化处理
         
@@ -165,14 +169,12 @@ class DataProcessor:
         返回:
             tuple (phones, word2ph, norm_text)
         """
-        self.normlizer = Normalizer(language)
-        
         # 特殊符号处理
         for special_s, special_l, target_symbol in special:
             if special_s in text and language == special_l:
                 text = text.replace(special_s, ",")
-                norm_text = self.normalizer.normalize(text)
-                phones = self.normlizer.g2p(norm_text)
+                norm_text = self.normalizer.do_normalize(text)
+                phones = self.normalizer.g2p(norm_text)
                 
                 # 替换特殊符号
                 new_ph = []
@@ -182,22 +184,27 @@ class DataProcessor:
                 return new_ph, phones[1], norm_text
 
         # 常规标准化流程
-        norm_text = self.normlizer.normalize(text)
-        
+        norm_text = self.normalizer.do_normalize(text)
+
         # 不同语言的分词处理
-        if language == "zh" or language=="cant":
-            phones, word2ph = self.normlizer.g2p(norm_text)
+        if self.language == "zh" or language=="cant":
+            phones, word2ph = self.normalizer.g2p(norm_text)
             assert len(phones) == sum(word2ph)
             assert len(norm_text) == len(word2ph)
-        elif language == "en":
-            phones = self.normlizer.g2p(norm_text)
+        elif self.language == "en":
+            phones = self.normalizer.g2p(norm_text)
             if len(phones) < 4:  # 确保最小长度
                 phones = [','] + phones
             word2ph = None
         else:
-            phones = self.normlizer.g2p(norm_text)
+            phones = self.normalizer.g2p(norm_text)
             word2ph = None
             
         # 未知符号处理
         phones = ['UNK' if ph not in symbols else ph for ph in phones]
         return phones, word2ph, norm_text
+
+if __name__ == '__main__':
+    processor = DataProcessor()
+    results = processor.process('20250409145258452558.1ed301dd.788fc313bf38482aa63fe2ea09781878')
+    print(results)

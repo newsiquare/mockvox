@@ -23,10 +23,10 @@ class NormalizerFactory:
 
 class Normalizer:
     '''
-    每个语言的Normalizer类，都需要实现 normalize 和 g2p 方法
+    每个语言的Normalizer类，都需要实现 do_normalize 和 g2p 方法
     '''
-    def __init__(self, language):
-        self.normalizer = NormalizerFactory.get_normalizer(language)
+    def __init__(self, language, *args, **kwargs):
+        self.normalizer = NormalizerFactory.get_normalizer(language, *args, **kwargs)
 
     @staticmethod
     def cleaned_text_to_sequence(text):
@@ -39,8 +39,8 @@ class Normalizer:
         phones = [symbol_to_id[symbol] for symbol in text]
         return phones
     
-    def normalize(self, text):
-        self.normalizer.normalize(text)
+    def do_normalize(self, text):
+        return self.normalizer.do_normalize(text)
     
     def g2p(self, text):
-        self.normalizer.g2p(text)
+        return self.normalizer.g2p(text)

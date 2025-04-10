@@ -39,9 +39,9 @@ class DataProcessor:
         model_dir = snapshot_download("AI-ModelScope/GPT-SoVITS", cache_dir=PRETRAINED_DIR)
         
         # 加载分词器和语言模型
-        model_dir = os.path.join(model_dir, 'chinese-roberta-wwm-ext-large')
-        self.tokenizer = AutoTokenizer(model_dir)
-        self.mlm = AutoModelForMaskedLM(model_dir)
+        bert_dir = os.path.join(model_dir, 'chinese-roberta-wwm-ext-large')
+        self.tokenizer = AutoTokenizer.from_pretrained(bert_dir)
+        self.mlm = AutoModelForMaskedLM.from_pretrained(bert_dir)
         
         # 设备配置（优先使用GPU）
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
@@ -71,7 +71,7 @@ class DataProcessor:
         # 验证对齐关系
         assert len(word2ph) == len(text)
         
-        # 构建频谱特征
+        # 构建音节重复特征
         phone_level_feature = []
         for i in range(len(word2ph)):
             repeat_feature = res[i].repeat(word2ph[i], 1)

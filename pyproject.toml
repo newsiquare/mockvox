@@ -22,7 +22,7 @@ classifiers = [
 # Required dependencies ------------------------------------------------------------------------------------------------
 dependencies = [
     "fastapi>=0.95.0",
-    "numpy>=2.1.3",
+    "numpy",
     "uvicorn>=0.34.0",
     "python-multipart>=0.0.20",
     "redis>=5.0.0",
@@ -32,10 +32,11 @@ dependencies = [
     "torch>=2.6.0",
     "torchaudio>=2.6.0",
     "torchvision>=0.21.0",
-    "modelscope>=1.20.0",
-    "transformers>=4.51.0",
+    "transformers",
     "pypinyin>=0.54.0",
     "opencc>=1.1.9",
+    "dotenv",
+    "modelscope",
     "onnxruntime",
     "jieba_fast"
 ]
@@ -44,10 +45,8 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest",
+    "httpx",
     "pytest-mock"
-]
-audio =  [
-    "modelscope[audio]"
 ]
 docs = [
 ]

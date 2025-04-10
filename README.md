@@ -37,9 +37,11 @@ conda create -n bot python=3.11 -y
 # 激活虚拟环境
 conda activate bot
 # 安装依赖项(开发环境)
-pip install -e .[dev,audio]
+pip install -e .[dev]
 # 安装依赖项(生产环境)
-pip install .[audio]
+pip install .
+# 安装 modelscope[audio]
+pip install modelscope[audio]
 # 安装完之后会报冲突，这是由阿里魔搭(modelscope[audio])引入的ms-funcodec这个包带来的。我们不会使用它，需要手动将其卸载:
 pip uninstall ms-funcodec
 # 重新升级被它影响到的 pypinyin 包
@@ -73,6 +75,9 @@ modelscope download --model 'iic/speech_paraformer-large_asr_nat-zh-cn-16k-commo
 modelscope download --model 'iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch' --local_dir './pretrained/iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch'
 # GPT-SoVITS
 modelscope download --model 'AI-ModelScope/GPT-SoVITS' --local_dir './pretrained/AI-ModelScope/GPT-SoVITS'
+# 接下来这个比较讨厌，它下载下来之后，有用的只有那个 G2PWModel_1.1.zip 文件。你需要把该文件解压之后，把原先目录中的东西都删掉，然后将解压后的内容放到 ./pretrained/G2PWModel 目录中。
+modelscope download --model 'xiaopch/G2PWModel_1.1' --local_dir './pretrained/G2PWModel'
+
 ```
 
 本项目需要在docker环境中运行redis, 请确保您的运行环境中已经安装了docker。

@@ -144,7 +144,6 @@ class DataProcessor:
                 results.append(result_item)
 
             except Exception as e:
-                # 错误处理（假设BotLogger已定义）
                 BotLogger.error(
                     f"数据处理异常 | 文件: {file_name} | 错误: {str(e)}",
                     extra={"action": "data_process_error"}

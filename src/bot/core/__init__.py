@@ -1,7 +1,7 @@
 from .slicer import Slicer, load_audio
 from .denoiser import AudioDenoiser
 from .asr import AutoSpeechRecognition
-from .dataprocess import DataProcessor
+from .data_process import DataProcessor
 
 __all__ = [
     "Slicer", 

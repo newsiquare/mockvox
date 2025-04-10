@@ -37,13 +37,11 @@ class DataProcessor:
         注意: 首次使用需通过以下命令下载模型：
             modelscope download --model 'AI-ModelScope/GPT-SoVITS' --local_dir './pretrained/AI-ModelScope/GPT-SoVITS'
         """
-        # 从ModelScope下载模型
-        model_dir = snapshot_download("AI-ModelScope/GPT-SoVITS", cache_dir=PRETRAINED_DIR)
-        
         # 加载分词器和语言模型
+        model_dir = os.path.join(PRETRAINED_DIR, "AI-ModelScope/GPT-SoVITS")
         bert_dir = os.path.join(model_dir, 'chinese-roberta-wwm-ext-large')
-        self.tokenizer = AutoTokenizer.from_pretrained(bert_dir)
-        self.mlm = AutoModelForMaskedLM.from_pretrained(bert_dir)
+        self.tokenizer = AutoTokenizer.from_pretrained(bert_dir, local_files_only=True)
+        self.mlm = AutoModelForMaskedLM.from_pretrained(bert_dir, local_files_only=True)
         self.language = language
         self.normalizer = Normalizer(language, mixed=False)
 
@@ -203,8 +201,3 @@ class DataProcessor:
         # 未知符号处理
         phones = ['UNK' if ph not in symbols else ph for ph in phones]
         return phones, word2ph, norm_text
-
-if __name__ == '__main__':
-    processor = DataProcessor()
-    results = processor.process('20250409145258452558.1ed301dd.788fc313bf38482aa63fe2ea09781878')
-    print(results)

@@ -3,10 +3,13 @@
 陪护机器人
 
 ## 安装
+
 使用SSH连接访问公司[Gitlab仓库](https://gitlab.datainside.com.cn:20443)，需要在您的本地生成 ed25519 密钥：
+
 ```bash
 ssh-keygen -t ed25519 -C "xxx@xx.com"
 ```
+
 然后将 id_ed25519.pub 加入到 gitlab 工作台的SSH Keys中：点击头像 -> Edit profile -> SSH Keys -> Add new key
 
 公司Gitlab仓库使用的不是标准SSH端口22, 而是端口20022, 所以您还需要在 ~\\.ssh\config 文件中增加：
@@ -19,12 +22,15 @@ Host gitlab.datainside.com.cn
 	IdentityFile {~}\.ssh\id_ed25519
 ```
 
-#### 克隆本项目
+### 克隆本项目
+
 ```bash
 git clone git@gitlab.datainside.com.cn:fakevoi/bot.git
 cd bot
 ```
-#### 虚拟环境
+
+### 虚拟环境
+
 ```bash
 # 创建虚拟环境
 conda create -n bot python=3.11 -y
@@ -34,11 +40,18 @@ conda activate bot
 pip install -e .[dev,audio]
 # 安装依赖项(生产环境)
 pip install .[audio]
-
+# 安装完之后会报冲突，这是由阿里魔搭(modelscope[audio])引入的ms-funcodec这个包带来的。我们不会使用它，需要手动将其卸载:
+pip uninstall ms-funcodec
+# 重新升级被它影响到的 pypinyin 包
+pip install -U pypinyin
 ```
+
 ## 运行本项目
-#### 安装ffmpeg
+
+### 安装ffmpeg
+
 安装ffmpeg(这里仅提供了ubuntu安装脚本)。
+
 ```bash
 # 安装ffmpeg
 sudo apt update
@@ -46,8 +59,11 @@ sudo apt install ffmpeg
 ## 检查安装
 ffmpeg -version
 ```
+
 #### 下载预训练模型
+
 **注意** 保持当前目录为项目根目录。
+
 ```bash
 # 语音降噪模型
 modelscope download --model 'damo/speech_frcrn_ans_cirm_16k' --local_dir './pretrained/damo/speech_frcrn_ans_cirm_16k'
@@ -58,7 +74,9 @@ modelscope download --model 'iic/punc_ct-transformer_zh-cn-common-vocab272727-py
 # GPT-SoVITS
 modelscope download --model 'AI-ModelScope/GPT-SoVITS' --local_dir './pretrained/AI-ModelScope/GPT-SoVITS'
 ```
+
 本项目需要在docker环境中运行redis, 请确保您的运行环境中已经安装了docker。
+
 ```bash
 # 复制环境变量文件
 cp .env.sample .env

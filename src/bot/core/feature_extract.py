@@ -85,8 +85,7 @@ class FeatureExtractor:
             + ((1 - self.alpha)*1145.14) * tmp_audio
         
         audio_tensor = torch.from_numpy(tmp_audio32b).reshape(1, -1)
-        tensor_wav16 = self.resampler(audio_tensor, dtype=audio_tensor.dtype)
-        tensor_wav16.to(self.device)
+        tensor_wav16 = self.resampler(audio_tensor).to(self.device)
 
         ssl = self.model.model(tensor_wav16)["last_hidden_state"].transpose(1,2).cpu()
 

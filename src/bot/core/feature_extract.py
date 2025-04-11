@@ -6,7 +6,7 @@ from pathlib import Path
 import torch
 import torchaudio
 from bot.config import ASR_PATH, PROCESS_PATH, DENOISED_ROOT_PATH, SLICED_ROOT_PATH
-from .slicer import load_audio
+from bot.core import load_audio
 import numpy as np
 from bot.utils import BotLogger
 from bot.models import CNHubert
@@ -28,7 +28,7 @@ class FeatureExtractor:
         )
         self.maxx = maxx
         self.alpha = alpha
-        # self.nan_fails = []
+        self.nan_fails = []
 
         # 设备配置（优先使用GPU）
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
@@ -50,15 +50,15 @@ class FeatureExtractor:
                     print(f"格式错误的行: {line}\n错误信息: {e}")
         return result
     
-    def extract(self, file_name, denoised=True) -> List:
+    def extract(self, file_path, denoised=True) -> List:
         # 路径配置
-        asr_dir = os.path.join(ASR_PATH, file_name)
+        asr_dir = os.path.join(ASR_PATH, file_path)
         if(denoised):
-            wav_dir = os.path.join(DENOISED_ROOT_PATH, file_name)
+            wav_dir = os.path.join(DENOISED_ROOT_PATH, file_path)
         else:
-            wav_dir = os.path.join(SLICED_ROOT_PATH, file_name)
+            wav_dir = os.path.join(SLICED_ROOT_PATH, file_path)
 
-        processed_dir = os.path.join(PROCESS_PATH, file_name)
+        processed_dir = os.path.join(PROCESS_PATH, file_path)
         hubert_dir = os.path.join(processed_dir, "cnhubert")
         Path(hubert_dir).mkdir(parents=True, exist_ok=True)
         wav32_dir = os.path.join(processed_dir, "wav32k")
@@ -71,8 +71,6 @@ class FeatureExtractor:
         for line in lines:
             wav_file = f"{wav_dir}/{line['key']}.wav"
             ssl = self.name2go(wav_file, wav32_dir, hubert_dir)
-            if np.isnan(ssl.numpy()).sum()!=0:
-                pass
 
     def name2go(self, wav_file_path, wav32k_dir, cnhubert_dir):
         tmp_audio = load_audio(wav_file_path, 32000)
@@ -103,3 +101,7 @@ class FeatureExtractor:
             tmp_audio32.astype("int16"),
         )        
         torch.save(ssl, f"{cnhubert_dir}/{Path(wav_file_path).stem}.pth")
+
+if __name__ == '__main__':
+    extractor = FeatureExtractor()
+    extractor.extract('20250409145258452558.1ed301dd.788fc313bf38482aa63fe2ea09781878', denoised=True)

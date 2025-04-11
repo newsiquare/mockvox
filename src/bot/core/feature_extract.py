@@ -36,13 +36,11 @@ class FeatureExtractor:
         # 音频处理参数
         self.maxx = maxx
         self.alpha = alpha
-        self.nan_fails = []  # 记录处理失败的文件
+        # self.nan_fails = []  # 记录处理失败的文件
 
-        # 设备配置（自动检测GPU）
-        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
-        
-        # 加载预训练模型到指定设备
-        self.model = CNHubert().to(self.device).eval()  # 添加eval模式
+        # 加载预训练模型
+        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")        
+        self.model = CNHubert().to(self.device)
 
     @staticmethod
     def load_asr_data(asr_file: str) -> List[dict]:
@@ -99,7 +97,7 @@ class FeatureExtractor:
                 cnhubert_dir=str(hubert_dir)
             )
 
-    def _process_audio(self, wav_file_path: str, wav32k_dir: str, cnhubert_dir: str):
+    def _process_audio(self, wav_file_path, wav32k_dir, cnhubert_dir):
         """
         核心音频处理流程
         :param wav_file_path: 输入音频路径
@@ -107,68 +105,52 @@ class FeatureExtractor:
         :param cnhubert_dir: 特征文件输出目录
         """
         try:
-            # 加载并校验音频
-            audio, sr = load_audio(wav_file_path, 32000)
-            if audio is None:
+            tmp_audio = load_audio(wav_file_path, 32000)  
+            if tmp_audio is None:
                 BotLogger.error(f"音频加载失败: {wav_file_path}")
                 return
 
             # 音频幅值校验
-            max_amplitude = np.abs(audio).max()
-            if max_amplitude > 2.2:
-                BotLogger.info(f"幅值过大被过滤: {wav_file_path} (峰值: {max_amplitude:.2f})")
+            tmp_max = np.abs(tmp_audio).max()
+            if tmp_max > 2.2:
+                BotLogger.info(f"幅值过滤: {wav_file_path} (峰值: {tmp_max:.2f})")
                 return
 
             # 音频增益混合处理
-            scaled_audio = self._audio_scaling(audio, max_amplitude)
+            tmp_audio32 = (tmp_audio / tmp_max * (self.maxx * self.alpha*32768)) \
+                + ((1 - self.alpha)*32768) * tmp_audio
+            tmp_audio32b = (tmp_audio / tmp_max * (self.maxx * self.alpha*1145.14)) \
+                + ((1 - self.alpha)*1145.14) * tmp_audio
             
-            # 生成16kHz重采样音频（设备自动处理）
-            audio_tensor = torch.from_numpy(scaled_audio).reshape(1, -1)
-            tensor_wav16 = self.resampler(audio_tensor).to(self.device)
+            # 生成16kHz重采样音频
+            audio_tensor = torch.from_numpy(tmp_audio32b).reshape(1, -1)
+            tensor_wav16 = self.resampler(audio_tensor).to(self.device)  
 
-            # 特征提取（batch_size=1）
-            with torch.no_grad():  # 禁用梯度计算
-                hidden_states = self.model(tensor_wav16)["last_hidden_state"]
+            # 特征提取
+            with torch.no_grad():
+                hidden_states = self.model.model(tensor_wav16)["last_hidden_state"]
                 ssl = hidden_states.transpose(1, 2).cpu()
 
             # 特征校验
             if torch.isnan(ssl).any():
-                BotLogger.info(f"NaN特征被过滤: {wav_file_path}")
+                BotLogger.info(f"NaN特征过滤: {wav_file_path}")
                 return
 
-            # 输出处理结果
-            self._save_outputs(
-                wav32k_dir=wav32k_dir,
-                cnhubert_dir=cnhubert_dir,
-                wav_file_path=wav_file_path,
-                scaled_audio=scaled_audio,
-                ssl=ssl
+            # 保存32kHz格式音频
+            wav_path = Path(wav32k_dir) / Path(wav_file_path).name
+            wavfile.write(
+                str(wav_path),
+                32000,
+                tmp_audio32.astype("int16"),
             )
+
+            # 保存特征文件
+            feature_path = Path(cnhubert_dir) / f"{Path(wav_file_path).stem}.pth"
+            torch.save(ssl, str(feature_path))
+            BotLogger.debug(f"处理完成: {wav_file_path} -> {feature_path}")
             
         except Exception as e:
             BotLogger.error(f"处理异常 {wav_file_path}: {str(e)}")
-
-    def _audio_scaling(self, audio: np.ndarray, max_amp: float) -> np.ndarray:
-        """音频增益混合计算"""
-        # 混合新旧两种增益策略
-        return (audio / max_amp * (self.maxx * self.alpha * 1145.14)) \
-                + ((1 - self.alpha) * 1145.14) * audio
-
-    def _save_outputs(self, wav32k_dir: str, cnhubert_dir: str, 
-                     wav_file_path: str, scaled_audio: np.ndarray, ssl: torch.Tensor):
-        """保存处理结果"""
-        # 保存32kHz格式音频
-        wav_path = Path(wav32k_dir) / Path(wav_file_path).name
-        wavfile.write(
-            str(wav_path),
-            32000,
-            scaled_audio.astype("int16"),
-        )
-        
-        # 保存特征文件
-        feature_path = Path(cnhubert_dir) / f"{Path(wav_file_path).stem}.pth"
-        torch.save(ssl, str(feature_path))
-        BotLogger.debug(f"处理完成: {wav_file_path} -> {feature_path}")
 
 if __name__ == '__main__':
     # 示例用法

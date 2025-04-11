@@ -48,53 +48,26 @@ class DataProcessor:
         # 设备配置（优先使用GPU）
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.mlm.to(self.device)
-
-    def get_bert_feature(self, text, word2ph):
-        """
-        提取文本的BERT特征
-        
-        参数:
-            text -- 输入文本
-            word2ph -- 音素到音节的映射关系
-            
-        返回:
-            (Tensor) 手机级别的特征矩阵
-        """
-        with torch.no_grad():  # 禁用梯度计算
-            # 文本编码
-            inputs = self.tokenizer(text, return_tensors="pt")
-            for i in inputs:
-                inputs[i] = inputs[i].to(self.device)
-                
-            # 获取隐藏层特征
-            res = self.mlm(**inputs, output_hidden_states=True)
-            res = torch.cat(res["hidden_states"][-3:-2], -1)[0].cpu()[1:-1]
-
-        # 验证对齐关系
-        assert len(word2ph) == len(text)
-        
-        # 构建音节重复特征
-        phone_level_feature = []
-        for i in range(len(word2ph)):
-            repeat_feature = res[i].repeat(word2ph[i], 1)
-            phone_level_feature.append(repeat_feature)
-
-        return torch.cat(phone_level_feature, dim=0).T
-
+    
     @staticmethod
-    def load_asr_data(asr_file):
-        """读取ASR结果文件并还原为列表"""
+    def load_asr_data(asr_file: str) -> List[dict]:
+        """
+        解析ASR识别结果文件
+        返回格式: [{"key": "文件名", "text": "识别文本"}, ...]
+        """
         result = []
-        with open(asr_file, 'r', encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue  # 跳过空行
-                try:
-                    # 使用 ast.literal_eval 安全转换字符串为字典
-                    result.append(ast.literal_eval(line))
-                except SyntaxError as e:
-                    print(f"格式错误的行: {line}\n错误信息: {e}")
+        try:
+            with open(asr_file, 'r', encoding='utf-8') as f:
+                for line_num, line in enumerate(f, 1):
+                    cleaned_line = line.strip()
+                    if not cleaned_line:
+                        continue
+                    try:
+                        result.append(ast.literal_eval(cleaned_line))
+                    except (SyntaxError, ValueError) as e:
+                        BotLogger.error(f"ASR文件格式错误 行号:{line_num} 内容:{cleaned_line} 错误:{str(e)}")
+        except FileNotFoundError:
+            BotLogger.error(f"ASR文件不存在: {asr_file}")
         return result
 
     def process(self, file_name) -> List:
@@ -126,11 +99,11 @@ class DataProcessor:
                 text = line['text'].replace("%", "-").replace("￥", ",")
                 
                 # 文本标准化处理
-                phones, word2ph, norm_text = self.normalize(text)
+                phones, word2ph, norm_text = self._normalize(text)
                 
                 # 保存BERT特征
                 bert_file = "%s/%s.pt" % (bert_dir, line['key'])
-                bert_feature = self.get_bert_feature(norm_text, word2ph)
+                bert_feature = self._get_bert_feature(norm_text, word2ph)
                 assert bert_feature.shape[-1] == len(phones)
                 torch.save(bert_feature, bert_file)
                 
@@ -155,7 +128,7 @@ class DataProcessor:
 
         return results
 
-    def normalize(self, text):
+    def _normalize(self, text):
         """
         文本标准化处理
         
@@ -200,3 +173,35 @@ class DataProcessor:
         # 未知符号处理
         phones = ['UNK' if ph not in symbols else ph for ph in phones]
         return phones, word2ph, norm_text
+
+    def _get_bert_feature(self, text, word2ph):
+        """
+        提取文本的BERT特征
+        
+        参数:
+            text -- 输入文本
+            word2ph -- 音素到音节的映射关系
+            
+        返回:
+            (Tensor) 手机级别的特征矩阵
+        """
+        with torch.no_grad():  # 禁用梯度计算
+            # 文本编码
+            inputs = self.tokenizer(text, return_tensors="pt")
+            for i in inputs:
+                inputs[i] = inputs[i].to(self.device)
+                
+            # 获取隐藏层特征
+            res = self.mlm(**inputs, output_hidden_states=True)
+            res = torch.cat(res["hidden_states"][-3:-2], -1)[0].cpu()[1:-1]
+
+        # 验证对齐关系
+        assert len(word2ph) == len(text)
+        
+        # 构建音节重复特征
+        phone_level_feature = []
+        for i in range(len(word2ph)):
+            repeat_feature = res[i].repeat(word2ph[i], 1)
+            phone_level_feature.append(repeat_feature)
+
+        return torch.cat(phone_level_feature, dim=0).T

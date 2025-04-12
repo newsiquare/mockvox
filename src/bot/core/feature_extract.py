@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-"""音频特征提取模块，基于CNHubert模型实现语音特征提取"""
+"""音频特征提取模块, 基于CNHubert模型实现语音特征提取"""
 
-import ast
-import os
-from typing import Optional, List
+from typing import Optional
 from pathlib import Path
 import torch
 import torchaudio
@@ -14,9 +12,10 @@ from bot.config import ASR_PATH, PROCESS_PATH, DENOISED_ROOT_PATH, SLICED_ROOT_P
 from bot.core import load_audio
 from bot.utils import BotLogger
 from bot.models import CNHubert
+from bot.core import load_asr_data
 
 class FeatureExtractor:
-    """音频特征提取器，负责处理音频文件并提取Hubert特征"""
+    """音频特征提取器, 负责处理音频文件并提取Hubert特征"""
     
     def __init__(self,
                  maxx: float = 0.95,  # 音频归一化最大系数
@@ -41,34 +40,12 @@ class FeatureExtractor:
         # 加载预训练模型
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")        
         self.model = CNHubert().to(self.device)
-
-    @staticmethod
-    def load_asr_data(asr_file: str) -> List[dict]:
-        """
-        解析ASR识别结果文件
-        返回格式: [{"key": "文件名", "text": "识别文本"}, ...]
-        """
-        result = []
-        try:
-            with open(asr_file, 'r', encoding='utf-8') as f:
-                for line_num, line in enumerate(f, 1):
-                    cleaned_line = line.strip()
-                    if not cleaned_line:
-                        continue
-                    try:
-                        result.append(ast.literal_eval(cleaned_line))
-                    except (SyntaxError, ValueError) as e:
-                        BotLogger.error(f"ASR文件格式错误 行号:{line_num} 内容:{cleaned_line} 错误:{str(e)}")
-        except FileNotFoundError:
-            BotLogger.error(f"ASR文件不存在: {asr_file}")
-        return result
-    
-    def extract(self, file_path: str, denoised: bool = True) -> List:
+   
+    def extract(self, file_path: str, denoised: bool = True):
         """
         主处理流程
         :param file_path: 相对路径标识符
         :param denoised: 是否使用降噪后的音频
-        :return: 处理结果列表（当前占位）
         """
         # 构建目录路径
         asr_dir = Path(ASR_PATH) / file_path
@@ -84,7 +61,7 @@ class FeatureExtractor:
 
         # 处理ASR结果
         asr_file = asr_dir / 'output.txt'
-        for line in self.load_asr_data(str(asr_file)):
+        for line in load_asr_data(str(asr_file)):
             wav_file = wav_dir / f"{line['key']}.wav"
             if not wav_file.exists():
                 BotLogger.warning(f"音频文件不存在: {wav_file}")
@@ -145,7 +122,7 @@ class FeatureExtractor:
             )
 
             # 保存特征文件
-            feature_path = Path(cnhubert_dir) / f"{Path(wav_file_path).stem}.pth"
+            feature_path = Path(cnhubert_dir) / f"{Path(wav_file_path).stem}.pt"
             torch.save(ssl, str(feature_path))
             BotLogger.debug(f"处理完成: {wav_file_path} -> {feature_path}")
             

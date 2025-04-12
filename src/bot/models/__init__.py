@@ -2,16 +2,20 @@
 from .HuBERT import *
 from .tools import *
 from .BaseModules import *
+from .core_vq import ResidualVectorQuantization
 from .quantize import *
 from .attentions import *
 from .mrte import MRTE, MELEncoder, SpeakerEncoder
+from .SynthesizerTrn import SynthesizerTrn
 
 __all__ = [
     # "BSRoformer", 
     # "MelBandRoformer",
     "CNHubert",
+    "SynthesizerTrn",
 
     # quantize
+    "ResidualVectorQuantization",
     "ResidualVectorQuantizer",
 
     # 工具集函数

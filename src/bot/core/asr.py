@@ -1,9 +1,13 @@
+# -*- coding: utf-8 -*-
+"""
+语音识别(Auto Speech Recognition, asr)模块
+"""
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from bot.config import PRETRAINED_DIR, DENOISED_ROOT_PATH
 from typing import Optional, List
 import torch
-import os
+import ast
+from bot.utils import BotLogger
 
 class AutoSpeechRecognition:
     def __init__(self,
@@ -55,3 +59,23 @@ class AutoSpeechRecognition:
             raise RuntimeError(f"语音识别&标点恢复失败: {str(e)}") from e
 
         return asr_result
+    
+def load_asr_data(asr_file: str) -> List[dict]:
+    """
+    解析ASR识别结果文件
+    返回格式: [{"key": "文件名", "text": "识别文本"}, ...]
+    """
+    result = []
+    try:
+        with open(asr_file, 'r', encoding='utf-8') as f:
+            for line_num, line in enumerate(f, 1):
+                cleaned_line = line.strip()
+                if not cleaned_line:
+                    continue
+                try:
+                    result.append(ast.literal_eval(cleaned_line))
+                except (SyntaxError, ValueError) as e:
+                    BotLogger.error(f"ASR文件格式错误 行号:{line_num} 内容:{cleaned_line} 错误:{str(e)}")
+    except FileNotFoundError:
+        BotLogger.error(f"ASR文件不存在: {asr_file}")
+    return result

@@ -3,13 +3,12 @@
 数据处理器模块，主要负责文本特征提取和预处理
 """
 import os
-import ast
 from typing import Optional
-from modelscope import snapshot_download
 from transformers import AutoTokenizer, AutoModelForMaskedLM
 from bot.config import PRETRAINED_DIR, PROCESS_PATH, ASR_PATH
 from bot.text import Normalizer, symbols
 from bot.utils import BotLogger
+from bot.core import load_asr_data
 from pathlib import Path
 import torch
 from typing import List
@@ -47,28 +46,7 @@ class DataProcessor:
 
         # 设备配置（优先使用GPU）
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
-        self.mlm.to(self.device)
-    
-    @staticmethod
-    def load_asr_data(asr_file: str) -> List[dict]:
-        """
-        解析ASR识别结果文件
-        返回格式: [{"key": "文件名", "text": "识别文本"}, ...]
-        """
-        result = []
-        try:
-            with open(asr_file, 'r', encoding='utf-8') as f:
-                for line_num, line in enumerate(f, 1):
-                    cleaned_line = line.strip()
-                    if not cleaned_line:
-                        continue
-                    try:
-                        result.append(ast.literal_eval(cleaned_line))
-                    except (SyntaxError, ValueError) as e:
-                        BotLogger.error(f"ASR文件格式错误 行号:{line_num} 内容:{cleaned_line} 错误:{str(e)}")
-        except FileNotFoundError:
-            BotLogger.error(f"ASR文件不存在: {asr_file}")
-        return result
+        self.mlm.to(self.device)   
 
     def process(self, file_name) -> List:
         """
@@ -90,7 +68,7 @@ class DataProcessor:
 
         # 加载ASR数据
         asr_file = os.path.join(asr_dir, 'output.txt')
-        lines = self.load_asr_data(asr_file)
+        lines = load_asr_data(asr_file)
         
         # 逐条处理数据
         for line in lines:

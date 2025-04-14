@@ -73,7 +73,7 @@ class DataProcessor:
                 extra={
                     "action": "data_processed",
                     "file_name": file_name,
-                    "json": json_file
+                    "json_file": json_file
                 }
             )
             return None  

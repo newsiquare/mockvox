@@ -60,9 +60,10 @@ class TextToSemantic:
 
             ssl_content = torch.load(hubert_file, map_location="cpu").to(self.device)
             codes = self.vq_model.extract_latent(ssl_content)
+            semantic = " ".join([str(i) for i in codes[0, 0, :].tolist()])
             result_item = {
                 "key": line['key'],
-                "semantic": " ".join([str(i) for i in codes[0, 0, :].tolist()])
+                "semantic": semantic
             }
             results.append(result_item)
 

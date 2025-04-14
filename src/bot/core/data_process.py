@@ -72,7 +72,7 @@ class DataProcessor:
                 "文本标准化已处理",
                 extra={
                     "action": "data_processed",
-                    "file name": file_name,
+                    "file_name": file_name,
                     "json": json_file
                 }
             )

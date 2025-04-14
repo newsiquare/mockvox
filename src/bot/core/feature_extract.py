@@ -57,7 +57,15 @@ class FeatureExtractor:
         hubert_dir = processed_dir / "cnhubert"
         wav32_dir = processed_dir / "wav32k"
         # 已处理
-        if hubert_dir.exists(): return 
+        if hubert_dir.exists(): 
+            BotLogger.info(
+                "特征提取已处理",
+                extra={
+                    "action": "feature_extracted",
+                    "file_name": file_path
+                }
+            )
+            return 
 
         hubert_dir.mkdir(parents=True, exist_ok=True)
         wav32_dir.mkdir(parents=True, exist_ok=True)
@@ -76,6 +84,14 @@ class FeatureExtractor:
                 wav32k_dir=str(wav32_dir),
                 cnhubert_dir=str(hubert_dir)
             )
+
+        BotLogger.info(
+            "特征提取处理完成",
+            extra={
+                "action": "feature_extracted",
+                "file_name": file_path
+            }
+        )
 
     def _process_audio(self, wav_file_path, wav32k_dir, cnhubert_dir):
         """

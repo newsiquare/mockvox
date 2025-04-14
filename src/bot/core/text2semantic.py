@@ -46,7 +46,16 @@ class TextToSemantic:
         processed_dir = Path(PROCESS_PATH) / file_path
         semantic_file = processed_dir / "text2semantic.json"
         # 已处理
-        if semantic_file.exists(): return None
+        if semantic_file.exists():
+            BotLogger.info(
+                "语义转换已处理",
+                extra={
+                    "action": "text_to_semantic",
+                    "file_name": file_path,
+                    "json_file": semantic_file
+                }
+            )
+            return None
 
         hubert_dir = processed_dir / "cnhubert"
 
@@ -70,6 +79,14 @@ class TextToSemantic:
         with open(semantic_file, "w", encoding="utf8") as f:
             json.dump(results, f, ensure_ascii=False, indent=2)
 
+        BotLogger.info(
+            "语义转换处理完成",
+            extra={
+                "action": "text_to_semantic",
+                "file_name": file_path,
+                "json_file": semantic_file
+            }
+        )
         return results
       
 if __name__ == '__main__':

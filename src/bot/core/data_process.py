@@ -67,7 +67,16 @@ class DataProcessor:
         json_file = os.path.join(processed_dir, 'name2text.json')
 
          # 已处理
-        if os.path.exists(json_file): return None  
+        if os.path.exists(json_file):
+            BotLogger.info(
+                "文本标准化已处理",
+                extra={
+                    "action": "data_processed",
+                    "file name": file_name,
+                    "json": json_file
+                }
+            )
+            return None  
 
         # 加载ASR数据
         asr_file = os.path.join(asr_dir, 'output.txt')
@@ -92,7 +101,7 @@ class DataProcessor:
                 result_item = {
                     "key": line['key'],
                     "phones": " ".join(phones),
-                    "word2ph": word2ph,  # 保留原始类型（list/None）
+                    "word2ph": word2ph,  # 保留原始类型 (list/None)
                     "norm_text": norm_text
                 }
                 results.append(result_item)
@@ -107,6 +116,14 @@ class DataProcessor:
         with open(json_file, "w", encoding="utf8") as f:
             json.dump(results, f, ensure_ascii=False, indent=2)
 
+        BotLogger.info(
+            "文本标准化处理完成",
+            extra={
+                "action": "data_processed",
+                "file_name": file_name,
+                "json_file": json_file
+            }
+        )
         return results
 
     def _normalize(self, text):
@@ -186,3 +203,9 @@ class DataProcessor:
             phone_level_feature.append(repeat_feature)
 
         return torch.cat(phone_level_feature, dim=0).T
+
+if __name__ == '__main__':
+    # 示例用法
+    processor = DataProcessor()
+    results = processor.process('20250409145258452558.1ed301dd.788fc313bf38482aa63fe2ea09781878')
+    print(results)

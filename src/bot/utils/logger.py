@@ -30,6 +30,21 @@ class ConditionalFormatter(logging.Formatter):
             '[action=%(action)s] [task_id=%(task_id)s] '
             '[path=%(path)s] - %(message)s'
         ),
+        "data_processed": (
+            '%(asctime)s - %(name)s - %(levelname)s - '
+            '[action=%(action)s] [file_name=%(file_name)s]'
+            '[json=%(json_file)s] - %(message)s'
+        ),
+        "feature_extracted": (
+            '%(asctime)s - %(name)s - %(levelname)s - '
+            '[action=%(action)s] [file_name=%(file_name)s]'
+            ' - %(message)s'
+        ),
+        "text_to_semantic": (
+            '%(asctime)s - %(name)s - %(levelname)s - '
+            '[action=%(action)s] [file_name=%(file_name)s]'
+            '[json=%(json_file)s] - %(message)s'
+        ),
         "default": '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     }
 

@@ -2,6 +2,7 @@
 """文本到语义"""
 import os
 from typing import Optional, List
+import json
 from pathlib import Path
 import torch
 

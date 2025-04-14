@@ -43,6 +43,10 @@ class TextToSemantic:
         # 路径配置
         asr_dir = Path(ASR_PATH) / file_path
         processed_dir = Path(PROCESS_PATH) / file_path
+        semantic_file = processed_dir / "text2semantic.json"
+        # 已处理
+        if semantic_file.exists(): return None
+
         hubert_dir = processed_dir / "cnhubert"
 
         # 处理文本转语义
@@ -55,12 +59,14 @@ class TextToSemantic:
 
             ssl_content = torch.load(hubert_file, map_location="cpu").to(self.device)
             codes = self.vq_model.extract_latent(ssl_content)
-            semantic = " ".join([str(i) for i in codes[0, 0, :].tolist()])
-            results.append("%s\t%s" % (line['key'], semantic))
+            result_item = {
+                "key": line['key'],
+                "semantic": " ".join([str(i) for i in codes[0, 0, :].tolist()])
+            }
+            results.append(result_item)
 
-        semantic_file = processed_dir / "text2semantic.tsv"
         with open(semantic_file, "w", encoding="utf8") as f:
-            f.write("\n".join(results))
+            json.dump(results, f, ensure_ascii=False, indent=2)
 
         return results
       

@@ -56,6 +56,9 @@ class FeatureExtractor:
         processed_dir = Path(PROCESS_PATH) / file_path
         hubert_dir = processed_dir / "cnhubert"
         wav32_dir = processed_dir / "wav32k"
+        # 已处理
+        if hubert_dir.exists(): return 
+
         hubert_dir.mkdir(parents=True, exist_ok=True)
         wav32_dir.mkdir(parents=True, exist_ok=True)
 

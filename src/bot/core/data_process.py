@@ -66,6 +66,9 @@ class DataProcessor:
         Path(bert_dir).mkdir(parents=True, exist_ok=True)
         json_file = os.path.join(processed_dir, 'name2text.json')
 
+         # 已处理
+        if os.path.exists(json_file): return None  
+
         # 加载ASR数据
         asr_file = os.path.join(asr_dir, 'output.txt')
         lines = load_asr_data(asr_file)

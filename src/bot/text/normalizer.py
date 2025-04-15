@@ -23,7 +23,7 @@ class NormalizerFactory:
 
 class Normalizer:
     '''
-    每个语言的Normalizer类，都需要实现 do_normalize 和 g2p 方法
+    每个语言的Normalizer类, 都需要实现 do_normalize 和 g2p 方法
     '''
     def __init__(self, language, *args, **kwargs):
         self.normalizer = NormalizerFactory.get_normalizer(language, *args, **kwargs)

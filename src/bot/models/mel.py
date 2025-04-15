@@ -72,7 +72,7 @@ def spectrogram_torch(y, n_fft, hop_size, win_size, center=False):
     dtype_device = str(y.dtype) + "_" + str(y.device)
     wnsize_dtype_device = str(win_size) + "_" + dtype_device
     
-    # 缓存汉宁窗（注意不同设备/精度会创建不同实例）
+    # 缓存汉宁窗
     if wnsize_dtype_device not in hann_window:
         hann_window[wnsize_dtype_device] = torch.hann_window(win_size).to(
             dtype=y.dtype, device=y.device

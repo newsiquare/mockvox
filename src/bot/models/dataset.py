@@ -1,0 +1,330 @@
+import random
+from pathlib import Path
+import traceback
+import json
+import torch
+import torch.nn.functional as F
+
+from bot.core import load_audio
+from bot.text import Normalizer
+from bot.utils import BotLogger
+from bot.models import spectrogram_torch
+
+class TextAudioSpeakerLoader(torch.utils.data.Dataset):
+    """
+    1) loads audio, speaker_id, text pairs
+    2) normalizes text and converts them to sequences of integers
+    3) computes spectrograms from audio files.
+    """
+    def __init__(self, hparams, val=False):
+        processed_dir = hparams.processed_dir
+        self.n2t = Path(processed_dir) / 'name2text.json'
+        self.cnhubert = Path(processed_dir) / 'cnhubert'
+        self.wav32k = Path(processed_dir) / 'wav32k'
+
+        # 验证路径
+        assert self.cnhubert.is_dir(), f"Directory required: {self.cnhubert}"
+        assert self.wav32k.is_dir(), f"Directory required: {self.wav32k}"
+        assert self.n2t.exists(), f"File {self.n2t} not found"
+
+        with open(self.n2t, 'r', encoding='utf8') as f:
+            n2t_data = json.load(f)
+        
+        self.phoneme_data = {item["key"]: [item["phones"]] for item in n2t_data}
+        names4 = {f.stem for f in self.cnhubert.glob("*.pt")}     # 去除.pt后缀
+        names5 = {f.stem for f in self.wav32k.glob("*.wav")}      # 去除.wav后缀
+
+        valid_keys = set(self.phoneme_data.keys()) & names4 & names5
+        self.audiopaths_sid_text = list(valid_keys)
+
+        # 不足100条数据，填充
+        min_num = 100
+        data_len = max(1, len(self.audiopaths_sid_text))
+        repeat_times = max(2, (min_num + data_len - 1) // data_len)
+        self.audiopaths_sid_text = (self.audiopaths_sid_text * repeat_times)
+        
+        # 音频参数设置
+        self.max_wav_value = hparams.max_wav_value
+        self.sampling_rate = hparams.sampling_rate
+        self.filter_length = hparams.filter_length
+        self.hop_length = hparams.hop_length
+        self.win_length = hparams.win_length
+        self.val = val
+
+        random.seed(1234)
+        random.shuffle(self.audiopaths_sid_text)
+
+        audiopaths_sid_text_new = []
+        lengths = []
+        skipped_phone = 0
+        skipped_dur = 0
+
+        for audiopath in self.audiopaths_sid_text:
+            # 音素数据处理
+            try:
+                phone_str = self.phoneme_data[audiopath][0]  # 获取phones字段
+                phonemes = phone_str.strip().split()
+                phoneme_ids = Normalizer.cleaned_text_to_sequence(phonemes)
+            except KeyError:
+                BotLogger.warn(f"{audiopath} not in phoneme_data!")
+                skipped_phone += 1
+                continue
+            except Exception as e:
+                BotLogger.warn(f"Phoneme processing error for {audiopath}: {str(e)}")
+                skipped_phone += 1
+                continue
+
+            # 音频文件验证
+            wav_path = self.wav32k / f"{audiopath}.wav"
+            try:
+                size = wav_path.stat().st_size
+                duration = size / (self.sampling_rate * 2)  # 16-bit mono假设
+            except FileNotFoundError:
+                BotLogger.warn(f"Audio file missing: {wav_path}")
+                skipped_dur += 1
+                continue
+
+            # 时长过滤逻辑
+            if (0.6 < duration < 54) or self.val:
+                audiopaths_sid_text_new.append([audiopath, phoneme_ids])
+                lengths.append(int(size // (2 * self.hop_length)))
+            else:
+                skipped_dur += 1
+
+        assert len(audiopaths_sid_text_new) > 1, "Insufficient valid data"
+
+        self.audiopaths_sid_text = audiopaths_sid_text_new
+        self.lengths = lengths
+
+    def get_audio_text_speaker_pair(self, audiopath_sid_text):
+        audiopath, phoneme_ids = audiopath_sid_text
+        text = torch.FloatTensor(phoneme_ids)
+        try:
+            spec, wav = self.get_audio(audiopath)
+            with torch.no_grad():
+                ssl = torch.load(self.cnhubert / f"{audiopath}.pt", map_location="cpu")
+                if (ssl.shape[-1] != spec.shape[-1]):
+                    ssl = F.pad(ssl.float(), (0, 1), mode="replicate").to(ssl.dtype)
+                ssl.requires_grad = False
+        except:
+            traceback.print_exc()
+            spec = torch.zeros(1025, 100)
+            wav = torch.zeros(1, 100 * self.hop_length)
+            ssl = torch.zeros(1, 768, 100)
+            text = text[-1:]
+            BotLogger.warn("load audio or ssl error!", self.processed_dir, audiopath)
+        return (ssl, spec, wav, text)
+
+    def get_audio(self, filename):
+        file_path = self.wav32k / f"{filename}.wav"
+        audio_array = load_audio(file_path, self.sampling_rate)  # load_audio的方法是已经归一化到-1~1之间的，不用再/32768
+        audio = torch.FloatTensor(audio_array)  # /32768
+        audio_norm = audio
+        audio_norm = audio_norm.unsqueeze(0)
+        spec = spectrogram_torch(audio_norm, self.filter_length, self.sampling_rate, self.hop_length, self.win_length,
+                                  center=False)
+        spec = torch.squeeze(spec, 0)
+        return spec, audio_norm
+
+    def get_sid(self, sid):
+        sid = torch.LongTensor([int(sid)])
+        return sid
+
+    def __getitem__(self, index):
+        return self.get_audio_text_speaker_pair(self.audiopaths_sid_text[index])
+
+    def __len__(self):
+        return len(self.audiopaths_sid_text)
+
+    def random_slice(self, ssl, wav, mel):
+        assert abs(ssl.shape[-1] - wav.shape[-1] // self.hop_length) < 3, ( \
+            "first", ssl.shape, wav.shape)
+
+        len_mel = mel.shape[1]
+        if self.val:
+            reference_mel = mel[:, :len_mel // 3]
+            return reference_mel, ssl, wav, mel
+        r_input = random.randint(0, 1)
+        sep_point = random.randint(int(len_mel // 3), int(len_mel // 3 * 2))
+
+        if r_input == 0:
+            reference_mel = mel[:, :sep_point]
+            ssl = ssl[:, :, sep_point:]
+            wav2 = wav[:, sep_point * self.hop_length:]
+            mel = mel[:, sep_point:]
+        else:
+            reference_mel = mel[:, sep_point:]
+            ssl = ssl[:, :, :sep_point]
+            wav2 = wav[:, :sep_point * self.hop_length]
+            mel = mel[:, :sep_point]
+
+        assert abs(ssl.shape[-1] - wav2.shape[-1] // self.hop_length) < 3, ( \
+            ssl.shape, wav.shape, wav2.shape, mel.shape, sep_point, self.hop_length, sep_point * self.hop_length, r_input)
+        return reference_mel, ssl, wav2, mel
+
+    def validate_dataset(self):
+        """校验数据集完整性"""
+        missing = []
+        for path in self.audiopaths_sid_text:
+            if not (self.cnhubert/f"{path[0]}.pt").exists():
+                missing.append(f"pt: {path[0]}")
+            if not (self.wav32k/f"{path[0]}.wav").exists():
+                missing.append(f"wav: {path[0]}")
+        return missing
+
+class TextAudioSpeakerCollate():
+    """ Zero-pads model inputs and targets
+    """
+    def __init__(self, return_ids=False):
+        self.return_ids = return_ids
+
+    def __call__(self, batch):
+        """Collate's training batch from normalized text, audio and speaker identities
+        PARAMS
+        ------
+        batch: [text_normalized, spec_normalized, wav_normalized, sid]
+        """
+        # Right zero-pad all one-hot text sequences to max input length
+        _, ids_sorted_decreasing = torch.sort(
+            torch.LongTensor([x[1].size(1) for x in batch]),
+            dim=0, descending=True)
+
+        max_ssl_len = max([x[0].size(2) for x in batch])
+        max_ssl_len = int(2 * ((max_ssl_len // 2) + 1))
+        max_spec_len = max([x[1].size(1) for x in batch])
+        max_spec_len = int(2 * ((max_spec_len // 2) + 1))
+        max_wav_len = max([x[2].size(1) for x in batch])
+        max_text_len = max([x[3].size(0) for x in batch])
+
+        ssl_lengths = torch.LongTensor(len(batch))
+        spec_lengths = torch.LongTensor(len(batch))
+        wav_lengths = torch.LongTensor(len(batch))
+        text_lengths = torch.LongTensor(len(batch))
+
+        device = batch[0][0].device
+        spec_padded = torch.FloatTensor(len(batch), batch[0][1].size(0), max_spec_len, device=device)
+        wav_padded = torch.FloatTensor(len(batch), 1, max_wav_len, device=device)
+        ssl_padded = torch.FloatTensor(len(batch), batch[0][0].size(1), max_ssl_len, device=device)
+        text_padded = torch.LongTensor(len(batch), max_text_len, device=device)
+
+        spec_padded.zero_()
+        wav_padded.zero_()
+        ssl_padded.zero_()
+        text_padded.zero_()
+
+        for i in range(len(ids_sorted_decreasing)):
+            row = batch[ids_sorted_decreasing[i]]
+
+            ssl = row[0]
+            ssl_padded[i, :, :ssl.size(2)] = ssl[0, :, :]
+            ssl_lengths[i] = ssl.size(2)
+
+            spec = row[1]
+            spec_padded[i, :, :spec.size(1)] = spec
+            spec_lengths[i] = spec.size(1)
+
+            wav = row[2]
+            wav_padded[i, :, :wav.size(1)] = wav
+            wav_lengths[i] = wav.size(1)
+
+            text = row[3]
+            text_padded[i, :text.size(0)] = text
+            text_lengths[i] = text.size(0)
+
+        return ssl_padded, ssl_lengths, spec_padded, spec_lengths, wav_padded, wav_lengths, text_padded, text_lengths
+
+class DistributedBucketSampler(torch.utils.data.distributed.DistributedSampler):
+    """
+    Maintain similar input lengths in a batch.
+    Length groups are specified by boundaries.
+    Ex) boundaries = [b1, b2, b3] -> any batch is included either {x | b1 < length(x) <=b2} or {x | b2 < length(x) <= b3}.
+
+    It removes samples which are not included in the boundaries.
+    Ex) boundaries = [b1, b2, b3] -> any x s.t. length(x) <= b1 or length(x) > b3 are discarded.
+    """
+    def __init__(self, dataset, batch_size, boundaries, num_replicas=None, rank=None, shuffle=True):
+        super().__init__(dataset, num_replicas=num_replicas, rank=rank, shuffle=shuffle)
+        self.lengths = dataset.lengths
+        self.batch_size = batch_size
+        self.boundaries = boundaries
+
+        self.buckets, self.num_samples_per_bucket = self._create_buckets()
+        self.total_size = sum(self.num_samples_per_bucket)
+        self.num_samples = self.total_size // self.num_replicas
+
+    def _create_buckets(self):
+        buckets = [[] for _ in range(len(self.boundaries) - 1)]
+        for i in range(len(self.lengths)):
+            length = self.lengths[i]
+            idx_bucket = self._bisect(length)
+            if idx_bucket != -1:
+                buckets[idx_bucket].append(i)
+
+        i = len(buckets) - 1
+        while i >= 0:
+            if len(buckets[i]) == 0:
+                buckets.pop(i)
+                self.boundaries.pop(i + 1)
+            i -= 1
+
+        num_samples_per_bucket = []
+        for i in range(len(buckets)):
+            len_bucket = len(buckets[i])
+            total_batch_size = self.num_replicas * self.batch_size
+            rem = (total_batch_size - (len_bucket % total_batch_size)) % total_batch_size
+            num_samples_per_bucket.append(len_bucket + rem)
+        return buckets, num_samples_per_bucket
+
+    def __iter__(self):
+        g = torch.Generator()
+        g.manual_seed(self.epoch)
+
+        indices = []
+        if self.shuffle:
+            for bucket in self.buckets:
+                indices.append(torch.randperm(len(bucket), generator=g).tolist())
+        else:
+            for bucket in self.buckets:
+                indices.append(list(range(len(bucket))))
+
+        batches = []
+        for i in range(len(self.buckets)):
+            bucket = self.buckets[i]
+            len_bucket = len(bucket)
+            ids_bucket = indices[i]
+            num_samples_bucket = self.num_samples_per_bucket[i]
+
+            rem = num_samples_bucket - len_bucket
+            ids_bucket = ids_bucket + ids_bucket * (rem // len_bucket) + ids_bucket[:(rem % len_bucket)]
+
+            ids_bucket = ids_bucket[self.rank::self.num_replicas]
+
+            for j in range(len(ids_bucket) // self.batch_size):
+                batch = [bucket[idx] for idx in ids_bucket[j * self.batch_size:(j + 1) * self.batch_size]]
+                batches.append(batch)
+
+        if self.shuffle:
+            batch_ids = torch.randperm(len(batches), generator=g).tolist()
+            batches = [batches[i] for i in batch_ids]
+        self.batches = batches
+
+        assert len(self.batches) * self.batch_size == self.num_samples
+        return iter(self.batches)
+
+    def _bisect(self, x, lo=0, hi=None):
+        if hi is None:
+            hi = len(self.boundaries) - 1
+
+        if hi > lo:
+            mid = (hi + lo) // 2
+            if self.boundaries[mid] < x and x <= self.boundaries[mid + 1]:
+                return mid
+            elif x <= self.boundaries[mid]:
+                return self._bisect(x, lo, mid)
+            else:
+                return self._bisect(x, mid + 1, hi)
+        else:
+            return -1
+
+    def __len__(self):
+        return self.num_samples // self.batch_size

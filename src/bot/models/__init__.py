@@ -7,12 +7,20 @@ from .quantize import *
 from .attentions import *
 from .mrte import MRTE, MELEncoder, SpeakerEncoder
 from .SynthesizerTrn import SynthesizerTrn
+from .MultiPeriodDiscriminator import MultiPeriodDiscriminator
+from .mel import spectrogram_torch, spec_to_mel_torch, mel_spectrogram_torch
 
 __all__ = [
     # "BSRoformer", 
     # "MelBandRoformer",
     "CNHubert",
     "SynthesizerTrn",
+    "MultiPeriodDiscriminator",
+
+    # mel频谱
+    "spectrogram_torch",
+    "spec_to_mel_torch",
+    "mel_spectrogram_torch",
 
     # quantize
     "ResidualVectorQuantization",

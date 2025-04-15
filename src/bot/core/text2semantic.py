@@ -22,7 +22,7 @@ class TextToSemantic:
         ):
         self.hps = get_hparams_from_file(s2config_path)
 
-        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")   
+        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.vq_model = SynthesizerTrn(
             self.hps.data.filter_length // 2 + 1,
             self.hps.train.segment_size // self.hps.data.hop_length,

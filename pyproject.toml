@@ -38,7 +38,8 @@ dependencies = [
     "dotenv",
     "modelscope",
     "onnxruntime",
-    "jieba_fast"
+    "jieba_fast",
+    "librosa"
 ]
 
 # Optional dependencies ------------------------------------------------------------------------------------------------

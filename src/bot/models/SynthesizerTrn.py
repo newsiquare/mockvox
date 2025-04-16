@@ -319,7 +319,7 @@ class SynthesizerTrn(nn.Module):
             y.dtype
         )        
         ge = self.ref_enc(y[:,:704] * y_mask, y_mask)
-        with autocast(enabled=False):
+        with autocast(enabled=False, device_type=type(self.device)):
             maybe_no_grad = torch.no_grad() if self.freeze_quantizer else contextlib.nullcontext()
             with maybe_no_grad:
                 if self.freeze_quantizer:

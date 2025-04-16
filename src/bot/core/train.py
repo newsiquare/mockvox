@@ -47,7 +47,7 @@ class SoVITsTrainer:
         self.dataset = TextAudioSpeakerLoader(self.hps.data)
         torch.distributed.init_process_group(
             backend="nccl",
-            init_method='env://?use_libuv=False',
+            init_method='tcp://127.0.0.1:23456',
             world_size=1,
             rank=0            
         )

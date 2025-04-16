@@ -43,7 +43,7 @@ class SoVITsTrainer:
         self.hps.data.processed_dir = processed_path
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
-        self.dataset = TextAudioSpeakerLoader(hps.data)
+        self.dataset = TextAudioSpeakerLoader(self.hps.data)
         self.sampler = DistributedBucketSampler(
             self.dataset, 
             self.hps.train.batch_size,

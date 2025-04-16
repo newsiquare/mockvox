@@ -5,7 +5,7 @@ set -eo pipefail  # 遇到错误立即退出
 # 定义路径常量
 ENV_FILE=".env"
 REDIS_CONF_TEMPLATE="redis/redis.conf.template"
-REDIS_DATA_DIR="redis/data"
+REDIS_DATA_PATH="redis/data"
 
 # 生成加密密码（避免特殊字符）
 generate_password() {
@@ -28,8 +28,8 @@ generate_password() {
 # 验证目录结构
 validate_paths() {
   [ -f "$REDIS_CONF_TEMPLATE" ] || { echo "缺少Redis模板文件！"; exit 1; }
-  mkdir -p "$REDIS_DATA_DIR"
-  chmod 700 "$REDIS_DATA_DIR"
+  mkdir -p "$REDIS_DATA_PATH"
+  chmod 700 "$REDIS_DATA_PATH"
 }
 
 # 加载环境变量
@@ -57,7 +57,7 @@ main() {
   docker run -d \
     --name bot-redis \
     -p "${REDIS_PORT:-6380}:${REDIS_PORT:-6380}" \
-    -v "$(pwd)/$REDIS_DATA_DIR:/data" \
+    -v "$(pwd)/$REDIS_DATA_PATH:/data" \
     -v "$(pwd)/$REDIS_CONF_TEMPLATE:/app/redis.conf.template:ro" \
     -e "REDIS_PASSWORD=$REDIS_PASSWORD" \
     -e "REDIS_PORT=${REDIS_PORT:-6380}" \

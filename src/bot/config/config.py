@@ -3,19 +3,24 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
-DATA_DIR = os.path.join(BASE_DIR, "data")
-PRETRAINED_DIR = os.path.join(BASE_DIR, "pretrained")
-LOG_DIR = os.path.join(BASE_DIR, "log")
-UPLOAD_PATH = os.path.join(DATA_DIR, "upload")
-SLICED_ROOT_PATH = os.path.join(DATA_DIR, "sliced")
-DENOISED_ROOT_PATH = os.path.join(DATA_DIR, "denoised")
-ASR_PATH = os.path.join(DATA_DIR, "asr")
-PROCESS_PATH = os.path.join(DATA_DIR, "process")
+BASE_PATH = Path(__file__).resolve().parent.parent.parent.parent
+DATA_PATH = os.path.join(BASE_PATH, "data")
+PRETRAINED_PATH = os.path.join(BASE_PATH, "pretrained")
+LOG_PATH = os.path.join(BASE_PATH, "log")
+UPLOAD_PATH = os.path.join(DATA_PATH, "upload")
+SLICED_ROOT_PATH = os.path.join(DATA_PATH, "sliced")
+DENOISED_ROOT_PATH = os.path.join(DATA_PATH, "denoised")
+ASR_PATH = os.path.join(DATA_PATH, "asr")
+PROCESS_PATH = os.path.join(DATA_PATH, "process")
+WEIGHTS_PATH = os.path.join(DATA_PATH, "weights")
 
-MODEL_CONFIG_FILE = os.path.join(BASE_DIR, "src/bot/config/s2.json")
+MODEL_CONFIG_FILE = os.path.join(BASE_PATH, "src/bot/config/s2.json")
+PRETRAINED_S2G_FILE = os.path.join(PRETRAINED_PATH, 'AI-ModelScope/GPT-SoVITS/gsv-v2final-pretrained/s2G2333k.pth')
+PRETRAINED_S2D_FILE = os.path.join(PRETRAINED_PATH, 'AI-ModelScope/GPT-SoVITS/gsv-v2final-pretrained/s2D2333k.pth')
+SOVITS_G_WEIGHTS_FILE = 'generator.pth'
+SOVITS_D_WEIGHTS_FILE = 'discriminator.pth'
 
-load_dotenv(BASE_DIR / ".env", override=True)  # 加载.env文件
+load_dotenv(BASE_PATH / ".env", override=True)  # 加载.env文件
 
 class Settings:
     # Global

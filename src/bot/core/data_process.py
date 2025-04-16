@@ -5,7 +5,7 @@
 import os
 from typing import Optional
 from transformers import AutoTokenizer, AutoModelForMaskedLM
-from bot.config import PRETRAINED_DIR, PROCESS_PATH, ASR_PATH
+from bot.config import PRETRAINED_PATH, PROCESS_PATH, ASR_PATH
 from bot.text import Normalizer, symbols
 from bot.utils import BotLogger
 from bot.core import load_asr_data
@@ -37,7 +37,7 @@ class DataProcessor:
             modelscope download --model 'AI-ModelScope/GPT-SoVITS' --local_dir './pretrained/AI-ModelScope/GPT-SoVITS'
         """
         # 加载分词器和语言模型
-        model_dir = os.path.join(PRETRAINED_DIR, "AI-ModelScope/GPT-SoVITS")
+        model_dir = os.path.join(PRETRAINED_PATH, "AI-ModelScope/GPT-SoVITS")
         bert_dir = os.path.join(model_dir, 'chinese-roberta-wwm-ext-large')
         self.tokenizer = AutoTokenizer.from_pretrained(bert_dir, local_files_only=True)
         self.mlm = AutoModelForMaskedLM.from_pretrained(bert_dir, local_files_only=True)

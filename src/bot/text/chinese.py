@@ -3,7 +3,7 @@ import re
 from pypinyin import lazy_pinyin, Style
 from pypinyin.contrib.tone_convert import to_initials, to_finals_tone3
 from bot.text.g2pw import correct_pronunciation
-from bot.config import PRETRAINED_DIR
+from bot.config import PRETRAINED_PATH
 from bot.text.tone_sandhi import ToneSandhi
 from bot.text.symbols import punctuation
 from bot.text.zh_normalization import TextNormalizer
@@ -15,8 +15,8 @@ pinyin_to_symbol_map = {
     for line in open(os.path.join(os.path.dirname(__file__), "opencpop-strict.txt")).readlines()
 }
 
-g2pw_model_path = os.path.join(PRETRAINED_DIR, 'G2PWModel')
-bert_model_path = os.path.join(PRETRAINED_DIR, 'AI-ModelScope/GPT-SoVITS/chinese-roberta-wwm-ext-large')
+g2pw_model_path = os.path.join(PRETRAINED_PATH, 'G2PWModel')
+bert_model_path = os.path.join(PRETRAINED_PATH, 'AI-ModelScope/GPT-SoVITS/chinese-roberta-wwm-ext-large')
 g2pw = G2PWPinyin(
     model_dir=g2pw_model_path,
     model_source=bert_model_path,

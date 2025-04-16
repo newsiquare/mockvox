@@ -5,6 +5,8 @@ import torchaudio
 import numpy as np
 import librosa
 from librosa.filters import mel as librosa_mel_fn
+from typing import Optional
+
 from bot.utils import BotLogger
 
 MAX_WAV_VALUE = 32768.0
@@ -51,7 +53,7 @@ hann_window = {}  # 缓存汉宁窗
 # -------------------
 # 频谱计算函数
 # -------------------
-def spectrogram_torch(y, n_fft, hop_size, win_size, center=False):
+def spectrogram_torch(y, n_fft, hop_size, win_size, center: Optional[bool] = False):
     """计算幅度谱
     Args:
         y: 音频波形 (Tensor) shape: (B, T)
@@ -136,7 +138,7 @@ def spec_to_mel_torch(spec, n_fft, num_mels, sampling_rate, fmin, fmax):
     return spectral_normalize_torch(mel_spec)
 
 def mel_spectrogram_torch(
-        y, n_fft, num_mels, sampling_rate, hop_size, win_size, fmin, fmax, center=False
+        y, n_fft, num_mels, sampling_rate, hop_size, win_size, fmin, fmax, center: Optional[bool] = False
     ):
     # 输入检查
     if (y.abs().max() > 1.0 + 1e-3):

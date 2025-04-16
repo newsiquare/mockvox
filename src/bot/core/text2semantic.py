@@ -7,12 +7,9 @@ from pathlib import Path
 import torch
 
 from bot.models import SynthesizerTrn
-from bot.config import BASE_DIR, PRETRAINED_DIR, ASR_PATH, PROCESS_PATH, MODEL_CONFIG_FILE
+from bot.config import ASR_PATH, PROCESS_PATH, MODEL_CONFIG_FILE, PRETRAINED_S2G_FILE
 from bot.utils import get_hparams_from_file, BotLogger
 from bot.core import load_asr_data
-
-model_dir = os.path.join(PRETRAINED_DIR, 'AI-ModelScope/GPT-SoVITS')
-pretrained_s2G = os.path.join(model_dir, 'gsv-v2final-pretrained/s2G2333k.pth')
 
 class TextToSemantic:
     def __init__(
@@ -33,10 +30,10 @@ class TextToSemantic:
 
         try:
             self.vq_model.load_state_dict(
-                torch.load(pretrained_s2G, map_location="cpu")["weight"], strict=False
+                torch.load(PRETRAINED_S2G_FILE, map_location="cpu")["weight"], strict=False
             )
         except FileNotFoundError:
-            BotLogger.error(f"预训练模型文件不存在: {pretrained_s2G}")
+            BotLogger.error(f"预训练模型文件不存在: {PRETRAINED_S2G_FILE}")
     
     def process(self, file_path: str) -> List:
         results = []

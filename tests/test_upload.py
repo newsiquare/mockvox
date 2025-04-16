@@ -4,12 +4,12 @@ import pytest
 from fastapi.testclient import TestClient
 from celery.result import AsyncResult
 import numpy as np
-from bot.config import BASE_DIR, get_config, UPLOAD_PATH, ASR_PATH
+from bot.config import BASE_PATH, get_config, UPLOAD_PATH, ASR_PATH
 
 cfg = get_config()
 
 # 设置测试文件
-TEST_FILE = os.path.join(BASE_DIR, 'tests/liuyx.WAV')
+TEST_FILE = os.path.join(BASE_PATH, 'tests/liuyx.WAV')
 
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))

@@ -1,6 +1,6 @@
 import logging
 from logging.handlers import RotatingFileHandler
-from bot.config import LOG_DIR
+from bot.config import LOG_PATH
 import os
 
 class ConditionalFormatter(logging.Formatter):
@@ -60,8 +60,8 @@ class ConditionalFormatter(logging.Formatter):
         )
         return formatter.format(record)
 
-os.makedirs(LOG_DIR, exist_ok=True)
-log_file = os.path.join(LOG_DIR, "bot.log")
+os.makedirs(LOG_PATH, exist_ok=True)
+log_file = os.path.join(LOG_PATH, "bot.log")
 
 BotLogger = logging.getLogger("BotLog")
 BotLogger.setLevel(logging.INFO)

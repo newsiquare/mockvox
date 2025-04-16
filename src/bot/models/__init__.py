@@ -10,6 +10,7 @@ from .SynthesizerTrn import SynthesizerTrn
 from .MultiPeriodDiscriminator import MultiPeriodDiscriminator
 from .mel import spectrogram_torch, spec_to_mel_torch, mel_spectrogram_torch
 from .dataset import TextAudioSpeakerLoader, TextAudioSpeakerCollate, DistributedBucketSampler
+from .loss import discriminator_loss, generator_loss, feature_loss, kl_loss
 
 __all__ = [
     # "BSRoformer", 
@@ -17,6 +18,12 @@ __all__ = [
     "CNHubert",
     "SynthesizerTrn",
     "MultiPeriodDiscriminator",
+
+    # loss
+    "discriminator_loss",
+    "generator_loss",
+    "feature_loss",
+    "kl_loss",
 
     # 数据集
     "TextAudioSpeakerLoader",

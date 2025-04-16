@@ -2,7 +2,7 @@ import os, traceback
 import numpy as np
 import time
 from scipy.io import wavfile
-from bot.config import get_config, PRETRAINED_DIR, UPLOAD_PATH, SLICED_ROOT_PATH, DENOISED_ROOT_PATH, ASR_PATH
+from bot.config import get_config, PRETRAINED_PATH, UPLOAD_PATH, SLICED_ROOT_PATH, DENOISED_ROOT_PATH, ASR_PATH
 from bot.core import Slicer, load_audio, AudioDenoiser, AutoSpeechRecognition
 from .worker import celeryApp
 from bot.utils import BotLogger
@@ -148,7 +148,7 @@ def batch_denoise(file_list: List[str], output_dir: str) -> List[str]:
         RuntimeError: 降噪处理失败
     """
     try:
-        denoise_model = os.path.join(PRETRAINED_DIR, 'damo/speech_frcrn_ans_cirm_16k')
+        denoise_model = os.path.join(PRETRAINED_PATH, 'damo/speech_frcrn_ans_cirm_16k')
         denoise_model = denoise_model if os.path.exists(denoise_model) else 'damo/speech_frcrn_ans_cirm_16k'
         denoiser = AudioDenoiser(model_name=denoise_model)     
         Path(output_dir).mkdir(parents=True, exist_ok=True)   
@@ -180,9 +180,9 @@ def batch_asr(file_list: List[str], output_dir: str):
         RuntimeError: 识别处理失败
     """
     try:
-        asr_model = os.path.join(PRETRAINED_DIR, 'iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch')
+        asr_model = os.path.join(PRETRAINED_PATH, 'iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch')
         asr_model = asr_model if os.path.exists(asr_model) else 'iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
-        punc_model = os.path.join(PRETRAINED_DIR, 'iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch')
+        punc_model = os.path.join(PRETRAINED_PATH, 'iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch')
         punc_model = punc_model if os.path.exists(punc_model) else 'iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch'
 
         asr = AutoSpeechRecognition(asr_model_name=asr_model, punc_model_name=punc_model)

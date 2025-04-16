@@ -45,7 +45,12 @@ class SoVITsTrainer:
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
         self.dataset = TextAudioSpeakerLoader(self.hps.data)
-        torch.distributed.init_process_group()
+        torch.distributed.init_process_group(
+            backend="nccl",
+            init_method='env://',
+            world_size=1,
+            rank=0            
+        )
         self.sampler = DistributedBucketSampler(
             self.dataset, 
             self.hps.train.batch_size,

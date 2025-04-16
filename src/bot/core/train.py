@@ -209,7 +209,7 @@ class SoVITsTrainer:
                 时间: {datetime.now().isoformat()}"
         )
 
-    def _do_train(epoch):
+    def _do_train(self, epoch):
         self.dataloader.batch_sampler.set_epoch(epoch)
         self.net_g.train()
         self.net_d.train()

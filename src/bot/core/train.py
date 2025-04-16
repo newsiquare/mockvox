@@ -345,3 +345,8 @@ class SoVITsTrainer:
             raise RuntimeError("预训练模型加载失败")
 
         return True
+
+if __name__ == '__main__':
+    # 示例用法
+    trainer = SoVITsTrainer("20250409145258452558.1ed301dd.788fc313bf38482aa63fe2ea09781878")
+    trainer.train(epochs=2)

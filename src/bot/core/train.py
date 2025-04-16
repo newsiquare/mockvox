@@ -90,14 +90,14 @@ class SoVITsTrainer:
         
         # SoVITs Generator
         self.net_g = SynthesizerTrn(
-            hps.data.filter_length // 2 + 1,
-            hps.train.segment_size // hps.data.hop_length,
-            n_speakers=hps.data.n_speakers,
-            **hps.model,
+            self.hps.data.filter_length // 2 + 1,
+            self.hps.train.segment_size // self.hps.data.hop_length,
+            n_speakers = self.hps.data.n_speakers,
+            **self.hps.model,
         ).to(self.device)
 
         # SoVITs Discriminator
-        self.net_d = MultiPeriodDiscriminator(hps.model.use_spectral_norm).to(self.device)
+        self.net_d = MultiPeriodDiscriminator(self.hps.model.use_spectral_norm).to(self.device)
 
         te_p = list(map(id, net_g.enc_p.text_embedding.parameters()))
         et_p = list(map(id, net_g.enc_p.encoder_text.parameters()))
@@ -109,37 +109,37 @@ class SoVITsTrainer:
         self.optim_g = torch.optim.AdamW(
             # filter(lambda p: p.requires_grad, net_g.parameters()), ###默认所有层lr一致
             [
-                {"params": base_params, "lr": hps.train.learning_rate},
+                {"params": base_params, "lr": self.hps.train.learning_rate},
                 {
                     "params": net_g.enc_p.text_embedding.parameters(),
-                    "lr": hps.train.learning_rate * hps.train.text_low_lr_rate,
+                    "lr": self.hps.train.learning_rate * self.hps.train.text_low_lr_rate,
                 },
                 {
                     "params": net_g.enc_p.encoder_text.parameters(),
-                    "lr": hps.train.learning_rate * hps.train.text_low_lr_rate,
+                    "lr": self.hps.train.learning_rate * self.hps.train.text_low_lr_rate,
                 },
                 {
                     "params": net_g.enc_p.mrte.parameters(),
-                    "lr": hps.train.learning_rate * hps.train.text_low_lr_rate,
+                    "lr": self.hps.train.learning_rate * self.hps.train.text_low_lr_rate,
                 },
             ],
-            hps.train.learning_rate,
-            betas=hps.train.betas,
-            eps=hps.train.eps,
+            self.hps.train.learning_rate,
+            betas=self.hps.train.betas,
+            eps=self.hps.train.eps,
         )
 
         self.optim_d = torch.optim.AdamW(
             self.net_d.parameters(),
-            hps.train.learning_rate,
-            betas=hps.train.betas,
-            eps=hps.train.eps,
+            self.hps.train.learning_rate,
+            betas=self.hps.train.betas,
+            eps=self.hps.train.eps,
         )
 
         self.scheduler_g = torch.optim.lr_scheduler.ExponentialLR(
-            self.optim_g, gamma=hps.train.lr_decay, last_epoch=-1
+            self.optim_g, gamma=self.hps.train.lr_decay, last_epoch=-1
         )
         self.scheduler_d = torch.optim.lr_scheduler.ExponentialLR(
-            self.optim_d, gamma=hps.train.lr_decay, last_epoch=-1
+            self.optim_d, gamma=self.hps.train.lr_decay, last_epoch=-1
         )
     
         self.scaler = GradScaler(enabled=self.hps.train.fp16_run)

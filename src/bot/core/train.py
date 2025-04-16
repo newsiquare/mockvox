@@ -226,6 +226,9 @@ class SoVITsTrainer:
         ) in enumerate(self.dataloader):
             spec = spec.to(self.device)
             spec_lengths = spec_lengths.to(self.device)
+            print("spec.shape:", spec.shape)  # 应 >= (B, n_mels, segment_size)
+            print("spec_lengths:", spec_lengths)  # 所有值应 >= segment_size
+
             y, y_lengths = y.to(self.device), y_lengths.to(self.device)
             ssl = ssl.to(self.device)
             ssl.requires_grad = False
@@ -241,6 +244,7 @@ class SoVITsTrainer:
                     (z, z_p, m_p, logs_p, m_q, logs_q),
                     stats_ssl,
                 ) = self.net_g(ssl, spec, spec_lengths, text, text_lengths)
+            
             mel = spec_to_mel_torch(
                 spec,
                 self.hps.data.filter_length,

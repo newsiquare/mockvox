@@ -348,6 +348,7 @@ class SoVITsTrainer:
 
 if __name__ == '__main__':
     # 示例用法
+    from bot.config import PROCESS_PATH
     processed_path = Path(PROCESS_PATH) / "20250409145258452558.1ed301dd.788fc313bf38482aa63fe2ea09781878"
     trainer = SoVITsTrainer(processed_path)
     trainer.train(epochs=2)

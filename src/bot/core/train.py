@@ -99,27 +99,27 @@ class SoVITsTrainer:
         # SoVITs Discriminator
         self.net_d = MultiPeriodDiscriminator(self.hps.model.use_spectral_norm).to(self.device)
 
-        te_p = list(map(id, net_g.enc_p.text_embedding.parameters()))
-        et_p = list(map(id, net_g.enc_p.encoder_text.parameters()))
-        mrte_p = list(map(id, net_g.enc_p.mrte.parameters()))
+        te_p = list(map(id, self.net_g.enc_p.text_embedding.parameters()))
+        et_p = list(map(id, self.net_g.enc_p.encoder_text.parameters()))
+        mrte_p = list(map(id, self.net_g.enc_p.mrte.parameters()))
         base_params = filter(
             lambda p: id(p) not in te_p + et_p + mrte_p and p.requires_grad,
-            net_g.parameters(),
+            self.net_g.parameters(),
         )
         self.optim_g = torch.optim.AdamW(
             # filter(lambda p: p.requires_grad, net_g.parameters()), ###默认所有层lr一致
             [
                 {"params": base_params, "lr": self.hps.train.learning_rate},
                 {
-                    "params": net_g.enc_p.text_embedding.parameters(),
+                    "params": self.net_g.enc_p.text_embedding.parameters(),
                     "lr": self.hps.train.learning_rate * self.hps.train.text_low_lr_rate,
                 },
                 {
-                    "params": net_g.enc_p.encoder_text.parameters(),
+                    "params": self.net_g.enc_p.encoder_text.parameters(),
                     "lr": self.hps.train.learning_rate * self.hps.train.text_low_lr_rate,
                 },
                 {
-                    "params": net_g.enc_p.mrte.parameters(),
+                    "params": self.net_g.enc_p.mrte.parameters(),
                     "lr": self.hps.train.learning_rate * self.hps.train.text_low_lr_rate,
                 },
             ],

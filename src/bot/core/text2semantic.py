@@ -7,11 +7,10 @@ from pathlib import Path
 import torch
 
 from bot.models import SynthesizerTrn
-from bot.config import BASE_DIR, PRETRAINED_DIR, ASR_PATH, PROCESS_PATH
+from bot.config import BASE_DIR, PRETRAINED_DIR, ASR_PATH, PROCESS_PATH, MODEL_CONFIG_FILE
 from bot.utils import get_hparams_from_file, BotLogger
 from bot.core import load_asr_data
 
-s2config_path = os.path.join(BASE_DIR, 'src/bot/config/s2.json')
 model_dir = os.path.join(PRETRAINED_DIR, 'AI-ModelScope/GPT-SoVITS')
 pretrained_s2G = os.path.join(model_dir, 'gsv-v2final-pretrained/s2G2333k.pth')
 
@@ -20,7 +19,7 @@ class TextToSemantic:
             self,
             device: Optional[str] = None  # 指定计算设备
         ):
-        self.hps = get_hparams_from_file(s2config_path)
+        self.hps = get_hparams_from_file(MODEL_CONFIG_FILE)
 
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.vq_model = SynthesizerTrn(

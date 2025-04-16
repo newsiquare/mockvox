@@ -1,6 +1,6 @@
 from .logger import BotLogger
 from .i18n import i18n
-from .fileHandle import generate_unique_filename, get_hparams_from_file
+from .files import generate_unique_filename, get_hparams_from_file
 
 __all__ = [
     "BotLogger",

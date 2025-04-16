@@ -13,6 +13,8 @@ DENOISED_ROOT_PATH = os.path.join(DATA_DIR, "denoised")
 ASR_PATH = os.path.join(DATA_DIR, "asr")
 PROCESS_PATH = os.path.join(DATA_DIR, "process")
 
+MODEL_CONFIG_FILE = os.path.join(BASE_DIR, "src/bot/config/s2.json")
+
 load_dotenv(BASE_DIR / ".env", override=True)  # 加载.env文件
 
 class Settings:

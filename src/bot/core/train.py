@@ -3,6 +3,7 @@
 from pathlib import Path
 from typing import Optional
 import datetime
+import os
 import torch
 from torch.utils.data import DataLoader
 from torch.cuda.amp import GradScaler, autocast
@@ -44,6 +45,7 @@ class SoVITsTrainer:
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
         self.dataset = TextAudioSpeakerLoader(self.hps.data)
+        torch.distributed.init_process_group()
         self.sampler = DistributedBucketSampler(
             self.dataset, 
             self.hps.train.batch_size,

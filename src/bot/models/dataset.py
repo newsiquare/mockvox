@@ -327,3 +327,111 @@ class DistributedBucketSampler(torch.utils.data.distributed.DistributedSampler):
 
     def __len__(self):
         return self.num_samples // self.batch_size
+
+class BucketSampler(torch.utils.data.Sampler):
+    """单机版分桶采样器（无分布式逻辑）"""
+    def __init__(self, dataset, batch_size, boundaries, shuffle=True):
+        self.batch_size = batch_size
+        self.shuffle = shuffle
+        self.lengths = dataset.lengths
+        self.boundaries = boundaries
+        
+        # 创建分桶
+        self.buckets = self._create_buckets()
+        self._calc_bucket_counts()
+
+    def _create_buckets(self):
+        buckets = [[] for _ in range(len(self.boundaries)-1)]
+        for idx, length in enumerate(self.lengths):
+            bid = self._bisect(length)
+            if bid != -1:
+                buckets[bid].append(idx)
+        
+        # 过滤空桶并调整边界
+        valid_buckets = []
+        new_boundaries = [self.boundaries[0]]
+        for i, bucket in enumerate(buckets):
+            if len(bucket) > 0:
+                valid_buckets.append(bucket)
+                new_boundaries.append(self.boundaries[i+1])
+        self.boundaries = new_boundaries
+        return valid_buckets
+
+    def _bisect(self, x):
+        lo, hi = 0, len(self.boundaries)-1
+        while lo < hi:
+            mid = (lo + hi) // 2
+            if self.boundaries[mid] < x <= self.boundaries[mid+1]:
+                return mid
+            elif x <= self.boundaries[mid]:
+                hi = mid
+            else:
+                lo = mid + 1
+        return -1
+
+    def _calc_bucket_counts(self):
+        self.bucket_counts = [
+            (len(bucket) + self.batch_size - 1) // self.batch_size 
+            for bucket in self.buckets
+        ]
+        self.total_batches = sum(self.bucket_counts)
+
+    def __iter__(self):
+        if self.shuffle:
+            # 每个epoch重新打乱桶内顺序和桶的顺序
+            g = torch.Generator()
+            g.manual_seed(int(torch.empty((), dtype=torch.int64).random_().item()))
+            
+            # 先打乱桶的顺序
+            bucket_order = torch.randperm(len(self.buckets), generator=g).tolist()
+            
+            all_batches = []
+            for bucket_id in bucket_order:
+                bucket = self.buckets[bucket_id]
+                # 打乱桶内样本顺序
+                indices = torch.randperm(len(bucket), generator=g).tolist()
+                # 生成完整批次
+                batches = [
+                    [bucket[i] for i in indices[i*self.batch_size : (i+1)*self.batch_size]]
+                    for i in range((len(indices) + self.batch_size - 1) // self.batch_size)
+                ]
+                all_batches.extend(batches)
+            
+            # 最后打乱所有批次顺序
+            batch_order = torch.randperm(len(all_batches), generator=g).tolist()
+            yield from [all_batches[i] for i in batch_order]
+        else:
+            # 顺序生成
+            for bucket in self.buckets:
+                for i in range(0, len(bucket), self.batch_size):
+                    yield bucket[i:i+self.batch_size]
+
+    def __len__(self):
+        return self.total_batches
+
+if __name__ == '__main__':
+    from bot.config import MODEL_CONFIG_FILE, PROCESS_PATH
+    from torch.utils.data import DataLoader
+    from bot.utils import get_hparams_from_file
+
+    hps = get_hparams_from_file(MODEL_CONFIG_FILE)
+    processed_path = Path(PROCESS_PATH) / "20250416212521743916.69ba5a80.e47c25863b0e4d11831e218672ae51c2"
+    hps.data.processed_dir = processed_path
+    print(hps.data)
+
+    torch.manual_seed(hps.train.seed)
+    dataset = TextAudioSpeakerLoader(hps.data)
+    collate_fn = TextAudioSpeakerCollate()
+    dataloader = DataLoader(dataset=dataset, collate_fn=collate_fn)
+    for batch_idx, (
+        ssl,
+        ssl_lengths,
+        spec,
+        spec_lengths,
+        y,
+        y_lengths,
+        text,
+        text_lengths       
+    ) in enumerate(dataloader):
+        print("spec.shape:", spec.shape)
+        print("spec_lengths:", spec_lengths) 

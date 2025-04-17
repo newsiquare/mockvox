@@ -44,50 +44,60 @@ class SoVITsTrainer:
         self.hps.data.processed_dir = processed_path
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
-        torch.distributed.init_process_group(
-            backend="nccl",
-            init_method='tcp://127.0.0.1:23456',
-            world_size=1,
-            rank=0            
-        )
-        torch.manual_seed(self.hps.train.seed)
+        # torch.distributed.init_process_group(
+        #     backend="nccl",
+        #     init_method='tcp://127.0.0.1:23456',
+        #     world_size=1,
+        #     rank=0            
+        # )
+        # torch.manual_seed(self.hps.train.seed)
         self.dataset = TextAudioSpeakerLoader(self.hps.data)
-        self.sampler = DistributedBucketSampler(
+        # self.sampler = DistributedBucketSampler(
+        #     self.dataset, 
+        #     self.hps.train.batch_size,
+        #     [
+        #         32,
+        #         300,
+        #         400,
+        #         500,
+        #         600,
+        #         700,
+        #         800,
+        #         900,
+        #         1000,
+        #         1100,
+        #         1200,
+        #         1300,
+        #         1400,
+        #         1500,
+        #         1600,
+        #         1700,
+        #         1800,
+        #         1900,
+        #     ],
+        #     num_replicas=1,
+        #     rank=0,
+        #     shuffle=True        
+        # )
+        self.sampler = BucketSampler(
             self.dataset, 
-            self.hps.train.batch_size,
-            [
-                32,
-                300,
-                400,
-                500,
-                600,
-                700,
-                800,
-                900,
-                1000,
-                1100,
-                1200,
-                1300,
-                1400,
-                1500,
-                1600,
-                1700,
-                1800,
-                1900,
+            batch_size=self.hps.train.batch_size,
+            boundaries=[
+                32, 300, 400, 500, 600, 700, 800, 900, 
+                1000, 1100, 1200, 1300, 1400, 1500, 
+                1600, 1700, 1800, 1900
             ],
-            num_replicas=1,
-            rank=0,
-            shuffle=True        
+            shuffle=True
         )
         self.collate_fn = TextAudioSpeakerCollate()
         self.dataloader = DataLoader(
             self.dataset,
-            num_workers=6,
+            num_workers=4,
             shuffle=False,
             pin_memory=True,
             collate_fn=self.collate_fn,
             batch_sampler=self.sampler,
-            persistent_workers=True,
+            persistent_workers=False,
             prefetch_factor=4
         )
         
@@ -213,7 +223,7 @@ class SoVITsTrainer:
         )
 
     def _do_train(self, epoch):
-        self.dataloader.batch_sampler.set_epoch(epoch)
+        # self.dataloader.batch_sampler.set_epoch(epoch)
         self.net_g.train()
         self.net_d.train()
 

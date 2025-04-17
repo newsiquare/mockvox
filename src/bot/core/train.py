@@ -44,13 +44,14 @@ class SoVITsTrainer:
         self.hps.data.processed_dir = processed_path
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
-        self.dataset = TextAudioSpeakerLoader(self.hps.data)
         torch.distributed.init_process_group(
             backend="nccl",
             init_method='tcp://127.0.0.1:23456',
             world_size=1,
             rank=0            
         )
+        torch.manual_seed(self.hps.train.seed)
+        self.dataset = TextAudioSpeakerLoader(self.hps.data)
         self.sampler = DistributedBucketSampler(
             self.dataset, 
             self.hps.train.batch_size,
@@ -74,6 +75,8 @@ class SoVITsTrainer:
                 1800,
                 1900,
             ],
+            num_replicas=1,
+            rank=0,
             shuffle=True        
         )
         self.collate_fn = TextAudioSpeakerCollate()
@@ -81,10 +84,10 @@ class SoVITsTrainer:
             self.dataset,
             num_workers=6,
             shuffle=False,
+            pin_memory=True,
             collate_fn=self.collate_fn,
             batch_sampler=self.sampler,
             persistent_workers=True,
-            pin_memory=True,
             prefetch_factor=4
         )
         

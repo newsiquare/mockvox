@@ -42,43 +42,10 @@ class SoVITsTrainer:
     ):
         self.hps = get_hparams_from_file(MODEL_CONFIG_FILE)
         self.hps.data.processed_dir = processed_path
+        Path(self.hps.data.processed_dir).mkdir(parents=True, exist_ok=True)
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
-        # torch.distributed.init_process_group(
-        #     backend="nccl",
-        #     init_method='tcp://127.0.0.1:23456',
-        #     world_size=1,
-        #     rank=0            
-        # )
-        # torch.manual_seed(self.hps.train.seed)
         self.dataset = TextAudioSpeakerLoader(self.hps.data)
-        # self.sampler = DistributedBucketSampler(
-        #     self.dataset, 
-        #     self.hps.train.batch_size,
-        #     [
-        #         32,
-        #         300,
-        #         400,
-        #         500,
-        #         600,
-        #         700,
-        #         800,
-        #         900,
-        #         1000,
-        #         1100,
-        #         1200,
-        #         1300,
-        #         1400,
-        #         1500,
-        #         1600,
-        #         1700,
-        #         1800,
-        #         1900,
-        #     ],
-        #     num_replicas=1,
-        #     rank=0,
-        #     shuffle=True        
-        # )
         self.sampler = BucketSampler(
             self.dataset, 
             batch_size=self.hps.train.batch_size,
@@ -157,7 +124,6 @@ class SoVITsTrainer:
     
         self.scaler = GradScaler(enabled=self.hps.train.fp16_run)
 
-        Path(self.hps.data.processed_dir).mkdir(parents=True, exist_ok=True)
         file_name = Path(self.hps.data.processed_dir).name
         # 类似 ./data/weights/20250409145258452558.1ed301dd.788fc313bf38482aa63fe2ea09781878/generator.pth
         self.generator_weights_path = Path(WEIGHTS_PATH) / file_name / SOVITS_G_WEIGHTS_FILE
@@ -240,8 +206,6 @@ class SoVITsTrainer:
         ) in enumerate(self.dataloader):
             spec = spec.to(self.device)
             spec_lengths = spec_lengths.to(self.device)
-            print("spec.shape:", spec.shape)  # 应 >= (B, n_mels, segment_size)
-            print("spec_lengths:", spec_lengths)  # 所有值应 >= segment_size
 
             y, y_lengths = y.to(self.device), y_lengths.to(self.device)
             ssl = ssl.to(self.device)

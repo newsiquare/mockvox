@@ -2,7 +2,7 @@
 """ Trainer """
 from pathlib import Path
 from typing import Optional
-import datetime
+from datetime import datetime
 import os
 import torch
 from torch.utils.data import DataLoader

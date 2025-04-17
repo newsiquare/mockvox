@@ -104,8 +104,14 @@ class TextAudioSpeakerLoader(torch.utils.data.Dataset):
             spec, wav = self.get_audio(audiopath)
             with torch.no_grad():
                 ssl = torch.load(self.cnhubert / f"{audiopath}.pt", map_location="cpu")
-                if (ssl.shape[-1] != spec.shape[-1]):
-                    ssl = F.pad(ssl.float(), (0, 1), mode="replicate").to(ssl.dtype)
+                # 更鲁棒的特征对齐逻辑
+                if ssl.shape[-1] < spec.shape[-1]:
+                    pad_length = spec.shape[-1] - ssl.shape[-1]
+                    ssl = F.pad(ssl, (0, pad_length), mode="constant")
+                elif ssl.shape[-1] > spec.shape[-1]:
+                    ssl = ssl[:, :, :spec.shape[-1]]
+                # if (ssl.shape[-1] != spec.shape[-1]):
+                #     ssl = F.pad(ssl.float(), (0, 1), mode="replicate").to(ssl.dtype)
                 ssl.requires_grad = False
         except:
             traceback.print_exc()

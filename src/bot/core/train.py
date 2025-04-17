@@ -97,8 +97,8 @@ class SoVITsTrainer:
             # pin_memory=True,
             collate_fn=self.collate_fn,
             batch_sampler=self.sampler,
-            persistent_workers=False,
-            prefetch_factor=4
+            persistent_workers=True,
+            prefetch_factor=2
         )
         
         # SoVITs Generator

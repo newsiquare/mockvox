@@ -21,7 +21,7 @@ from bot.config import (
 from bot.models import (
     TextAudioSpeakerLoader, 
     TextAudioSpeakerCollate, 
-    DistributedBucketSampler,
+    BucketSampler,
     SynthesizerTrn,
     MultiPeriodDiscriminator,
     spec_to_mel_torch,

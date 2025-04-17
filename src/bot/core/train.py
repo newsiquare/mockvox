@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Optional
 from datetime import datetime
-import tqdm
+from tqdm import tqdm
 import os
 import torch
 from torch.utils.data import DataLoader

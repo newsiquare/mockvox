@@ -39,7 +39,8 @@ dependencies = [
     "modelscope",
     "onnxruntime",
     "jieba_fast",
-    "librosa"
+    "librosa",
+    "tqdm"
 ]
 
 # Optional dependencies ------------------------------------------------------------------------------------------------

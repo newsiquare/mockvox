@@ -3,14 +3,19 @@
 from pathlib import Path
 from typing import Optional
 from datetime import datetime
-from tqdm import tqdm
 import os
 import torch
 from torch.utils.data import DataLoader
 from torch.cuda.amp import GradScaler, autocast
 import torch.nn.functional as F
 
-from bot.utils import get_hparams_from_file, load_checkpoint, save_checkpoint, BotLogger
+from bot.utils import (
+    get_hparams_from_file,
+    load_checkpoint,
+    save_checkpoint,
+    BotLogger,
+    CustomTQDM
+)
 from bot.config import (
     MODEL_CONFIG_FILE, 
     PRETRAINED_S2G_FILE, 
@@ -206,7 +211,7 @@ class SoVITsTrainer:
             y_lengths,
             text,
             text_lengths       
-        ) in tqdm(enumerate(self.dataloader)):
+        ) in CustomTQDM(enumerate(self.dataloader)):
             spec = spec.to(self.device)
             spec_lengths = spec_lengths.to(self.device)
 
@@ -346,4 +351,4 @@ if __name__ == '__main__':
     from bot.config import PROCESS_PATH
     processed_path = Path(PROCESS_PATH) / "20250416212521743916.69ba5a80.e47c25863b0e4d11831e218672ae51c2"
     trainer = SoVITsTrainer(processed_path)
-    trainer.train(epochs=2)
+    trainer.train(epochs=10)

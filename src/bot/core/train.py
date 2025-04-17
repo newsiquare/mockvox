@@ -42,7 +42,6 @@ class SoVITsTrainer:
     ):
         self.hps = get_hparams_from_file(MODEL_CONFIG_FILE)
         self.hps.data.processed_dir = processed_path
-        Path(self.hps.data.processed_dir).mkdir(parents=True, exist_ok=True)
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
         self.dataset = TextAudioSpeakerLoader(self.hps.data)
@@ -125,6 +124,7 @@ class SoVITsTrainer:
         self.scaler = GradScaler(enabled=self.hps.train.fp16_run)
 
         file_name = Path(self.hps.data.processed_dir).name
+        (Path(WEIGHTS_PATH) / file_name).mkdir(parents=True, exist_ok=True)
         # 类似 ./data/weights/20250409145258452558.1ed301dd.788fc313bf38482aa63fe2ea09781878/generator.pth
         self.generator_weights_path = Path(WEIGHTS_PATH) / file_name / SOVITS_G_WEIGHTS_FILE
         # 类似 ./data/weights/20250409145258452558.1ed301dd.788fc313bf38482aa63fe2ea09781878/discriminator.pth

@@ -3,7 +3,7 @@ from .config import get_config, Settings, BASE_PATH, PRETRAINED_PATH, DATA_PATH,
                     SOVITS_G_WEIGHTS_FILE, SOVITS_D_WEIGHTS_FILE
 from .celery import celery_config
 
-TQDM_BAR_FORMAT = "{l_bar}{bar:10}{r_bar}" if VERBOSE else None  # tqdm bar format
+TQDM_BAR_FORMAT = "{l_bar}{bar:10}{r_bar}" # tqdm bar format
 
 __all__ = [
     "get_config", 

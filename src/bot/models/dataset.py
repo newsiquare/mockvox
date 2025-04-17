@@ -179,48 +179,71 @@ class TextAudioSpeakerCollate:
         self.device = torch.device(device)
     
     def __call__(self, batch):
-        # 按频谱长度降序排序
+        # 过滤空批次
+        batch = [x for x in batch if x is not None]
+        if len(batch) == 0:
+            return None
+
+        # 按频谱时间步降序排序
         sorted_indices = sorted(
-            range(len(batch)), 
-            key=lambda x: batch[x][1].size(1), 
+            range(len(batch)),
+            key=lambda x: batch[x][1].size(1),
             reverse=True
         )
         sorted_batch = [batch[i] for i in sorted_indices]
 
-        # 计算最大长度（保持偶数）
-        def get_even_max(dim):
-            max_len = max(x[dim].size(1) for x in sorted_batch)
-            return max_len if max_len % 2 == 0 else max_len + 1
-            
-        max_ssl_len = get_even_max(0)
-        max_spec_len = get_even_max(1)
-        max_wav_len = max(x[2].size(1) for x in sorted_batch)
+        # 动态获取特征维度
+        ssl_feat_dim = sorted_batch[0][0].size(1)
+        spec_feat_dim = sorted_batch[0][1].size(0)
+
+        # 检查维度一致性
+        for x in sorted_batch:
+            assert x[0].size(1) == ssl_feat_dim, \
+                f"SSL特征维度不一致！样本维度：{x[0].size()}"
+            assert x[1].size(0) == spec_feat_dim, \
+                f"频谱特征维度不一致！样本维度：{x[1].size()}"
+
+        # 计算各特征最大时间步（保持偶数）
+        def get_even_max(feature_idx, time_dim):
+            max_len = max(x[feature_idx].size(time_dim) for x in sorted_batch)
+            return max_len if max_len % 2 ==0 else max_len+1
+
+        max_ssl_time = get_even_max(0, 2)   # x[0] 是 SSL，时间步在 dim2
+        max_spec_time = get_even_max(1, 1)  # x[1] 是频谱，时间步在 dim1
+        max_wav_time = max(x[2].size(1) for x in sorted_batch)
         max_text_len = max(x[3].size(0) for x in sorted_batch)
 
-        # 使用pad_sequence进行向量化填充
-        ssl_padded = pad_sequence(
-            [x[0].squeeze(0).T for x in sorted_batch],
-            batch_first=True,
-            padding_value=0
-        ).transpose(1, 2).to(self.device)
+        # 初始化填充容器
+        ssl_padded = torch.zeros(
+            len(sorted_batch), 1, ssl_feat_dim, max_ssl_time,
+            device=self.device
+        )
+        spec_padded = torch.zeros(
+            len(sorted_batch), spec_feat_dim, max_spec_time,
+            device=self.device
+        )
+        wav_padded = torch.zeros(
+            len(sorted_batch), 1, max_wav_time,
+            device=self.device
+        )
+        text_padded = torch.zeros(
+            len(sorted_batch), max_text_len,
+            dtype=torch.long, device=self.device
+        )
 
-        spec_padded = pad_sequence(
-            [x[1] for x in sorted_batch],
-            batch_first=True,
-            padding_value=0
-        ).to(self.device)
-
-        wav_padded = pad_sequence(
-            [x[2] for x in sorted_batch],
-            batch_first=True,
-            padding_value=0
-        ).to(self.device)
-
-        text_padded = pad_sequence(
-            [x[3] for x in sorted_batch],
-            batch_first=True,
-            padding_value=0
-        ).to(self.device)
+        # 填充数据
+        for i, (ssl, spec, wav, text) in enumerate(sorted_batch):
+            # SSL: (1, D, T) -> (1, D, max_T)
+            ssl_padded[i, :, :, :ssl.size(2)] = ssl
+            
+            # Spec: (F, T) -> (F, max_T)
+            spec_padded[i, :, :spec.size(1)] = spec
+            
+            # Wav: (1, L) -> (1, max_L)
+            wav_padded[i, :, :wav.size(1)] = wav
+            
+            # Text: (N,) -> (max_N)
+            text_padded[i, :text.size(0)] = text
 
         # 获取实际长度
         lengths = torch.tensor([
@@ -229,10 +252,14 @@ class TextAudioSpeakerCollate:
         ], device=self.device).T
 
         return (
-            ssl_padded, lengths[0],
-            spec_padded, lengths[1],
-            wav_padded, lengths[2],
-            text_padded, lengths[3]
+            ssl_padded.squeeze(1),  # 移除冗余的通道维度 (B, D, T)
+            lengths[0],
+            spec_padded,
+            lengths[1],
+            wav_padded,
+            lengths[2],
+            text_padded,
+            lengths[3]
         )
 
 class DistributedBucketSampler(torch.utils.data.distributed.DistributedSampler):

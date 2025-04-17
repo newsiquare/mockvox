@@ -89,7 +89,7 @@ class SoVITsTrainer:
             ],
             shuffle=True
         )
-        self.collate_fn = TextAudioSpeakerCollate()
+        self.collate_fn = TextAudioSpeakerCollate(self.device)
         self.dataloader = DataLoader(
             self.dataset,
             num_workers=4,

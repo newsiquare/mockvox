@@ -4,6 +4,7 @@ import traceback
 import json
 import torch
 import torch.nn.functional as F
+from torch.nn.utils.rnn import pad_sequence
 
 from bot.core import load_audio
 from bot.text import Normalizer
@@ -171,66 +172,68 @@ class TextAudioSpeakerLoader(torch.utils.data.Dataset):
                 missing.append(f"wav: {path[0]}")
         return missing
 
-class TextAudioSpeakerCollate():
+class TextAudioSpeakerCollate:
     """ Zero-pads model inputs and targets
     """
-    def __init__(self, return_ids=False):
-        self.return_ids = return_ids
-
+    def __init__(self, device='cuda'):
+        self.device = torch.device(device)
+    
     def __call__(self, batch):
-        """Collate's training batch from normalized text, audio and speaker identities
-        PARAMS
-        ------
-        batch: [text_normalized, spec_normalized, wav_normalized, sid]
-        """
-        # Right zero-pad all one-hot text sequences to max input length
-        _, ids_sorted_decreasing = torch.sort(
-            torch.LongTensor([x[1].size(1) for x in batch]),
-            dim=0, descending=True)
+        # 按频谱长度降序排序
+        sorted_indices = sorted(
+            range(len(batch)), 
+            key=lambda x: batch[x][1].size(1), 
+            reverse=True
+        )
+        sorted_batch = [batch[i] for i in sorted_indices]
 
-        max_ssl_len = max([x[0].size(2) for x in batch])
-        max_ssl_len = int(2 * ((max_ssl_len // 2) + 1))
-        max_spec_len = max([x[1].size(1) for x in batch])
-        max_spec_len = int(2 * ((max_spec_len // 2) + 1))
-        max_wav_len = max([x[2].size(1) for x in batch])
-        max_text_len = max([x[3].size(0) for x in batch])
+        # 计算最大长度（保持偶数）
+        def get_even_max(dim):
+            max_len = max(x[dim].size(1) for x in sorted_batch)
+            return max_len if max_len % 2 == 0 else max_len + 1
+            
+        max_ssl_len = get_even_max(0)
+        max_spec_len = get_even_max(1)
+        max_wav_len = max(x[2].size(1) for x in sorted_batch)
+        max_text_len = max(x[3].size(0) for x in sorted_batch)
 
-        ssl_lengths = torch.LongTensor(len(batch))
-        spec_lengths = torch.LongTensor(len(batch))
-        wav_lengths = torch.LongTensor(len(batch))
-        text_lengths = torch.LongTensor(len(batch))
+        # 使用pad_sequence进行向量化填充
+        ssl_padded = pad_sequence(
+            [x[0].squeeze(0).T for x in sorted_batch],
+            batch_first=True,
+            padding_value=0
+        ).transpose(1, 2).to(self.device)
 
-        device = batch[0][0].device
-        spec_padded = torch.FloatTensor(len(batch), batch[0][1].size(0), max_spec_len, device=device)
-        wav_padded = torch.FloatTensor(len(batch), 1, max_wav_len, device=device)
-        ssl_padded = torch.FloatTensor(len(batch), batch[0][0].size(1), max_ssl_len, device=device)
-        text_padded = torch.LongTensor(len(batch), max_text_len, device=device)
+        spec_padded = pad_sequence(
+            [x[1] for x in sorted_batch],
+            batch_first=True,
+            padding_value=0
+        ).to(self.device)
 
-        spec_padded.zero_()
-        wav_padded.zero_()
-        ssl_padded.zero_()
-        text_padded.zero_()
+        wav_padded = pad_sequence(
+            [x[2] for x in sorted_batch],
+            batch_first=True,
+            padding_value=0
+        ).to(self.device)
 
-        for i in range(len(ids_sorted_decreasing)):
-            row = batch[ids_sorted_decreasing[i]]
+        text_padded = pad_sequence(
+            [x[3] for x in sorted_batch],
+            batch_first=True,
+            padding_value=0
+        ).to(self.device)
 
-            ssl = row[0]
-            ssl_padded[i, :, :ssl.size(2)] = ssl[0, :, :]
-            ssl_lengths[i] = ssl.size(2)
+        # 获取实际长度
+        lengths = torch.tensor([
+            [x[0].size(2), x[1].size(1), x[2].size(1), x[3].size(0)]
+            for x in sorted_batch
+        ], device=self.device).T
 
-            spec = row[1]
-            spec_padded[i, :, :spec.size(1)] = spec
-            spec_lengths[i] = spec.size(1)
-
-            wav = row[2]
-            wav_padded[i, :, :wav.size(1)] = wav
-            wav_lengths[i] = wav.size(1)
-
-            text = row[3]
-            text_padded[i, :text.size(0)] = text
-            text_lengths[i] = text.size(0)
-
-        return ssl_padded, ssl_lengths, spec_padded, spec_lengths, wav_padded, wav_lengths, text_padded, text_lengths
+        return (
+            ssl_padded, lengths[0],
+            spec_padded, lengths[1],
+            wav_padded, lengths[2],
+            text_padded, lengths[3]
+        )
 
 class DistributedBucketSampler(torch.utils.data.distributed.DistributedSampler):
     """
@@ -417,12 +420,11 @@ if __name__ == '__main__':
     hps = get_hparams_from_file(MODEL_CONFIG_FILE)
     processed_path = Path(PROCESS_PATH) / "20250416212521743916.69ba5a80.e47c25863b0e4d11831e218672ae51c2"
     hps.data.processed_dir = processed_path
-    print(hps.data)
 
-    torch.manual_seed(hps.train.seed)
-    dataset = TextAudioSpeakerLoader(hps.data)
-    collate_fn = TextAudioSpeakerCollate()
-    dataloader = DataLoader(dataset=dataset, collate_fn=collate_fn)
+    _device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    dataset = TextAudioSpeakerLoader(hps.data).to(_device)
+    collate_fn = TextAudioSpeakerCollate(_device)
+    dataloader = DataLoader(dataset=dataset, collate_fn=collate_fn, batch_size=4)
     for batch_idx, (
         ssl,
         ssl_lengths,

@@ -14,7 +14,9 @@ ASR_PATH = os.path.join(DATA_PATH, "asr")
 PROCESS_PATH = os.path.join(DATA_PATH, "process")
 WEIGHTS_PATH = os.path.join(DATA_PATH, "weights")
 
-MODEL_CONFIG_FILE = os.path.join(BASE_PATH, "src/bot/config/s2.json")
+SOVITS_MODEL_CONFIG = os.path.join(BASE_PATH, "src/bot/config/s2.json")
+GPT_MODEL_CONFIG = os.path.join(BASE_PATH, "src/bot/config/s1.json")
+
 PRETRAINED_S2G_FILE = os.path.join(PRETRAINED_PATH, 'AI-ModelScope/GPT-SoVITS/gsv-v2final-pretrained/s2G2333k.pth')
 PRETRAINED_S2D_FILE = os.path.join(PRETRAINED_PATH, 'AI-ModelScope/GPT-SoVITS/gsv-v2final-pretrained/s2D2333k.pth')
 SOVITS_G_WEIGHTS_FILE = 'generator.pth'

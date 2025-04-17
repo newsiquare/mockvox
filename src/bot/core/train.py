@@ -3,7 +3,6 @@
 from pathlib import Path
 from typing import Optional
 from datetime import datetime
-import os
 import torch
 from torch.utils.data import DataLoader
 from torch.cuda.amp import GradScaler, autocast
@@ -17,7 +16,6 @@ from bot.utils import (
     CustomTQDM
 )
 from bot.config import (
-    MODEL_CONFIG_FILE, 
     PRETRAINED_S2G_FILE, 
     PRETRAINED_S2D_FILE,
     WEIGHTS_PATH,
@@ -43,17 +41,16 @@ from bot.models import (
 class SoVITsTrainer:
     def __init__(
         self,
-        processed_path,                 # 处理之后的数据存放地址
+        hparams,                            # 配置信息
         device: Optional[str] = None    # 指定计算设备
     ):
-        self.hps = get_hparams_from_file(MODEL_CONFIG_FILE)
-        self.hps.data.processed_dir = processed_path
+        self.hparams = hparams
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
-        self.dataset = TextAudioSpeakerLoader(self.hps.data)
+        self.dataset = TextAudioSpeakerLoader(self.hparams.data)
         self.sampler = BucketSampler(
             self.dataset, 
-            batch_size=self.hps.train.batch_size,
+            batch_size=self.hparams.train.batch_size,
             boundaries=[
                 32, 300, 400, 500, 600, 700, 800, 900, 
                 1000, 1100, 1200, 1300, 1400, 1500, 
@@ -75,14 +72,14 @@ class SoVITsTrainer:
         
         # SoVITs Generator
         self.net_g = SynthesizerTrn(
-            self.hps.data.filter_length // 2 + 1,
-            self.hps.train.segment_size // self.hps.data.hop_length,
-            n_speakers = self.hps.data.n_speakers,
-            **self.hps.model,
+            self.hparams.data.filter_length // 2 + 1,
+            self.hparams.train.segment_size // self.hparams.data.hop_length,
+            n_speakers = self.hparams.data.n_speakers,
+            **self.hparams.model,
         ).to(self.device)
 
         # SoVITs Discriminator
-        self.net_d = MultiPeriodDiscriminator(self.hps.model.use_spectral_norm).to(self.device)
+        self.net_d = MultiPeriodDiscriminator(self.hparams.model.use_spectral_norm).to(self.device)
 
         te_p = list(map(id, self.net_g.enc_p.text_embedding.parameters()))
         et_p = list(map(id, self.net_g.enc_p.encoder_text.parameters()))
@@ -94,42 +91,42 @@ class SoVITsTrainer:
         self.optim_g = torch.optim.AdamW(
             # filter(lambda p: p.requires_grad, net_g.parameters()), ###默认所有层lr一致
             [
-                {"params": base_params, "lr": self.hps.train.learning_rate},
+                {"params": base_params, "lr": self.hparams.train.learning_rate},
                 {
                     "params": self.net_g.enc_p.text_embedding.parameters(),
-                    "lr": self.hps.train.learning_rate * self.hps.train.text_low_lr_rate,
+                    "lr": self.hparams.train.learning_rate * self.hparams.train.text_low_lr_rate,
                 },
                 {
                     "params": self.net_g.enc_p.encoder_text.parameters(),
-                    "lr": self.hps.train.learning_rate * self.hps.train.text_low_lr_rate,
+                    "lr": self.hparams.train.learning_rate * self.hparams.train.text_low_lr_rate,
                 },
                 {
                     "params": self.net_g.enc_p.mrte.parameters(),
-                    "lr": self.hps.train.learning_rate * self.hps.train.text_low_lr_rate,
+                    "lr": self.hparams.train.learning_rate * self.hparams.train.text_low_lr_rate,
                 },
             ],
-            self.hps.train.learning_rate,
-            betas=self.hps.train.betas,
-            eps=self.hps.train.eps,
+            self.hparams.train.learning_rate,
+            betas=self.hparams.train.betas,
+            eps=self.hparams.train.eps,
         )
 
         self.optim_d = torch.optim.AdamW(
             self.net_d.parameters(),
-            self.hps.train.learning_rate,
-            betas=self.hps.train.betas,
-            eps=self.hps.train.eps,
+            self.hparams.train.learning_rate,
+            betas=self.hparams.train.betas,
+            eps=self.hparams.train.eps,
         )
 
         self.scheduler_g = torch.optim.lr_scheduler.ExponentialLR(
-            self.optim_g, gamma=self.hps.train.lr_decay, last_epoch=-1
+            self.optim_g, gamma=self.hparams.train.lr_decay, last_epoch=-1
         )
         self.scheduler_d = torch.optim.lr_scheduler.ExponentialLR(
-            self.optim_d, gamma=self.hps.train.lr_decay, last_epoch=-1
+            self.optim_d, gamma=self.hparams.train.lr_decay, last_epoch=-1
         )
     
-        self.scaler = GradScaler(enabled=self.hps.train.fp16_run)
+        self.scaler = GradScaler(enabled=self.hparams.train.fp16_run)
 
-        self.file_name = Path(self.hps.data.processed_dir).name
+        self.file_name = Path(self.hparams.data.processed_dir).name
         (Path(WEIGHTS_PATH) / self.file_name).mkdir(parents=True, exist_ok=True)
         # 类似 ./data/weights/20250409145258452558.1ed301dd.788fc313bf38482aa63fe2ea09781878/generator.pth
         self.generator_weights_path = Path(WEIGHTS_PATH) / self.file_name / SOVITS_G_WEIGHTS_FILE
@@ -138,7 +135,7 @@ class SoVITsTrainer:
 
     def train(self, epochs: Optional[int]=100):
         """ 执行训练 """
-        epochs = epochs or self.hps.train.epochs
+        epochs = epochs or self.hparams.train.epochs
         # 如果训练过, 尝试加载最后一次模型参数
         epoch_done = self.resume()
         if epoch_done:
@@ -158,18 +155,18 @@ class SoVITsTrainer:
             self.scheduler_g.step()
             self.scheduler_d.step()
 
-            if epoch % self.hps.train.save_interval == 0:
+            if epoch % self.hparams.train.save_interval == 0:
                 save_checkpoint(
                     self.net_g,
                     self.optim_g,
-                    self.hps.train.learning_rate,
+                    self.hparams.train.learning_rate,
                     epoch,
                     self.generator_weights_path
                 )
                 save_checkpoint(
                     self.net_d,
                     self.optim_d,
-                    self.hps.train.learning_rate,
+                    self.hparams.train.learning_rate,
                     epoch,
                     self.discriminator_weights_path
                 )
@@ -180,14 +177,14 @@ class SoVITsTrainer:
             save_checkpoint(
                 self.net_g,
                 self.optim_g,
-                self.hps.train.learning_rate,
+                self.hparams.train.learning_rate,
                 epochs,
                 self.generator_weights_path
             )
             save_checkpoint(
                 self.net_d,
                 self.optim_d,
-                self.hps.train.learning_rate,
+                self.hparams.train.learning_rate,
                 epochs,
                 self.discriminator_weights_path
             )
@@ -220,7 +217,7 @@ class SoVITsTrainer:
             ssl.requires_grad = False
             text, text_lengths = text.to(self.device), text_lengths.to(self.device)
 
-            with autocast(enabled=self.hps.train.fp16_run):
+            with autocast(enabled=self.hparams.train.fp16_run):
                 (
                     y_hat,
                     kl_ssl,
@@ -233,27 +230,27 @@ class SoVITsTrainer:
             
                 mel = spec_to_mel_torch(
                     spec,
-                    self.hps.data.filter_length,
-                    self.hps.data.n_mel_channels,
-                    self.hps.data.sampling_rate,
-                    self.hps.data.mel_fmin,
-                    self.hps.data.mel_fmax,
+                    self.hparams.data.filter_length,
+                    self.hparams.data.n_mel_channels,
+                    self.hparams.data.sampling_rate,
+                    self.hparams.data.mel_fmin,
+                    self.hparams.data.mel_fmax,
                 )
                 y_mel = slice_segments(
-                    mel, ids_slice, self.hps.train.segment_size // self.hps.data.hop_length
+                    mel, ids_slice, self.hparams.train.segment_size // self.hparams.data.hop_length
                 )
                 y_hat_mel = mel_spectrogram_torch(
                     y_hat.squeeze(1),
-                    self.hps.data.filter_length,
-                    self.hps.data.n_mel_channels,
-                    self.hps.data.sampling_rate,
-                    self.hps.data.hop_length,
-                    self.hps.data.win_length,
-                    self.hps.data.mel_fmin,
-                    self.hps.data.mel_fmax
+                    self.hparams.data.filter_length,
+                    self.hparams.data.n_mel_channels,
+                    self.hparams.data.sampling_rate,
+                    self.hparams.data.hop_length,
+                    self.hparams.data.win_length,
+                    self.hparams.data.mel_fmin,
+                    self.hparams.data.mel_fmax
                 )
                 y = slice_segments(
-                    y, ids_slice * self.hps.data.hop_length, self.hps.train.segment_size
+                    y, ids_slice * self.hparams.data.hop_length, self.hparams.train.segment_size
                 ) 
 
                 # Discriminator
@@ -271,11 +268,11 @@ class SoVITsTrainer:
             self.scaler.step(self.optim_d)
 
             # Generator
-            with autocast(enabled=self.hps.train.fp16_run):
+            with autocast(enabled=self.hparams.train.fp16_run):
                 y_d_hat_r, y_d_hat_g, fmap_r, fmap_g = self.net_d(y, y_hat)
                 with autocast(enabled=False):
-                    loss_mel = F.l1_loss(y_mel, y_hat_mel) * self.hps.train.c_mel
-                    loss_kl = kl_loss(z_p, logs_q, m_p, logs_p, z_mask) * self.hps.train.c_kl
+                    loss_mel = F.l1_loss(y_mel, y_hat_mel) * self.hparams.train.c_mel
+                    loss_kl = kl_loss(z_p, logs_q, m_p, logs_p, z_mask) * self.hparams.train.c_kl
 
                     loss_fm = feature_loss(fmap_r, fmap_g)
                     loss_gen, losses_gen = generator_loss(y_d_hat_g)
@@ -290,7 +287,7 @@ class SoVITsTrainer:
 
     def resume(self):
         """Check if resume checkpoint exists"""
-        if self.hps.train.resume:
+        if self.hparams.train.resume:
             if not self.generator_weights_path.exists(): return None
             if not self.discriminator_weights_path.exists(): return None
             try:                
@@ -298,7 +295,7 @@ class SoVITsTrainer:
                     self.discriminator_weights_path,
                     self.net_d,
                     self.optim_d)
-                self.net_g, self.optim_g, self.hps.train.learning_rate, epoch = load_checkpoint(
+                self.net_g, self.optim_g, self.hparams.train.learning_rate, epoch = load_checkpoint(
                     self.generator_weights_path,
                     self.net_g,
                     self.optim_g)
@@ -346,9 +343,11 @@ class SoVITsTrainer:
 if __name__ == '__main__':
     # 示例用法
     import torch.multiprocessing as mp
-
     mp.set_start_method('spawn', force=True)  # 强制使用 spawn 模式
-    from bot.config import PROCESS_PATH
+
+    from bot.config import PROCESS_PATH, SOVITS_MODEL_CONFIG
+    hparams = get_hparams_from_file(SOVITS_MODEL_CONFIG)
     processed_path = Path(PROCESS_PATH) / "20250416212521743916.69ba5a80.e47c25863b0e4d11831e218672ae51c2"
-    trainer = SoVITsTrainer(processed_path)
-    trainer.train(epochs=15)
+    hparams.data.processed_dir = processed_path
+    trainer = SoVITsTrainer(hparams=hparams)
+    trainer.train(epochs=10)

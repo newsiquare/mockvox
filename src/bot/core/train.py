@@ -124,12 +124,12 @@ class SoVITsTrainer:
     
         self.scaler = GradScaler(enabled=self.hps.train.fp16_run)
 
-        file_name = Path(self.hps.data.processed_dir).name
-        (Path(WEIGHTS_PATH) / file_name).mkdir(parents=True, exist_ok=True)
+        self.file_name = Path(self.hps.data.processed_dir).name
+        (Path(WEIGHTS_PATH) / self.file_name).mkdir(parents=True, exist_ok=True)
         # 类似 ./data/weights/20250409145258452558.1ed301dd.788fc313bf38482aa63fe2ea09781878/generator.pth
-        self.generator_weights_path = Path(WEIGHTS_PATH) / file_name / SOVITS_G_WEIGHTS_FILE
+        self.generator_weights_path = Path(WEIGHTS_PATH) / self.file_name / SOVITS_G_WEIGHTS_FILE
         # 类似 ./data/weights/20250409145258452558.1ed301dd.788fc313bf38482aa63fe2ea09781878/discriminator.pth
-        self.discriminator_weights_path = Path(WEIGHTS_PATH) / file_name / SOVITS_D_WEIGHTS_FILE
+        self.discriminator_weights_path = Path(WEIGHTS_PATH) / self.file_name / SOVITS_D_WEIGHTS_FILE
 
     def train(self, epochs: Optional[int]=100):
         """ 执行训练 """
@@ -145,6 +145,7 @@ class SoVITsTrainer:
             self.load_pretrained()
 
         saved = False
+        BotLogger.info(f"开启训练 |  路径: {self.file_name} | 时间: {datetime.now().isoformat()}")
         for epoch in range(epoch_done+1, epochs+1):
             saved = False
             BotLogger.info(f"训练轮次: {epoch}")
@@ -187,7 +188,7 @@ class SoVITsTrainer:
             )
         
         BotLogger.info(
-            f"模型训练完成 --- 生成器参数: {self.generator_weights_path}; 分类器参数: {self.discriminator_weights_path}, \
+            f"模型训练完成 | 生成器参数: {self.generator_weights_path} | 分类器参数: {self.discriminator_weights_path} | \
                 时间: {datetime.now().isoformat()}"
         )
 
@@ -298,7 +299,7 @@ class SoVITsTrainer:
                     self.optim_g)
             except Exception as e:
                 BotLogger.error(
-                    f"模型参数加载异常 | 文件: {file_name} | 错误: {str(e)}"
+                    f"模型参数加载异常 | 文件: {self.file_name} | 错误: {str(e)}"
                 )
                 return None
         return epoch

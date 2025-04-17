@@ -157,6 +157,7 @@ class SoVITsTrainer:
     
         self.scaler = GradScaler(enabled=self.hps.train.fp16_run)
 
+        Path(self.hps.data.processed_dir).mkdir(parents=True, exist_ok=True)
         file_name = Path(self.hps.data.processed_dir).name
         # 类似 ./data/weights/20250409145258452558.1ed301dd.788fc313bf38482aa63fe2ea09781878/generator.pth
         self.generator_weights_path = Path(WEIGHTS_PATH) / file_name / SOVITS_G_WEIGHTS_FILE

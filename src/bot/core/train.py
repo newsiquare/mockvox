@@ -372,6 +372,9 @@ class SoVITsTrainer:
 
 if __name__ == '__main__':
     # 示例用法
+    import torch.multiprocessing as mp
+    
+    mp.set_start_method('spawn', force=True)  # 强制使用 spawn 模式
     from bot.config import PROCESS_PATH
     processed_path = Path(PROCESS_PATH) / "20250416212521743916.69ba5a80.e47c25863b0e4d11831e218672ae51c2"
     trainer = SoVITsTrainer(processed_path)

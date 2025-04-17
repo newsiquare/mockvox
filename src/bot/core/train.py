@@ -3,6 +3,7 @@
 from pathlib import Path
 from typing import Optional
 from datetime import datetime
+import tqdm
 import os
 import torch
 from torch.utils.data import DataLoader
@@ -146,6 +147,7 @@ class SoVITsTrainer:
         saved = False
         for epoch in range(epoch_done+1, epochs+1):
             saved = False
+            BotLogger.info(f"训练轮次: {epoch}")
             self._do_train(epoch)
             self.scheduler_g.step()
             self.scheduler_d.step()
@@ -203,7 +205,7 @@ class SoVITsTrainer:
             y_lengths,
             text,
             text_lengths       
-        ) in enumerate(self.dataloader):
+        ) in tqdm(enumerate(self.dataloader)):
             spec = spec.to(self.device)
             spec_lengths = spec_lengths.to(self.device)
 

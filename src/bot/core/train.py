@@ -173,14 +173,14 @@ class SoVITsTrainer:
                 self.net_g,
                 self.optim_g,
                 self.hps.train.learning_rate,
-                epoch,
+                epochs,
                 self.generator_weights_path
             )
             save_checkpoint(
                 self.net_d,
                 self.optim_d,
                 self.hps.train.learning_rate,
-                epoch,
+                epochs,
                 self.discriminator_weights_path
             )
         

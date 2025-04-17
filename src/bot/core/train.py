@@ -136,7 +136,7 @@ class SoVITsTrainer:
         # 如果训练过, 尝试加载最后一次模型参数
         epoch_done = self.resume()
         if epoch_done:
-            for _ in range(epoch):
+            for _ in range(epochs):
                 self.scheduler_g.step()
                 self.scheduler_d.step()
         else:

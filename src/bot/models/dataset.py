@@ -128,7 +128,6 @@ class TextAudioSpeakerLoader(torch.utils.data.Dataset):
         audio = torch.FloatTensor(audio_array)  # /32768
         audio_norm = audio
         audio_norm = audio_norm.unsqueeze(0)
-        # spec = spectrogram_torch(audio_norm, self.filter_length, self.sampling_rate, self.hop_length, self.win_length)
         spec = spectrogram_torch(
             audio_norm,
             self.filter_length,  # n_fft=2048

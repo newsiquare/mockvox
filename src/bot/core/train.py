@@ -258,38 +258,38 @@ class SoVITsTrainer:
                     stats_ssl,
                 ) = self.net_g(ssl, spec, spec_lengths, text, text_lengths)
             
-            mel = spec_to_mel_torch(
-                spec,
-                self.hps.data.filter_length,
-                self.hps.data.n_mel_channels,
-                self.hps.data.sampling_rate,
-                self.hps.data.mel_fmin,
-                self.hps.data.mel_fmax,
-            )
-            y_mel = slice_segments(
-                mel, ids_slice, self.hps.train.segment_size // self.hps.data.hop_length
-            )
-            y_hat_mel = mel_spectrogram_torch(
-                y_hat.squeeze(1),
-                self.hps.data.filter_length,
-                self.hps.data.n_mel_channels,
-                self.hps.data.sampling_rate,
-                self.hps.data.hop_length,
-                self.hps.data.win_length,
-                self.hps.data.mel_fmin,
-                self.hps.data.mel_fmax
-            )
-            y = slice_segments(
-                y, ids_slice * self.hps.data.hop_length, self.hps.train.segment_size
-            ) 
-
-            # Discriminator
-            y_d_hat_r, y_d_hat_g, _, _ = self.net_d(y, y_hat.detach())
-            with autocast(enabled=False):
-                loss_disc, losses_disc_r, losses_disc_g = discriminator_loss(
-                    y_d_hat_r, y_d_hat_g
+                mel = spec_to_mel_torch(
+                    spec,
+                    self.hps.data.filter_length,
+                    self.hps.data.n_mel_channels,
+                    self.hps.data.sampling_rate,
+                    self.hps.data.mel_fmin,
+                    self.hps.data.mel_fmax,
                 )
-                loss_disc_all = loss_disc
+                y_mel = slice_segments(
+                    mel, ids_slice, self.hps.train.segment_size // self.hps.data.hop_length
+                )
+                y_hat_mel = mel_spectrogram_torch(
+                    y_hat.squeeze(1),
+                    self.hps.data.filter_length,
+                    self.hps.data.n_mel_channels,
+                    self.hps.data.sampling_rate,
+                    self.hps.data.hop_length,
+                    self.hps.data.win_length,
+                    self.hps.data.mel_fmin,
+                    self.hps.data.mel_fmax
+                )
+                y = slice_segments(
+                    y, ids_slice * self.hps.data.hop_length, self.hps.train.segment_size
+                ) 
+
+                # Discriminator
+                y_d_hat_r, y_d_hat_g, _, _ = self.net_d(y, y_hat.detach())
+                with autocast(enabled=False):
+                    loss_disc, losses_disc_r, losses_disc_g = discriminator_loss(
+                        y_d_hat_r, y_d_hat_g
+                    )
+                    loss_disc_all = loss_disc
 
             self.optim_d.zero_grad()
             self.scaler.scale(loss_disc_all).backward()

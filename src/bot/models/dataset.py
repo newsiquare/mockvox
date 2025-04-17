@@ -422,9 +422,9 @@ if __name__ == '__main__':
     hps.data.processed_dir = processed_path
 
     _device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    dataset = TextAudioSpeakerLoader(hps.data).to(_device)
+    dataset = TextAudioSpeakerLoader(hps.data)
     collate_fn = TextAudioSpeakerCollate(_device)
-    dataloader = DataLoader(dataset=dataset, collate_fn=collate_fn, batch_size=4)
+    dataloader = DataLoader(dataset=dataset, collate_fn=collate_fn, batch_size=4, pin_memory=True)
     for batch_idx, (
         ssl,
         ssl_lengths,

@@ -687,7 +687,7 @@ if __name__ == '__main__':
 
     print(f"Test GPT training Dataset --------------------------------------------------")
     hps = HParams()
-    hps.phoneme_path = processed_path / 'name2semantic.json'
+    hps.phoneme_path = processed_path / 'text2semantic.json'
     hps.semantic_path = processed_path / 'name2text.json'
     hps.bert_path = processed_path / 'bert'
     hps.max_sample = None

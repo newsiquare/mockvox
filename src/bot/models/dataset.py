@@ -50,7 +50,7 @@ class Text2SemanticDataset(torch.utils.data.Dataset):
         if self.hparams.max_sample is not None:
             self.semantic_data = self.semantic_data[:max_sample]
         
-        _init_batch()
+        self._init_batch()
 
     def _init_batch(self):
         self.semantic_phoneme = []

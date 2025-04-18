@@ -696,3 +696,13 @@ if __name__ == '__main__':
     hps.pad_value = 1024
 
     dataset_GPT = Text2SemanticDataset(hparams=hps)
+    dataloader_GPT = DataLoader(
+        dataset_GPT,
+        batch_size=4,
+        collate_fn=dataset_GPT.collate,
+        num_workers=4,
+        persistent_workers=True,
+        prefetch_factor=8
+    )
+    for idx, batch in enumerate(dataloader_GPT):
+        print("batch shape: ", batch.shape)

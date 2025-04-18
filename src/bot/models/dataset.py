@@ -683,7 +683,8 @@ if __name__ == '__main__':
         text_lengths       
     ) in enumerate(dataloader):
         print("spec.shape:", spec.shape)
-        print("spec_lengths:", spec_lengths) 
+        print("spec_lengths:", spec_lengths)
+        break
 
     print(f"Test GPT training Dataset --------------------------------------------------")
     hps = HParams()
@@ -706,4 +707,5 @@ if __name__ == '__main__':
         prefetch_factor=8
     )
     for idx, batch in enumerate(dataloader_GPT):
-        print("batch shape: ", batch.shape)
+        print("batch : ", batch)
+        break

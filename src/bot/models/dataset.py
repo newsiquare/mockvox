@@ -691,6 +691,7 @@ if __name__ == '__main__':
     hps.semantic_path = processed_path / 'name2text.json'
     hps.bert_path = processed_path / 'bert'
     hps.max_sample = None
+    hps.max_sec = 100
     hps.max_ps_ratio = 25
     hps.min_ps_ratio = 3
     hps.pad_value = 1024

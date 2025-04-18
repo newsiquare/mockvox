@@ -3,9 +3,10 @@
       "seed": 1234,
       "epochs": 20,
       "batch_size": 8,
-      "save_every_n_epoch": 1,
+      "save_interval": 5,
       "precision": "16-mixed",
-      "gradient_clip": 1.0
+      "gradient_clip": 1.0,
+      "resume": true
     },
     "optimizer": {
       "lr": 0.01,

@@ -26,7 +26,7 @@ def save_checkpoint(model, optimizer, learning_rate, iteration, checkpoint_path)
             "date": datetime.now().isoformat(),
             "author": "联宇创新(Lianyu Co,L.T.D)"
         },
-        checkpoint_path,
+        checkpoint_path
     )
 
 def load_checkpoint(checkpoint_path, model, optimizer=None, skip_optimizer=False):

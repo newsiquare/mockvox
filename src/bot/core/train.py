@@ -20,7 +20,8 @@ from bot.config import (
     PRETRAINED_S2D_FILE,
     WEIGHTS_PATH,
     SOVITS_G_WEIGHTS_FILE,
-    SOVITS_D_WEIGHTS_FILE
+    SOVITS_D_WEIGHTS_FILE,
+    GPT_WEIGHTS_FILE
 )
 from bot.models import (
     TextAudioSpeakerLoader, 
@@ -77,6 +78,38 @@ class GPTTrainer:
         self.model = Text2SemanticDecoder(self.hparams).to(self.device)
         self.optimizer, self.scheduler = self._configure_optimizers()
 
+        self.file_name = Path(self.hparams.data.semantic_path).parent.name
+        (Path(WEIGHTS_PATH) / self.file_name).mkdir(parents=True, exist_ok=True)
+        # 类似 ./data/weights/20250409145258452558.1ed301dd.788fc313bf38482aa63fe2ea09781878/gpt.pth
+        self.gpt_weights_path = Path(WEIGHTS_PATH) / self.file_name / GPT_WEIGHTS_FILE
+
+    def train(self, epochs: Optional[int]=100):
+        """ 执行训练 """
+        epochs = epochs or self.hparams.train.epochs
+        # 如果训练过, 尝试加载最后一次模型参数
+        epoch_done = self.resume()
+
+    def _do_train(self):
+        pass
+    
+    def resume(self):
+        """Check if resume checkpoint exists"""
+        if self.hparams.train.resume:
+            if not self.gpt_weights_path.exists(): return None
+            try:                
+                self.model, self.optimizer, _, epoch = load_checkpoint(
+                    self.gpt_weights_path,
+                    self.model,
+                    self.optimizer)
+                for _ in range(epoch):
+                    self.scheduler.step()
+            except Exception as e:
+                BotLogger.error(
+                    f"模型参数加载异常 | 文件: {self.file_name} | 错误: {str(e)}"
+                )
+                return None
+        return epoch
+    
     def _configure_optimizers(self):
         # 获取模型参数名称列表
         parameters_names = [
@@ -196,9 +229,9 @@ class SoVITsTrainer:
 
         self.file_name = Path(self.hparams.data.processed_dir).name
         (Path(WEIGHTS_PATH) / self.file_name).mkdir(parents=True, exist_ok=True)
-        # 类似 ./data/weights/20250409145258452558.1ed301dd.788fc313bf38482aa63fe2ea09781878/generator.pth
+        # 类似 ./data/weights/20250409145258452558.1ed301dd.788fc313bf38482aa63fe2ea09781878/gen.pth
         self.generator_weights_path = Path(WEIGHTS_PATH) / self.file_name / SOVITS_G_WEIGHTS_FILE
-        # 类似 ./data/weights/20250409145258452558.1ed301dd.788fc313bf38482aa63fe2ea09781878/discriminator.pth
+        # 类似 ./data/weights/20250409145258452558.1ed301dd.788fc313bf38482aa63fe2ea09781878/disc.pth
         self.discriminator_weights_path = Path(WEIGHTS_PATH) / self.file_name / SOVITS_D_WEIGHTS_FILE
 
     def train(self, epochs: Optional[int]=100):
@@ -207,7 +240,7 @@ class SoVITsTrainer:
         # 如果训练过, 尝试加载最后一次模型参数
         epoch_done = self.resume()
         if epoch_done:
-            for _ in range(epochs):
+            for _ in range(epoch_done):
                 self.scheduler_g.step()
                 self.scheduler_d.step()
         else:

@@ -1,6 +1,6 @@
 from .logger import BotLogger
 from .i18n import i18n
-from .files import generate_unique_filename, get_hparams_from_file, load_checkpoint, save_checkpoint
+from .files import generate_unique_filename, get_hparams_from_file, load_checkpoint, save_checkpoint, HParams
 from .TQDM import CustomTQDM
 
 __all__ = [
@@ -10,5 +10,6 @@ __all__ = [
     "get_hparams_from_file",
     "load_checkpoint",
     "save_checkpoint",
+    "HParams",
     "CustomTQDM"
 ]

@@ -2,14 +2,221 @@ import random
 from pathlib import Path
 import traceback
 import json
+from typing import List, Dict
 import torch
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
+import numpy as np
 
 from bot.core import load_audio
 from bot.text import Normalizer
-from bot.utils import BotLogger
+from bot.utils import BotLogger, get_hparams_from_file
 from bot.models import spectrogram_torch
+from bot.config import SOVITS_MODEL_CONFIG
+
+class Text2SemanticDataset(torch.utils.data.Dataset):
+    """dataset class for text tokens to semantic model training."""
+
+    def __init__(self, hparams) -> None:
+        """ 
+        传入的超参数(hparams)中, 必须包含以下参数：
+            phoneme_path - name2semantic.json 文件的完整路径 
+            semantic_path - name2text.json 文件的完整路径
+            bert_path - bert 子目录
+            max_sample - 最大样本量. 建议 None
+            max_sec - 最大长度(秒). 建议 100
+            max_ps_ratio - max value of phoneme/sec. 建议25
+            min_ps_ratio - min value of phoneme/sec. 建议3
+            pad_value - 建议1024
+        """
+        super().__init__()
+        self.hparams = hparams
+
+        assert Path(self.hparams.phoneme_path).exists()
+        assert Path(self.hparams.semantic_path).exists()
+
+        try:
+            with open(self.hparams.semantic_path, 'r', encoding='utf8') as f:
+                self.phoneme_data = json.load(f)
+            with open(self.hparams.phoneme_path, 'r', encoding='utf8') as f:
+                self.semantic_data = json.load(f)
+        except FileNotFoundError:
+            BotLogger.error(f"语义文件不存在: {Path(self.hparams.semantic_path).name} or \
+                音素文件不存在: {Path(self.hparams.phoneme_path).name}")
+
+        hps = get_hparams_from_file(SOVITS_MODEL_CONFIG)
+        self.hz = int(hps.model.semantic_frame_rate[:-2])        
+
+        if self.hparams.max_sample is not None:
+            self.semantic_data = self.semantic_data[:max_sample]
+        
+        _init_batch()
+
+    def _init_batch(self):
+        self.semantic_phoneme = []
+        self.item_names = []
+        num_not_in = 0
+        num_deleted_bigger = 0
+        num_deleted_ps = 0
+
+        max_sec = self.hparams.get("max_sec", 100)
+        max_ps_ratio = self.hparams.get("max_ps_ratio", 25)
+        min_ps_ratio = self.hparams.get("min_ps_ratio", 3)
+        hz = self.hz
+
+        phoneme_dict = {item["key"]: item for item in self.phoneme_data}
+
+        for item_semantic in self.semantic_data:
+            key = item_semantic['key']
+
+            # 1. 检查key对齐
+            if key not in phoneme_dict:
+                num_not_in += 1
+                continue
+
+            item_phoneme = phoneme_dict[key]        
+            semantic_ids = [int(x) for x in item_semantic["semantic"].split()]
+
+            # 2. 检查音频时长
+            if len(semantic_ids) > max_sec * hz:
+                num_deleted_bigger += 1
+                continue
+
+            phonemes = item_phoneme["phones"].split()
+            try:
+                phoneme_ids = Normalizer.cleaned_text_to_sequence(phonemes)
+            except Exception:
+                num_not_in += 1
+                continue
+
+            # 3. 检查phoneme长度限制
+            if len(phoneme_ids) > max_sec * hz / 2.5:
+                num_deleted_ps += 1
+                continue
+
+            # 4. 检查phoneme/sec比例
+            duration = len(semantic_ids) / hz
+            if duration == 0:
+                continue
+            ps_ratio = len(phoneme_ids) / duration
+            
+            if not (min_ps_ratio <= ps_ratio <= max_ps_ratio):
+                num_deleted_ps += 1
+                continue
+
+            # 保存有效数据
+            self.semantic_phoneme.append((semantic_ids, phoneme_ids))
+            self.item_names.append(key)
+
+        # 数据增强：当有效数据不足时复制样本
+        min_num = 100
+        current_len = len(self.semantic_phoneme)
+        if current_len < min_num and current_len > 0:
+            copies = max(2, min_num // current_len)
+        self.semantic_phoneme = self.semantic_phoneme * copies
+        self.item_names = self.item_names * copies
+
+    def __get_item_names__(self) -> List[str]:
+        return self.item_names
+
+    def __len__(self) -> int:
+        return len(self.semantic_phoneme)
+
+    def __getitem__(self, idx: int) -> Dict:
+        semantic_ids, phoneme_ids = self.semantic_phoneme[idx]
+        item_name = self.item_names[idx]
+        phoneme_ids_len = len(phoneme_ids)
+        # semantic tokens target
+        semantic_ids_len = len(semantic_ids)
+
+        flag = 0
+        path_bert = Path(self.hparams.bert_path) / f"{item_name}.pt"
+        if path_bert.exists():
+            bert_feature = torch.load(path_bert, map_location="cpu")
+            assert bert_feature.shape[-1] == len(phoneme_ids)
+        else:
+            bert_feature = None
+        
+        return {
+            "idx": idx,
+            "phoneme_ids": phoneme_ids,
+            "phoneme_ids_len": phoneme_ids_len,
+            "semantic_ids": semantic_ids,
+            "semantic_ids_len": semantic_ids_len,
+            "bert_feature": bert_feature,
+        }
+
+    def get_sample_length(self, idx: int):
+        semantic_ids = self.semantic_phoneme[idx][0]
+        sec = 1.0 * len(semantic_ids) / self.hz
+        return sec
+
+    def collate(self, examples: List[Dict]) -> Dict:
+        sample_index: List[int] = []
+        phoneme_ids: List[torch.Tensor] = []
+        phoneme_ids_lens: List[int] = []
+        semantic_ids: List[torch.Tensor] = []
+        semantic_ids_lens: List[int] = []
+        # return
+
+        for item in examples:
+            sample_index.append(item["idx"])
+            phoneme_ids.append(np.array(item["phoneme_ids"], dtype=np.int64))
+            semantic_ids.append(np.array(item["semantic_ids"], dtype=np.int64))
+            phoneme_ids_lens.append(item["phoneme_ids_len"])
+            semantic_ids_lens.append(item["semantic_ids_len"])
+
+        # pad 0
+        phoneme_ids = batch_sequences(phoneme_ids)
+        semantic_ids = batch_sequences(semantic_ids, pad_value=self.hparams.pad_value)
+
+        # # convert each batch to torch.tensor
+        phoneme_ids = torch.tensor(phoneme_ids)
+        semantic_ids = torch.tensor(semantic_ids)
+        phoneme_ids_lens = torch.tensor(phoneme_ids_lens)
+        semantic_ids_lens = torch.tensor(semantic_ids_lens)
+        bert_padded = torch.FloatTensor(len(examples), 1024, max(phoneme_ids_lens))
+        bert_padded.zero_()
+
+        for idx, item in enumerate(examples):
+            bert = item["bert_feature"]
+            if bert != None:
+                bert_padded[idx, :, : bert.shape[-1]] = bert
+
+        return {
+            # List[int]
+            "ids": sample_index,
+            # torch.Tensor (B, max_phoneme_length)
+            "phoneme_ids": phoneme_ids,
+            # torch.Tensor (B)
+            "phoneme_ids_len": phoneme_ids_lens,
+            # torch.Tensor (B, max_semantic_ids_length)
+            "semantic_ids": semantic_ids,
+            # torch.Tensor (B)
+            "semantic_ids_len": semantic_ids_lens,
+            # torch.Tensor (B, 1024, max_phoneme_length)
+            "bert_feature": bert_padded,
+        }
+
+def batch_sequences(sequences: List[np.array], axis: int = 0, pad_value: int = 0):
+    seq = sequences[0]
+    ndim = seq.ndim
+    if axis < 0:
+        axis += ndim
+    dtype = seq.dtype
+    pad_value = dtype.type(pad_value)
+    seq_lengths = [seq.shape[axis] for seq in sequences]
+    max_length = np.max(seq_lengths)
+
+    padded_sequences = []
+    for seq, length in zip(sequences, seq_lengths):
+        padding = (
+            [(0, 0)] * axis + [(0, max_length - length)] + [(0, 0)] * (ndim - axis - 1)
+        )
+        padded_seq = np.pad(seq, padding, mode="constant", constant_values=pad_value)
+        padded_sequences.append(padded_seq)
+    batch = np.stack(padded_sequences)
+    return batch
 
 class TextAudioSpeakerLoader(torch.utils.data.Dataset):
     """
@@ -119,7 +326,7 @@ class TextAudioSpeakerLoader(torch.utils.data.Dataset):
             wav = torch.zeros(1, 100 * self.hop_length)
             ssl = torch.zeros(1, 768, 100)
             text = text[-1:]
-            BotLogger.warn("load audio or ssl error!", self.processed_dir, audiopath)
+            BotLogger.warn("load audio or ssl error!", self.cnhubert, audiopath)
         return (ssl, spec, wav, text)
 
     def get_audio(self, filename):
@@ -452,14 +659,15 @@ class BucketSampler(torch.utils.data.Sampler):
         return self.total_batches
 
 if __name__ == '__main__':
-    from bot.config import MODEL_CONFIG_FILE, PROCESS_PATH
+    from bot.config import SOVITS_MODEL_CONFIG, PROCESS_PATH
     from torch.utils.data import DataLoader
-    from bot.utils import get_hparams_from_file
+    from bot.utils import get_hparams_from_file, HParams
 
-    hps = get_hparams_from_file(MODEL_CONFIG_FILE)
+    hps = get_hparams_from_file(SOVITS_MODEL_CONFIG)
     processed_path = Path(PROCESS_PATH) / "20250416212521743916.69ba5a80.e47c25863b0e4d11831e218672ae51c2"
     hps.data.processed_dir = processed_path
 
+    print(f"Test SoVITs training Dataset --------------------------------------------------")
     _device = 'cuda' if torch.cuda.is_available() else 'cpu'
     dataset = TextAudioSpeakerLoader(hps.data)
     collate_fn = TextAudioSpeakerCollate(_device)
@@ -476,3 +684,15 @@ if __name__ == '__main__':
     ) in enumerate(dataloader):
         print("spec.shape:", spec.shape)
         print("spec_lengths:", spec_lengths) 
+
+    print(f"Test GPT training Dataset --------------------------------------------------")
+    hps = HParams()
+    hps.phoneme_path = processed_path / 'name2semantic.json'
+    hps.semantic_path = processed_path / 'name2text.json'
+    hps.bert_path = processed_path / 'bert'
+    hps.max_sample = None
+    hps.max_ps_ratio = 25
+    hps.min_ps_ratio = 3
+    hps.pad_value = 1024
+
+    dataset_GPT = Text2SemanticDataset(hparams=hps)

@@ -38,6 +38,15 @@ from bot.models import (
     clip_grad_value_
 )
 
+class GPTTrainer:
+    def __init__(
+        self,
+        hparams,
+        device: Optional[str] = None
+    ):
+        self.hparams = hparams
+        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+
 class SoVITsTrainer:
     def __init__(
         self,

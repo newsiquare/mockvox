@@ -3,6 +3,7 @@ from tqdm import tqdm
 from bot.config import TQDM_BAR_FORMAT
 
 class CustomTQDM(tqdm):
+    """modified from ultralytics"""
     def __init__(self, *args, **kwargs):
         """
         Initialize custom tqdm class with different default arguments.

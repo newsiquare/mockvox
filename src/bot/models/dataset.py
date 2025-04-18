@@ -59,9 +59,9 @@ class Text2SemanticDataset(torch.utils.data.Dataset):
         num_deleted_bigger = 0
         num_deleted_ps = 0
 
-        max_sec = self.hparams.get("max_sec", 100)
-        max_ps_ratio = self.hparams.get("max_ps_ratio", 25)
-        min_ps_ratio = self.hparams.get("min_ps_ratio", 3)
+        max_sec = self.hparams.max_sec
+        max_ps_ratio = self.hparams.max_ps_ratio
+        min_ps_ratio = self.hparams.min_ps_ratio
         hz = self.hz
 
         phoneme_dict = {item["key"]: item for item in self.phoneme_data}

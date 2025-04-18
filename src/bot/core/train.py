@@ -26,6 +26,8 @@ from bot.models import (
     TextAudioSpeakerLoader, 
     TextAudioSpeakerCollate, 
     SoVITsBucketSampler,
+    Text2SemanticDataset,
+    GPTBucketSampler,
     SynthesizerTrn,
     MultiPeriodDiscriminator,
     spec_to_mel_torch,
@@ -37,8 +39,16 @@ from bot.models import (
     kl_loss,
     clip_grad_value_
 )
+from bot.models.AR import Text2SemanticDecoder
+from bot.models.AR.nn import ScaledAdam, WarmupCosineLRSchedule
 
 class GPTTrainer:
+    """
+    传入超参数(hparams)时，必须具备以下参数:
+        hparams.data.phoneme_path - name2semantic.json 文件的完整路径 
+        hparams.data.semantic_path - name2text.json 文件的完整路径
+        hparams.data.bert_path - bert 子目录  
+    """
     def __init__(
         self,
         hparams,
@@ -46,6 +56,55 @@ class GPTTrainer:
     ):
         self.hparams = hparams
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+
+        dataset = Text2SemanticDataset(self.hparams.data)
+        sampler = GPTBucketSampler(
+            dataset,
+            batch_size=self.hparams.train.batch_size,
+            shuffle=True,
+            bucket_width=2.0
+        )
+        self.dataloader = DataLoader(
+            dataset,
+            num_workers=self.hparams.data.num_workers,
+            shuffle=False,
+            collate_fn=dataset.collate,
+            batch_sampler=sampler,
+            persistent_workers=True,
+            prefetch_factor=8
+        )
+
+        self.model = Text2SemanticDecoder(self.hparams).to(self.device)
+        self.optimizer, self.scheduler = self._configure_optimizers()
+
+    def _configure_optimizers(self):
+        # 获取模型参数名称列表
+        parameters_names = [
+            [name for name, _ in self.model.named_parameters()]
+        ]
+
+        # 创建ScaledAdam优化器
+        optimizer = ScaledAdam(
+            params=self.model.parameters(),
+            lr=0.01,  # 初始占位值，实际由scheduler控制
+            betas=(0.9, 0.95),
+            clipping_scale=2.0,
+            parameters_names=parameters_names,
+            clipping_update_period=1000,
+            show_dominant_parameters=False
+        )
+
+        # 创建学习率调度器
+        scheduler = WarmupCosineLRSchedule(
+            optimizer=optimizer,
+            init_lr=self.hparams.optimizer.lr_init,
+            peak_lr=self.hparams.optimizer.lr,
+            end_lr=self.hparams.optimizer.lr_end,
+            warmup_steps=self.hparams.optimizer.warmup_steps,
+            total_steps=self.hparams.optimizer.decay_steps
+        )
+
+        return optimizer, scheduler
 
 class SoVITsTrainer:
     def __init__(
@@ -56,9 +115,9 @@ class SoVITsTrainer:
         self.hparams = hparams
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
-        self.dataset = TextAudioSpeakerLoader(self.hparams.data)
-        self.sampler = SoVITsBucketSampler(
-            self.dataset, 
+        dataset = TextAudioSpeakerLoader(self.hparams.data)
+        sampler = SoVITsBucketSampler(
+            dataset, 
             batch_size=self.hparams.train.batch_size,
             boundaries=[
                 32, 300, 400, 500, 600, 700, 800, 900, 
@@ -67,14 +126,14 @@ class SoVITsTrainer:
             ],
             shuffle=True
         )
-        self.collate_fn = TextAudioSpeakerCollate(self.device)
+        collate_fn = TextAudioSpeakerCollate(self.device)
         self.dataloader = DataLoader(
-            self.dataset,
+            dataset,
             num_workers=4,
             shuffle=False,
             # pin_memory=True,
-            collate_fn=self.collate_fn,
-            batch_sampler=self.sampler,
+            collate_fn=collate_fn,
+            batch_sampler=sampler,
             persistent_workers=True,
             prefetch_factor=2
         )

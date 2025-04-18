@@ -16,9 +16,12 @@
     },
     "data": {
       "max_eval_sample": 8,
+      "max_sample": null,      
       "max_sec": 54,
-      "num_workers": 4,
-      "pad_val": 1024
+      "max_ps_ratio": 25,
+      "min_ps_ratio": 3,
+      "pad_value": 1024,
+      "num_workers": 4
     },
     "model": {
       "vocab_size": 1025,

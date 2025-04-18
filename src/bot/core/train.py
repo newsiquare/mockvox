@@ -25,7 +25,7 @@ from bot.config import (
 from bot.models import (
     TextAudioSpeakerLoader, 
     TextAudioSpeakerCollate, 
-    BucketSampler,
+    SoVITsBucketSampler,
     SynthesizerTrn,
     MultiPeriodDiscriminator,
     spec_to_mel_torch,
@@ -57,7 +57,7 @@ class SoVITsTrainer:
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
         self.dataset = TextAudioSpeakerLoader(self.hparams.data)
-        self.sampler = BucketSampler(
+        self.sampler = SoVITsBucketSampler(
             self.dataset, 
             batch_size=self.hparams.train.batch_size,
             boundaries=[

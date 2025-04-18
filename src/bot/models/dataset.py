@@ -1,8 +1,9 @@
 import random
 from pathlib import Path
+import math
 import traceback
 import json
-from typing import List, Dict
+from typing import List, Dict, Iterator
 import torch
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
@@ -217,6 +218,88 @@ def batch_sequences(sequences: List[np.array], axis: int = 0, pad_value: int = 0
         padded_sequences.append(padded_seq)
     batch = np.stack(padded_sequences)
     return batch
+
+class GPTBucketSampler(torch.utils.data.Sampler):
+    """单卡桶式采样器，支持动态长度分桶和批次洗牌"""
+    
+    def __init__(
+        self,
+        dataset: torch.utils.data.Dataset,
+        batch_size: int = 32,
+        shuffle: bool = True,
+        drop_last: bool = False,
+        bucket_width: float = 2.0,
+        seed: int = 42
+    ):
+        super().__init__(dataset)
+        self.dataset = dataset
+        self.batch_size = batch_size
+        self.shuffle = shuffle
+        self.drop_last = drop_last
+        self.seed = seed
+        self.bucket_width = bucket_width
+
+        # 获取样本长度并分桶
+        self.sample_lengths = self._get_sample_lengths()
+        self.buckets = self._create_buckets()
+
+    def _get_sample_lengths(self) -> List[tuple]:
+        """获取带索引的样本长度列表"""
+        return [(i, self.dataset.get_sample_length(i)) for i in range(len(self.dataset))]
+
+    def _create_buckets(self) -> List[List[int]]:
+        """创建长度分桶"""
+        # 按长度排序
+        sorted_samples = sorted(self.sample_lengths, key=lambda x: x[1])
+        
+        # 动态分桶
+        buckets = []
+        current_bucket = []
+        current_max = self.bucket_width
+        
+        for idx, length in sorted_samples:
+            if length <= current_max:
+                current_bucket.append(idx)
+            else:
+                buckets.append(current_bucket)
+                current_bucket = [idx]
+                current_max += self.bucket_width
+        if current_bucket:
+            buckets.append(current_bucket)
+        return buckets
+
+    def _generate_batches(self) -> List[List[int]]:
+        """生成洗牌后的批次索引"""
+        # 桶内洗牌
+        rng = random.Random(self.seed)
+        shuffled_buckets = [rng.sample(b, len(b)) for b in self.buckets]
+
+        # 平铺所有样本
+        all_indices = [idx for bucket in shuffled_buckets for idx in bucket]
+
+        # 切分批次
+        batch_indices = []
+        for i in range(0, len(all_indices), self.batch_size):
+            batch = all_indices[i:i+self.batch_size]
+            if not self.drop_last or len(batch) == self.batch_size:
+                batch_indices.append(batch)
+
+        # 批次级洗牌
+        if self.shuffle:
+            rng.shuffle(batch_indices)
+        return batch_indices
+
+    def __iter__(self) -> Iterator[List[int]]:
+        yield from self._generate_batches()
+
+    def __len__(self) -> int:
+        if self.drop_last:
+            return len(self.dataset) // self.batch_size
+        return math.ceil(len(self.dataset) / self.batch_size)
+
+    def set_epoch(self, epoch: int):
+        """设置随机种子 (保持API兼容性)"""
+        self.seed = epoch
 
 class TextAudioSpeakerLoader(torch.utils.data.Dataset):
     """
@@ -577,7 +660,7 @@ class DistributedBucketSampler(torch.utils.data.distributed.DistributedSampler):
     def __len__(self):
         return self.num_samples // self.batch_size
 
-class BucketSampler(torch.utils.data.Sampler):
+class SoVITsBucketSampler(torch.utils.data.Sampler):
     """单机版分桶采样器（无分布式逻辑）"""
     def __init__(self, dataset, batch_size, boundaries, shuffle=True):
         self.batch_size = batch_size
@@ -698,11 +781,18 @@ if __name__ == '__main__':
     hps.pad_value = 1024
 
     dataset_GPT = Text2SemanticDataset(hparams=hps)
-    dataloader_GPT = DataLoader(
+    sampler = GPTBucketSampler(
         dataset_GPT,
         batch_size=4,
-        collate_fn=dataset_GPT.collate,
+        shuffle=True,
+        bucket_width=2.0
+    )
+    dataloader_GPT = DataLoader(
+        dataset_GPT,
         num_workers=4,
+        shuffle=False,
+        collate_fn=dataset_GPT.collate,
+        batch_sampler=sampler,
         persistent_workers=True,
         prefetch_factor=8
     )

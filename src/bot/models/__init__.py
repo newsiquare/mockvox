@@ -9,7 +9,13 @@ from .mrte import MRTE, MELEncoder, SpeakerEncoder
 from .SynthesizerTrn import SynthesizerTrn
 from .MultiPeriodDiscriminator import MultiPeriodDiscriminator
 from .mel import spectrogram_torch, spec_to_mel_torch, mel_spectrogram_torch
-from .dataset import TextAudioSpeakerLoader, TextAudioSpeakerCollate, DistributedBucketSampler, BucketSampler
+from .dataset import (
+    TextAudioSpeakerLoader, 
+    TextAudioSpeakerCollate, 
+    SoVITsBucketSampler,
+    Text2SemanticDataset,
+    GPTBucketSampler
+)
 from .loss import discriminator_loss, generator_loss, feature_loss, kl_loss
 
 __all__ = [
@@ -28,8 +34,9 @@ __all__ = [
     # 数据集
     "TextAudioSpeakerLoader",
     "TextAudioSpeakerCollate",
-    "DistributedBucketSampler",
-    "BucketSampler",
+    "SoVITsBucketSampler",
+    "Text2SemanticDataset",
+    "GPTBucketSampler"
 
     # mel频谱
     "spectrogram_torch",

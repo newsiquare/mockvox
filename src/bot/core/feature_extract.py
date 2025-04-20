@@ -150,5 +150,10 @@ class FeatureExtractor:
 
 if __name__ == '__main__':
     # 示例用法
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('file', type=str, help='processed file name.')
+    args = parser.parse_args()
+
     extractor = FeatureExtractor()
-    extractor.extract('20250410205853575614.e0559cf4.91677d92edfd4ba897d302c48fa8646c', denoised=True)
+    extractor.extract(args.file, denoised=True)

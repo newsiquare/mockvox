@@ -513,12 +513,18 @@ class SoVITsTrainer:
 
 if __name__ == '__main__':
     # 示例用法
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('file', type=str, help='processed file name.')
+    args = parser.parse_args()
+    
     import torch.multiprocessing as mp
     mp.set_start_method('spawn', force=True)  # 强制使用 spawn 模式
 
     from bot.config import PROCESS_PATH, SOVITS_MODEL_CONFIG
+
     hparams = get_hparams_from_file(SOVITS_MODEL_CONFIG)
-    processed_path = Path(PROCESS_PATH) / "20250410205853575614.e0559cf4.91677d92edfd4ba897d302c48fa8646c"
+    processed_path = Path(PROCESS_PATH) / args.file
     hparams.data.processed_dir = processed_path
     trainer = SoVITsTrainer(hparams=hparams)
     trainer.train(epochs=10)
@@ -529,5 +535,4 @@ if __name__ == '__main__':
     hparams.data.phoneme_path = processed_path / 'text2semantic.json'
     hparams.data.bert_path = processed_path / 'bert'
     trainer = GPTTrainer(hparams=hparams)
-    # print(trainer.hparams)
     trainer.train(epochs=10)

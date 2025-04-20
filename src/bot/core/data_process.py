@@ -206,6 +206,11 @@ class DataProcessor:
 
 if __name__ == '__main__':
     # 示例用法
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('file', type=str, help='processed file name.')
+    args = parser.parse_args()
+
     processor = DataProcessor()
-    results = processor.process('20250416212521743916.69ba5a80.e47c25863b0e4d11831e218672ae51c2')
+    results = processor.process(args.file)
     print(results)

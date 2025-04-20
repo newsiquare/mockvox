@@ -151,4 +151,4 @@ class FeatureExtractor:
 if __name__ == '__main__':
     # 示例用法
     extractor = FeatureExtractor()
-    extractor.extract('20250416212521743916.69ba5a80.e47c25863b0e4d11831e218672ae51c2', denoised=True)
+    extractor.extract('20250410205853575614.e0559cf4.91677d92edfd4ba897d302c48fa8646c', denoised=True)

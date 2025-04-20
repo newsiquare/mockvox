@@ -18,6 +18,7 @@ from bot.utils import (
 from bot.config import (
     PRETRAINED_S2G_FILE, 
     PRETRAINED_S2D_FILE,
+    PRETRAINED_GPT_FILE,
     WEIGHTS_PATH,
     SOVITS_G_WEIGHTS_FILE,
     SOVITS_D_WEIGHTS_FILE,
@@ -46,8 +47,8 @@ from bot.models.AR.nn import ScaledAdam, WarmupCosineLRSchedule
 class GPTTrainer:
     """
     传入超参数(hparams)时，必须具备以下参数:
-        hparams.data.phoneme_path - name2semantic.json 文件的完整路径 
         hparams.data.semantic_path - name2text.json 文件的完整路径
+        hparams.data.phoneme_path - text2semantic.json 文件的完整路径 
         hparams.data.bert_path - bert 子目录  
     """
     def __init__(
@@ -76,6 +77,7 @@ class GPTTrainer:
         )
 
         self.model = Text2SemanticDecoder(self.hparams).to(self.device)
+        self.scaler = GradScaler(enabled=(self.hparams.train.precision=='16-mixed'))
         self.optimizer, self.scheduler = self._configure_optimizers()
 
         self.file_name = Path(self.hparams.data.semantic_path).parent.name
@@ -87,12 +89,76 @@ class GPTTrainer:
         """ 执行训练 """
         epochs = epochs or self.hparams.train.epochs
         # 如果训练过, 尝试加载最后一次模型参数
-        epoch_done = self.resume()
+        epoch_done = self._resume()
+        if not epoch_done:
+            epoch_done = 0
+            self._load_pretrained()
 
-    def _do_train(self):
-        pass
+        saved = False
+        BotLogger.info(f"启动GPT训练 |  路径: {self.file_name} | 时间: {datetime.now().isoformat()}")
+
+        for epoch in range(epoch_done+1, epochs+1):
+            saved=False
+            BotLogger.info(f"训练轮次: {epoch}")
+            self._do_train(epoch)
+            # self.scheduler.step()
+
+            if epoch % self.hparams.train.save_interval == 0:
+                save_checkpoint(
+                    self.model,
+                    self.optimizer,
+                    None,
+                    epoch,
+                    self.gpt_weights_path
+                )
+            saved = True
+        
+        if not saved:
+            save_checkpoint(
+                self.model,
+                self.optimizer,
+                None,
+                epochs,
+                self.gpt_weights_path
+            )
+
+    def _do_train(self, epoch):
+        self.model.train()
+
+        for batch_idx, batch in CustomTQDM(enumerate(self.dataloader)):
+            with autocast(enabled=(self.hparams.train.precision=='16-mixed')):
+                loss, acc = self.model.forward(
+                    batch["phoneme_ids"].to(self.device),
+                    batch["phoneme_ids_len"].to(self.device),
+                    batch["semantic_ids"].to(self.device),
+                    batch["semantic_ids_len"].to(self.device),
+                    batch["bert_feature"].to(self.device)
+                )
+            
+            self.scaler.scale(loss).backward()
+            if batch_idx > 0 and batch_idx % 4 == 0:
+                self.scaler.step(self.optimizer)
+                self.scaler.update()
+                self.optimizer.zero_grad()
+                self.scheduler.step()
     
-    def resume(self):
+    def _load_pretrained(self) -> bool:
+        """ 加载预训练模型 """
+        if not Path(PRETRAINED_GPT_FILE).exists(): return False
+        try:
+            self.model.load_state_dict(
+                torch.load(PRETRAINED_GPT_FILE, map_location='cpu')["weight"],
+                strict=False
+            )
+        except Exception as e:
+            BotLogger.error(
+                f"预训练模型加载异常 | 错误: {str(e)}"
+            )
+            raise RuntimeError("预训练模型加载失败")
+
+        return True
+
+    def _resume(self):
         """Check if resume checkpoint exists"""
         if self.hparams.train.resume:
             if not self.gpt_weights_path.exists(): return None
@@ -140,6 +206,10 @@ class GPTTrainer:
         return optimizer, scheduler
 
 class SoVITsTrainer:
+    """
+    传入超参数(hparams)时，必须具备以下参数:
+        hparams.data.processed_dir - 存放数据处理结果的完整路径 
+    """
     def __init__(
         self,
         hparams,                            # 配置信息
@@ -238,17 +308,17 @@ class SoVITsTrainer:
         """ 执行训练 """
         epochs = epochs or self.hparams.train.epochs
         # 如果训练过, 尝试加载最后一次模型参数
-        epoch_done = self.resume()
+        epoch_done = self._resume()
         if epoch_done:
             for _ in range(epoch_done):
                 self.scheduler_g.step()
                 self.scheduler_d.step()
         else:
             epoch_done=0
-            self.load_pretrained()
+            self._load_pretrained()
 
         saved = False
-        BotLogger.info(f"开启训练 |  路径: {self.file_name} | 时间: {datetime.now().isoformat()}")
+        BotLogger.info(f"启动SoVITs训练 |  路径: {self.file_name} | 时间: {datetime.now().isoformat()}")
         for epoch in range(epoch_done+1, epochs+1):
             saved = False
             BotLogger.info(f"训练轮次: {epoch}")
@@ -386,7 +456,7 @@ class SoVITsTrainer:
             self.scaler.step(self.optim_g)
             self.scaler.update()
 
-    def resume(self):
+    def _resume(self):
         """Check if resume checkpoint exists"""
         if self.hparams.train.resume:
             if not self.generator_weights_path.exists(): return None
@@ -407,7 +477,7 @@ class SoVITsTrainer:
                 return None
         return epoch
 
-    def load_pretrained(self) -> bool:
+    def _load_pretrained(self) -> bool:
         """ 加载预训练模型 """
         if not Path(PRETRAINED_S2G_FILE).exists(): return False
         if not Path(PRETRAINED_S2D_FILE).exists(): return False
@@ -448,7 +518,16 @@ if __name__ == '__main__':
 
     from bot.config import PROCESS_PATH, SOVITS_MODEL_CONFIG
     hparams = get_hparams_from_file(SOVITS_MODEL_CONFIG)
-    processed_path = Path(PROCESS_PATH) / "20250416212521743916.69ba5a80.e47c25863b0e4d11831e218672ae51c2"
+    processed_path = Path(PROCESS_PATH) / "20250410205853575614.e0559cf4.91677d92edfd4ba897d302c48fa8646c"
     hparams.data.processed_dir = processed_path
     trainer = SoVITsTrainer(hparams=hparams)
+    trainer.train(epochs=10)
+
+    from bot.config import GPT_MODEL_CONFIG
+    hparams = get_hparams_from_file(GPT_MODEL_CONFIG)
+    hparams.data.semantic_path = processed_path / 'name2text.json'
+    hparams.data.phoneme_path = processed_path / 'text2semantic.json'
+    hparams.data.bert_path = processed_path / 'bert'
+    trainer = GPTTrainer(hparams=hparams)
+    # print(trainer.hparams)
     trainer.train(epochs=10)

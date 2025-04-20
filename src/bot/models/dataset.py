@@ -21,8 +21,8 @@ class Text2SemanticDataset(torch.utils.data.Dataset):
     def __init__(self, hparams) -> None:
         """ 
         传入的超参数(hparams)中, 必须包含以下参数：
-            phoneme_path - name2semantic.json 文件的完整路径 
             semantic_path - name2text.json 文件的完整路径
+            phoneme_path - name2semantic.json 文件的完整路径 
             bert_path - bert 子目录
             max_sample - 最大样本量. 建议 None
             max_sec - 最大长度(秒). 建议 100
@@ -33,8 +33,8 @@ class Text2SemanticDataset(torch.utils.data.Dataset):
         super().__init__()
         self.hparams = hparams
 
-        assert Path(self.hparams.phoneme_path).exists()
         assert Path(self.hparams.semantic_path).exists()
+        assert Path(self.hparams.phoneme_path).exists()
 
         try:
             with open(self.hparams.semantic_path, 'r', encoding='utf8') as f:
@@ -747,7 +747,7 @@ if __name__ == '__main__':
     from bot.utils import get_hparams_from_file, HParams
 
     hps = get_hparams_from_file(SOVITS_MODEL_CONFIG)
-    processed_path = Path(PROCESS_PATH) / "20250416212521743916.69ba5a80.e47c25863b0e4d11831e218672ae51c2"
+    processed_path = Path(PROCESS_PATH) / "20250410205853575614.e0559cf4.91677d92edfd4ba897d302c48fa8646c"
     hps.data.processed_dir = processed_path
 
     print(f"Test SoVITs training Dataset --------------------------------------------------")

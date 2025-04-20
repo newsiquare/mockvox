@@ -7,7 +7,7 @@ from pathlib import Path
 import torch
 
 from bot.models import SynthesizerTrn
-from bot.config import ASR_PATH, PROCESS_PATH, MODEL_CONFIG_FILE, PRETRAINED_S2G_FILE
+from bot.config import ASR_PATH, PROCESS_PATH, SOVITS_MODEL_CONFIG, PRETRAINED_S2G_FILE
 from bot.utils import get_hparams_from_file, BotLogger
 from bot.core import load_asr_data
 
@@ -16,7 +16,7 @@ class TextToSemantic:
             self,
             device: Optional[str] = None  # 指定计算设备
         ):
-        self.hps = get_hparams_from_file(MODEL_CONFIG_FILE)
+        self.hps = get_hparams_from_file(SOVITS_MODEL_CONFIG)
 
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.vq_model = SynthesizerTrn(
@@ -88,5 +88,5 @@ class TextToSemantic:
 if __name__ == '__main__':
     # 示例用法
     t2s = TextToSemantic()
-    results = t2s.process("20250416212521743916.69ba5a80.e47c25863b0e4d11831e218672ae51c2")
+    results = t2s.process("20250410205853575614.e0559cf4.91677d92edfd4ba897d302c48fa8646c")
     print(results)

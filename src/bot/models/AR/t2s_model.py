@@ -400,6 +400,10 @@ class Text2SemanticDecoder(nn.Module):
         # from feiteng: 每次 duration 越多, 梯度更新也应该更多, 所以用 sum
 
         loss_1 = F.cross_entropy(logits.permute(0, 2, 1), targets, reduction="sum")
+        print("logits 转置之后的shape: ", logits.permute(0,2,1))
+        print("targes shape: ", targets.shape)
+        raise RuntimeError(f"强制中断!")
+
         acc = self.ar_accuracy_metric(logits.permute(0, 2, 1).detach(), targets).item()
 
         A_logits, R_logits = get_batch_logps(logits, reject_logits, targets, reject_targets)

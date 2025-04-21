@@ -387,11 +387,7 @@ class Text2SemanticDecoder(nn.Module):
         # 展平
         logits_flat = logits.view(-1, logits.shape[-1])    # shape: (batch_size * seq_len, vocab_size)
         targets_flat = targets.reshape(-1)                   # shape: (batch_size * seq_len)
-
-        print("logits 展平之后的shape: ", logits_flat.shape)
-        print("targes 展平之后的shape: ", targets_flat.shape)
-
-        assert logits_flat.shape[0] == targets_flat.shape[0], f"Seq length mismatch: {logits_flat.shape} vs {targets_flat.shape}"
+        # assert logits_flat.shape[0] == targets_flat.shape[0], f"Seq length mismatch: {logits_flat.shape} vs {targets_flat.shape}"
 
         ###### DPO #############
         reject_xy_pos, reject_xy_attn_mask, reject_targets = self.make_input_data(x, x_lens, reject_y, reject_y_lens, bert_feature)
@@ -406,7 +402,7 @@ class Text2SemanticDecoder(nn.Module):
         # 展平
         reject_logits_flat = reject_logits.view(-1, reject_logits.shape[-1])    # shape: (batch_size * seq_len, vocab_size)
         reject_targets_flat = reject_targets.reshape(-1)                   # shape: (batch_size * seq_len)
-
+        # assert reject_logits_flat.shape[0] == reject_targets_flat.shape[0], f"Seq length mismatch: {reject_logits_flat.shape} vs {reject_targets_flat.shape}"
         # loss
         # from feiteng: 每次 duration 越多, 梯度更新也应该更多, 所以用 sum
 

@@ -384,7 +384,14 @@ class Text2SemanticDecoder(nn.Module):
         x_len = x_lens.max()
         logits = self.ar_predict_layer(xy_dec[:, x_len:])
 
-        assert logits.shape[1] == targets.shape[1], f"Seq length mismatch: {logits.shape} vs {targets.shape}"
+        # 展平
+        logits_flat = logits.view(-1, logits.shape[-1])    # shape: (batch_size * seq_len, vocab_size)
+        targets_flat = targets.view(-1)                   # shape: (batch_size * seq_len)
+
+        print("logits 展平之后的shape: ", logits_flat.shape)
+        print("targes 展平之后的shape: ", targets_flat.shape)
+
+        assert logits_flat.shape[0] == targets_flat.shape[0], f"Seq length mismatch: {logits_flat.shape} vs {targets_flat.shape}"
 
         ###### DPO #############
         reject_xy_pos, reject_xy_attn_mask, reject_targets = self.make_input_data(x, x_lens, reject_y, reject_y_lens, bert_feature)
@@ -399,11 +406,12 @@ class Text2SemanticDecoder(nn.Module):
         # loss
         # from feiteng: 每次 duration 越多, 梯度更新也应该更多, 所以用 sum
 
-        loss_1 = F.cross_entropy(logits.permute(0, 2, 1), targets, reduction="sum")
-        print("logits 转置之后的shape: ", logits.permute(0,2,1).shape)
-        print("targes shape: ", targets.shape)
-
-        acc = self.ar_accuracy_metric(logits.permute(0, 2, 1).detach(), targets).item()
+        # loss_1 = F.cross_entropy(logits.permute(0, 2, 1), targets, reduction="sum")
+        # acc = self.ar_accuracy_metric(logits.permute(0, 2, 1).detach(), targets).item()
+        
+        # 用展平后的 logits 和 targets 计算交叉熵损失和精度
+        loss_1 = F.cross_entropy(logits_flat, targets_flat, reduction="sum")
+        acc = self.ar_accuracy_metric(logits_flat.detach(), targets_flat).item()
 
         A_logits, R_logits = get_batch_logps(logits, reject_logits, targets, reject_targets)
         loss_2, _, _ = dpo_loss(A_logits, R_logits, 0, 0, 0.2, reference_free=True)

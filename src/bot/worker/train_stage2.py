@@ -8,10 +8,9 @@ from bot.utils import BotLogger
 from bot.core import (
     DataProcessor,
     FeatureExtractor,
-    TextToSemantic,
-    SoVITsTrainer,
-    GPTTrainer
+    TextToSemantic
 )
+from bot.core.train import SoVITsTrainer, GPTTrainer
 from bot.config import (
     PROCESS_PATH,
     SOVITS_MODEL_CONFIG,

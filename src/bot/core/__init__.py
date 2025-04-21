@@ -4,7 +4,6 @@ from .asr import AutoSpeechRecognition, load_asr_data
 from .data_process import DataProcessor
 from .feature_extract import FeatureExtractor
 from .text2semantic import TextToSemantic
-from .train import SoVITsTrainer, GPTTrainer
 
 __all__ = [
     "Slicer", 
@@ -15,6 +14,4 @@ __all__ = [
     "DataProcessor",
     "FeatureExtractor",
     "TextToSemantic",
-    "SoVITsTrainer",
-    "GPTTrainer"
 ]

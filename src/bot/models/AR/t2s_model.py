@@ -400,7 +400,7 @@ class Text2SemanticDecoder(nn.Module):
         # from feiteng: 每次 duration 越多, 梯度更新也应该更多, 所以用 sum
 
         loss_1 = F.cross_entropy(logits.permute(0, 2, 1), targets, reduction="sum")
-        print("logits 转置之后的shape: ", logits.permute(0,2,1))
+        print("logits 转置之后的shape: ", logits.permute(0,2,1).shape)
         print("targes shape: ", targets.shape)
         raise RuntimeError(f"强制中断!")
 

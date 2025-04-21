@@ -75,7 +75,7 @@ class GPTTrainer:
             shuffle=False,
             collate_fn=dataset.collate,
             batch_sampler=sampler,
-            persistent_workers=True,
+            persistent_workers=False,
             prefetch_factor=None
         )
 
@@ -246,7 +246,7 @@ class SoVITsTrainer:
             # pin_memory=True,
             collate_fn=collate_fn,
             batch_sampler=sampler,
-            persistent_workers=True,
+            persistent_workers=False,
             prefetch_factor=None
         )
         

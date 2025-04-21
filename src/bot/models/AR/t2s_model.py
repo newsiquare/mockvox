@@ -386,7 +386,7 @@ class Text2SemanticDecoder(nn.Module):
 
         # 展平
         logits_flat = logits.view(-1, logits.shape[-1])    # shape: (batch_size * seq_len, vocab_size)
-        targets_flat = targets.view(-1)                   # shape: (batch_size * seq_len)
+        targets_flat = targets.reshape(-1)                   # shape: (batch_size * seq_len)
 
         print("logits 展平之后的shape: ", logits_flat.shape)
         print("targes 展平之后的shape: ", targets_flat.shape)
@@ -403,17 +403,21 @@ class Text2SemanticDecoder(nn.Module):
         x_len = x_lens.max()
         reject_logits = self.ar_predict_layer(reject_xy_dec[:, x_len:])
 
+        # 展平
+        reject_logits_flat = reject_logits.view(-1, reject_logits.shape[-1])    # shape: (batch_size * seq_len, vocab_size)
+        reject_targets_flat = reject_targets.reshape(-1)                   # shape: (batch_size * seq_len)
+
         # loss
         # from feiteng: 每次 duration 越多, 梯度更新也应该更多, 所以用 sum
 
         # loss_1 = F.cross_entropy(logits.permute(0, 2, 1), targets, reduction="sum")
         # acc = self.ar_accuracy_metric(logits.permute(0, 2, 1).detach(), targets).item()
-        
+
         # 用展平后的 logits 和 targets 计算交叉熵损失和精度
         loss_1 = F.cross_entropy(logits_flat, targets_flat, reduction="sum")
         acc = self.ar_accuracy_metric(logits_flat.detach(), targets_flat).item()
 
-        A_logits, R_logits = get_batch_logps(logits, reject_logits, targets, reject_targets)
+        A_logits, R_logits = get_batch_logps(logits_flat, reject_logits_flat, targets_flat, reject_targets_flat)
         loss_2, _, _ = dpo_loss(A_logits, R_logits, 0, 0, 0.2, reference_free=True)
         
         loss = loss_1 + loss_2

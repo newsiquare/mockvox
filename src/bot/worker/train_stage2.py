@@ -1,4 +1,5 @@
 import traceback
+import torch
 import torch.multiprocessing as mp
 from pathlib import Path
 from collections import OrderedDict
@@ -43,6 +44,8 @@ def train_task(
         hps_sovits.data.processed_dir = processed_path
         trainer_sovits = SoVITsTrainer(hparams=hps_sovits)
         trainer_sovits.train(epochs=sovits_epochs)
+        del trainer_sovits
+        torch.cuda.empty_cache()
 
         hps_gpt = get_hparams_from_file(GPT_MODEL_CONFIG)
         hps_gpt.data.semantic_path = processed_path / 'name2text.json'
@@ -50,6 +53,8 @@ def train_task(
         hps_gpt.data.bert_path = processed_path / 'bert'
         trainer_gpt = GPTTrainer(hparams=hps_gpt)
         trainer_gpt.train(epochs=gpt_epochs)
+        del trainer_gpt
+        torch.cuda.empty_cache()
 
         sovits_half_weights_path = Path(WEIGHTS_PATH) / file_name / SOVITS_HALF_WEIGHTS_FILE
         gpt_half_weights_path = Path(WEIGHTS_PATH) / file_name / GPT_HALF_WEIGHTS_FILE

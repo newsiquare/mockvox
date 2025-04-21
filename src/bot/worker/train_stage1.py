@@ -199,6 +199,9 @@ def batch_asr(file_list: List[str], output_dir: str):
                 result = asr.speech_recognition(input_path=file)
                 f.writelines(f"{item}\n" for item in result)
                 results.extend(result)
+        
+        del asr_model, punc_model
+        torch.cuda.empty_cache()
         return results
 
     except Exception as e:

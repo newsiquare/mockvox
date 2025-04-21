@@ -23,6 +23,8 @@ PRETRAINED_GPT_FILE = os.path.join(PRETRAINED_PATH, 'AI-ModelScope/GPT-SoVITS/gs
 
 SOVITS_G_WEIGHTS_FILE = 'gen.pth'
 SOVITS_D_WEIGHTS_FILE = 'disc.pth'
+SOVITS_HALF_WEIGHTS_FILE = 'sovits.pth'
+
 GPT_WEIGHTS_FILE = 'gpt.pth'
 
 load_dotenv(BASE_PATH / ".env", override=True)  # 加载.env文件

@@ -12,6 +12,7 @@ from bot.utils import (
     get_hparams_from_file,
     load_checkpoint,
     save_checkpoint,
+    save_checkpoint_half_latest,
     BotLogger,
     CustomTQDM
 )
@@ -22,6 +23,7 @@ from bot.config import (
     WEIGHTS_PATH,
     SOVITS_G_WEIGHTS_FILE,
     SOVITS_D_WEIGHTS_FILE,
+    SOVITS_HALF_WEIGHTS_FILE,
     GPT_WEIGHTS_FILE
 )
 from bot.models import (
@@ -303,6 +305,9 @@ class SoVITsTrainer:
         # 类似 ./data/weights/20250409145258452558.1ed301dd.788fc313bf38482aa63fe2ea09781878/disc.pth
         self.discriminator_weights_path = Path(WEIGHTS_PATH) / self.file_name / SOVITS_D_WEIGHTS_FILE
 
+        # 类似 ./data/weights/20250409145258452558.1ed301dd.788fc313bf38482aa63fe2ea09781878/sovits.pth
+        self.sovits_weights_path = Path(WEIGHTS_PATH) / self.file_name / SOVITS_HALF_WEIGHTS_FILE
+
     def train(self, epochs: Optional[int]=100):
         """ 执行训练 """
         epochs = epochs or self.hparams.train.epochs
@@ -359,9 +364,11 @@ class SoVITsTrainer:
                 self.discriminator_weights_path
             )
         
+        save_checkpoint_half_latest(self.net_g, epochs, self.sovits_weights_path)        
+
         BotLogger.info(
             f"模型训练完成 | 生成器参数: {self.generator_weights_path} | 分类器参数: {self.discriminator_weights_path} | \
-                时间: {datetime.now().isoformat()}"
+                半精度推理模型参数: {self.sovits_weights_path} | 时间: {datetime.now().isoformat()}"
         )
 
     def _do_train(self, epoch):

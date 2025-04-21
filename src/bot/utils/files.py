@@ -4,6 +4,8 @@ from datetime import datetime
 import os
 import json
 import torch
+from collections import OrderedDict
+from io import BytesIO
 from bot.utils import BotLogger
 
 def save_checkpoint(model, optimizer, learning_rate, iteration, checkpoint_path):
@@ -23,6 +25,31 @@ def save_checkpoint(model, optimizer, learning_rate, iteration, checkpoint_path)
             "iteration": iteration,
             "optimizer": optimizer.state_dict(),
             "learning_rate": learning_rate,
+            "date": datetime.now().isoformat(),
+            "author": "联宇创新(Lianyu Co,L.T.D)"
+        },
+        checkpoint_path
+    )
+
+def save_checkpoint_half_latest(model, iteration, checkpoint_path):
+    BotLogger.info(
+        f"Saving latest half model state at iteration {iteration} to {checkpoint_path}"
+    )
+    if hasattr(model, "module"):
+        ckpt = model.module.state_dict()
+    else:
+        ckpt = model.state_dict()
+    
+    half_ckpt = OrderedDict()
+    for key in ckpt.keys():
+        if "enc_q" in key:
+            continue
+        half_ckpt[key] = ckpt[key].half()
+    
+    torch.save(
+        {
+            "weight": half_ckpt,
+            "epoch": iteration,
             "date": datetime.now().isoformat(),
             "author": "联宇创新(Lianyu Co,L.T.D)"
         },

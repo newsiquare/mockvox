@@ -129,7 +129,7 @@ class GPTTrainer:
 
         BotLogger.info(
             f"模型训练完成 | GPT参数: {self.gpt_weights_path} | \
-                半精度推理模型参数: {self.gpt_half_weights_path} | 时间: {datetime.now().isoformat()}"
+                半精度GPT推理参数: {self.gpt_half_weights_path} | 时间: {datetime.now().isoformat()}"
         )
 
     def _do_train(self, epoch):
@@ -376,7 +376,7 @@ class SoVITsTrainer:
 
         BotLogger.info(
             f"模型训练完成 | 生成器参数: {self.generator_weights_path} | 分类器参数: {self.discriminator_weights_path} | \
-                半精度推理模型参数: {self.sovits_weights_path} | 时间: {datetime.now().isoformat()}"
+                半精度SoVITs推理参数: {self.sovits_weights_path} | 时间: {datetime.now().isoformat()}"
         )
 
     def _do_train(self, epoch):

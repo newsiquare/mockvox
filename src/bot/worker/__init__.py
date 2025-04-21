@@ -1,4 +1,5 @@
 from .worker import celeryApp
 from .train_stage1 import process_file_task
+from .train_stage2 import train_task
 
-__all__ = ["celeryApp", "process_file_task"]
+__all__ = ["celeryApp", "process_file_task", "train_task"]

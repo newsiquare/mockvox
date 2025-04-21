@@ -8,7 +8,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from celery.result import AsyncResult
 
 from bot.config import get_config, UPLOAD_PATH
-from bot.worker import celeryApp, process_file_task
+from bot.worker import celeryApp, process_file_task, train_task
 from bot.utils import BotLogger, generate_unique_filename
 
 cfg = get_config()
@@ -48,10 +48,58 @@ def allowed_file(filename: str) -> bool:
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@app.post("/upload",
-         summary="上传语音文件",
-         response_description="返回存储的文件信息",
-         tags=["语音处理"])
+@app.post(
+    "/train",
+    summary="启动训练",
+    response_description="返回任务ID",
+    tags=["模型训练"]
+)
+async def start_train(
+    filename: str = Form(..., description="训练文件名（调用 /upload 上传后返回的文件名"),
+    epochs: int = Form(10, description="训练轮次"),
+    config: str = Form("{}", description="JSON 格式的配置参数")
+):
+    try:
+        # 发送异步任务
+        task = train_task(file_name=filename, ifDenoise=True)
+        # 确保任务对象有效
+        if not isinstance(task, AsyncResult):
+            BotLogger.error(f"Celery训练任务提交异常 | {filename}")
+            raise HTTPException(500, "Celery训练任务提交失败")
+
+        # 记录任务提交日志
+        BotLogger.info(
+            "训练任务已提交",
+            extra={
+                "action": "stage2_task_submitted",
+                "task_id": task.id,
+                "file_name": filename
+            }
+        )
+
+        return {
+            "message": "训练任务已进入处理队列",
+            "file_name": filename,
+            "task_id": task.id
+        }
+
+    except HTTPException as he:
+        raise he
+    
+    except ConnectionError as ce:
+        BotLogger.critical("消息队列连接失败", exc_info=True)
+        raise HTTPException(503, "系统暂时不可用")
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"训练过程错误: {str(e)}")
+
+
+@app.post(
+    "/upload",
+    summary="上传语音文件",
+    response_description="返回存储的文件信息和任务ID",
+    tags=["语音处理"]
+)
 async def upload_audio(file: UploadFile = File(..., description="音频文件，仅支持 WAV 格式")):
     try:
         # 验证文件类型
@@ -87,12 +135,12 @@ async def upload_audio(file: UploadFile = File(..., description="音频文件，
         task = process_file_task.delay(file_name=filename, ifDenoise=True)
         # 确保任务对象有效
         if not isinstance(task, AsyncResult):
-            BotLogger.error(f"Celery任务提交异常 | {filename}")
-            raise HTTPException(500, "Celery任务提交失败")
+            BotLogger.error(f"Celery文件任务提交异常 | {filename}")
+            raise HTTPException(500, "Celery文件任务提交失败")
 
         # 记录任务提交日志
         BotLogger.info(
-            "异步任务已提交",
+            "文件任务已提交",
             extra={
                 "action": "stage1_task_submitted",
                 "task_id": task.id,
@@ -119,7 +167,7 @@ async def upload_audio(file: UploadFile = File(..., description="音频文件，
 # 任务状态查询接口
 @app.get("/tasks/{task_id}",
          summary="获取任务执行结果",
-         response_description="",
+         response_description="返回任务状态",
          tags=[""])
 def get_task_status(task_id: str):
     task = celeryApp.AsyncResult(task_id)
@@ -127,7 +175,6 @@ def get_task_status(task_id: str):
         "task_id": task_id,
         "status": task.result.get("status") if task.ready() else "UNKNOWN",
         "results": task.result.get("results") if task.ready() else None,
-        "path": task.result.get("path") if task.ready() else None,
         "time": task.result.get("time") if task.ready() else None
     }
 

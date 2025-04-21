@@ -8,6 +8,7 @@ from .worker import celeryApp
 from bot.utils import BotLogger
 from typing import List
 from pathlib import Path
+from collections import OrderedDict
 
 cfg = get_config()
 os.makedirs(SLICED_ROOT_PATH, exist_ok=True)
@@ -62,11 +63,14 @@ def process_file_task(self, file_name: str, ifDenoise: bool):
                 "path": asr_path
             }
         )
+
+        results = OrderedDict()
+        results["asr"] = asr_results
+        results["path"] = Path(path_result).name
         
         return {
             "status": "success", 
-            "results": asr_results, 
-            "path": Path(path_result).name,
+            "results": results, 
             "time":time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
         }
     

@@ -15,6 +15,11 @@ class ConditionalFormatter(logging.Formatter):
             '[action=%(action)s] [task_id=%(task_id)s] '
             '[file_name=%(file_name)s] - %(message)s'
         ),
+        "stage2_task_submitted": (
+            '%(asctime)s - %(name)s - %(levelname)s - '
+            '[action=%(action)s] [task_id=%(task_id)s] '
+            '[file_name=%(file_name)s] - %(message)s'
+        ),
         "file_sliced": (
             '%(asctime)s - %(name)s - %(levelname)s - '
             '[action=%(action)s] [task_id=%(task_id)s] '

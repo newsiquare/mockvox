@@ -124,15 +124,15 @@ class GPTTrainer:
 
     def _do_train(self, epoch):
         self.model.train()
-
         for batch_idx, batch in CustomTQDM(enumerate(self.dataloader)):
+            batch = {k: v.to(self.device) for k, v in batch.items()}
             with autocast(enabled=(self.hparams.train.precision=='16-mixed')):
                 loss, acc = self.model.forward(
-                    batch["phoneme_ids"].to(self.device),
-                    batch["phoneme_ids_len"].to(self.device),
-                    batch["semantic_ids"].to(self.device),
-                    batch["semantic_ids_len"].to(self.device),
-                    batch["bert_feature"].to(self.device)
+                    batch["phoneme_ids"],
+                    batch["phoneme_ids_len"],
+                    batch["semantic_ids"],
+                    batch["semantic_ids_len"],
+                    batch["bert_feature"]
                 )
             
             self.scaler.scale(loss).backward()

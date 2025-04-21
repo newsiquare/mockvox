@@ -56,12 +56,18 @@ def allowed_file(filename: str) -> bool:
 )
 async def start_train(
     filename: str = Form(..., description="训练文件名（调用 /upload 上传后返回的文件名"),
-    epochs: int = Form(10, description="训练轮次"),
+    epochs_sovits: int = Form(10, description="SoVITs训练轮次"),
+    epochs_gpt: int = Form(10, description="GPT训练轮次"),
     config: str = Form("{}", description="JSON 格式的配置参数")
 ):
     try:
         # 发送异步任务
-        task = train_task(file_name=filename, ifDenoise=True)
+        task = train_task(
+            file_name=filename,
+            sovits_epochs=epochs_sovits,
+            gpt_epochs=epochs_gpt, 
+            ifDenoise=True
+        )
         # 确保任务对象有效
         if not isinstance(task, AsyncResult):
             BotLogger.error(f"Celery训练任务提交异常 | {filename}")

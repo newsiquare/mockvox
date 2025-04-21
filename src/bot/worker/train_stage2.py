@@ -22,7 +22,13 @@ from bot.config import (
 from bot.utils import get_hparams_from_file
 
 @celeryApp.task(name="train_stage2", bind=True)
-def train_task(self, file_name: str, ifDenoise: bool):
+def train_task(
+    self, 
+    file_name: str, 
+    sovits_epochs: int,
+    gpt_epochs: int,
+    ifDenoise: bool
+):
     try:
         processor = DataProcessor()
         processor.process(file_name)
@@ -36,14 +42,14 @@ def train_task(self, file_name: str, ifDenoise: bool):
         processed_path = Path(PROCESS_PATH) / file_name
         hps_sovits.data.processed_dir = processed_path
         trainer_sovits = SoVITsTrainer(hparams=hps_sovits)
-        trainer.train(epochs=10)
+        trainer.train(epochs=sovits_epochs)
 
         hps_gpt = get_hparams_from_file(GPT_MODEL_CONFIG)
         hps_gpt.data.semantic_path = processed_path / 'name2text.json'
         hps_gpt.data.phoneme_path = processed_path / 'text2semantic.json'
         hps_gpt.data.bert_path = processed_path / 'bert'
         trainer_gpt = GPTTrainer(hparams=hps_gpt)
-        trainer_gpt.train(epochs=10)
+        trainer_gpt.train(epochs=gpt_epochs)
 
         sovits_half_weights_path = Path(WEIGHTS_PATH) / file_name / SOVITS_HALF_WEIGHTS_FILE
         gpt_half_weights_path = Path(WEIGHTS_PATH) / file_name / GPT_HALF_WEIGHTS_FILE

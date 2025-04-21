@@ -24,7 +24,8 @@ from bot.config import (
     SOVITS_G_WEIGHTS_FILE,
     SOVITS_D_WEIGHTS_FILE,
     SOVITS_HALF_WEIGHTS_FILE,
-    GPT_WEIGHTS_FILE
+    GPT_WEIGHTS_FILE,
+    GPT_HALF_WEIGHTS_FILE
 )
 from bot.models import (
     TextAudioSpeakerLoader, 
@@ -86,6 +87,7 @@ class GPTTrainer:
         (Path(WEIGHTS_PATH) / self.file_name).mkdir(parents=True, exist_ok=True)
         # 类似 ./data/weights/20250409145258452558.1ed301dd.788fc313bf38482aa63fe2ea09781878/gpt.pth
         self.gpt_weights_path = Path(WEIGHTS_PATH) / self.file_name / GPT_WEIGHTS_FILE
+        self.gpt_half_weights_path = Path(WEIGHTS_PATH) / self.file_name / GPT_HALF_WEIGHTS_FILE
 
     def train(self, epochs: Optional[int]=100):
         """ 执行训练 """
@@ -123,6 +125,12 @@ class GPTTrainer:
                 epochs,
                 self.gpt_weights_path
             )
+        save_checkpoint_half_latest(self.model, epochs, self.gpt_half_weights_path)        
+
+        BotLogger.info(
+            f"模型训练完成 | GPT参数: {self.gpt_weights_path} | \
+                半精度推理模型参数: {self.gpt_half_weights_path} | 时间: {datetime.now().isoformat()}"
+        )
 
     def _do_train(self, epoch):
         self.model.train()

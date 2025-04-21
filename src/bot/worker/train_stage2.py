@@ -56,8 +56,8 @@ def train_task(
         gpt_half_weights_path = Path(WEIGHTS_PATH) / file_name / GPT_HALF_WEIGHTS_FILE
 
         results = OrderedDict()
-        results["SoVITs Weight"] = sovits_half_weights_path
-        results["GPT Weight"] = gpt_half_weights_path
+        results["SoVITs Weight"] = Path(sovits_half_weights_path).name
+        results["GPT Weight"] = Path(gpt_half_weights_path).name
         return {
             "status": "success",
             "results": results,

@@ -742,12 +742,18 @@ class SoVITsBucketSampler(torch.utils.data.Sampler):
         return self.total_batches
 
 if __name__ == '__main__':
+    # 示例用法
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('file', type=str, help='processed file name.')
+    args = parser.parse_args()
+
     from bot.config import SOVITS_MODEL_CONFIG, PROCESS_PATH
     from torch.utils.data import DataLoader
     from bot.utils import get_hparams_from_file, HParams
 
     hps = get_hparams_from_file(SOVITS_MODEL_CONFIG)
-    processed_path = Path(PROCESS_PATH) / "20250410205853575614.e0559cf4.91677d92edfd4ba897d302c48fa8646c"
+    processed_path = Path(PROCESS_PATH) / args.file
     hps.data.processed_dir = processed_path
 
     print(f"Test SoVITs training Dataset --------------------------------------------------")

@@ -185,9 +185,23 @@ def get_batch_logps(logits_target: torch.FloatTensor, logits_reject: torch.Float
 
     # dummy token; we'll ignore the losses on these tokens later
 
-    per_token_logps_target = torch.gather(logits_target.log_softmax(-1), dim=2, index=labels_target.unsqueeze(2)).squeeze(2)
-    per_token_logps_reject = torch.gather(logits_reject.log_softmax(-1), dim=2, index=labels_reject.unsqueeze(2)).squeeze(2)
-
+    # per_token_logps_target = torch.gather(logits_target.log_softmax(-1), dim=2, index=labels_target.unsqueeze(2)).squeeze(2)
+    # per_token_logps_reject = torch.gather(logits_reject.log_softmax(-1), dim=2, index=labels_reject.unsqueeze(2)).squeeze(2)
+    # return per_token_logps_target.sum(-1), per_token_logps_reject.sum(-1)
+    
+    # 修正后的 gather 操作
+    per_token_logps_target = torch.gather(
+        logits_target.log_softmax(-1), 
+        dim=1,  # 维度修正为 1
+        index=labels_target.unsqueeze(1)  # 索引维度修正为 1
+    ).squeeze(1)  # 形状变为 [batch_size*seq_len]
+    
+    per_token_logps_reject = torch.gather(
+        logits_reject.log_softmax(-1), 
+        dim=1,  # 同上
+        index=labels_reject.unsqueeze(1)
+    ).squeeze(1)
+    
     return per_token_logps_target.sum(-1), per_token_logps_reject.sum(-1)
 
 def make_reject_y(y_o, y_lens):

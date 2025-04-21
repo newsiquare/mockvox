@@ -76,7 +76,7 @@ class GPTTrainer:
             collate_fn=dataset.collate,
             batch_sampler=sampler,
             persistent_workers=True,
-            prefetch_factor=8
+            prefetch_factor=None
         )
 
         self.model = Text2SemanticDecoder(self.hparams).to(self.device)
@@ -247,7 +247,7 @@ class SoVITsTrainer:
             collate_fn=collate_fn,
             batch_sampler=sampler,
             persistent_workers=True,
-            prefetch_factor=2
+            prefetch_factor=None
         )
         
         # SoVITs Generator

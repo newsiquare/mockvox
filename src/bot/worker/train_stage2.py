@@ -43,7 +43,7 @@ def train_task(
         processed_path = Path(PROCESS_PATH) / file_name
         hps_sovits.data.processed_dir = processed_path
         trainer_sovits = SoVITsTrainer(hparams=hps_sovits)
-        trainer.train(epochs=sovits_epochs)
+        trainer_sovits.train(epochs=sovits_epochs)
 
         hps_gpt = get_hparams_from_file(GPT_MODEL_CONFIG)
         hps_gpt.data.semantic_path = processed_path / 'name2text.json'

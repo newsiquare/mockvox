@@ -384,6 +384,8 @@ class Text2SemanticDecoder(nn.Module):
         x_len = x_lens.max()
         logits = self.ar_predict_layer(xy_dec[:, x_len:])
 
+        assert logits.shape[1] == targets.shape[1], f"Seq length mismatch: {logits.shape} vs {targets.shape}"
+
         ###### DPO #############
         reject_xy_pos, reject_xy_attn_mask, reject_targets = self.make_input_data(x, x_lens, reject_y, reject_y_lens, bert_feature)
 

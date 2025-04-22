@@ -2,6 +2,7 @@ import os, traceback
 import numpy as np
 import time
 from scipy.io import wavfile
+import torch
 from bot.config import get_config, PRETRAINED_PATH, UPLOAD_PATH, SLICED_ROOT_PATH, DENOISED_ROOT_PATH, ASR_PATH
 from bot.core import Slicer, load_audio, AudioDenoiser, AutoSpeechRecognition
 from .worker import celeryApp

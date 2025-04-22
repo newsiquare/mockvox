@@ -49,6 +49,18 @@ def allowed_file(filename: str) -> bool:
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.post(
+    "/revision",
+    summary="ASR校对",
+    response_description="保存成功标志",
+    tags=["ASR结果校对"]
+)
+async def asr_revision(
+    filename: str = Form(..., description="文件名（调用 /upload 上传后返回的文件名"),
+    results: str = Form("{}", description="JSON格式的校对结果")
+):
+    pass
+
+@app.post(
     "/train",
     summary="启动训练",
     response_description="返回任务ID",

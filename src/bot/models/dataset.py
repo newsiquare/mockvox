@@ -111,6 +111,7 @@ class Text2SemanticDataset(torch.utils.data.Dataset):
 
         # 数据增强：当有效数据不足时复制样本
         min_num = 100
+        copies = 1
         current_len = len(self.semantic_phoneme)
         if current_len < min_num and current_len > 0:
             copies = max(2, min_num // current_len)

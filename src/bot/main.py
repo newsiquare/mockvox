@@ -6,8 +6,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from celery.result import AsyncResult
+import json
+from pathlib import Path
 
-from bot.config import get_config, UPLOAD_PATH
+from bot.config import get_config, UPLOAD_PATH, DENOISED_ROOT_PATH, SLICED_ROOT_PATH, ASR_PATH
 from bot.worker import celeryApp, process_file_task, train_task
 from bot.utils import BotLogger, generate_unique_filename
 
@@ -55,10 +57,51 @@ def allowed_file(filename: str) -> bool:
     tags=["ASR结果校对"]
 )
 async def asr_revision(
-    filename: str = Form(..., description="文件名（调用 /upload 上传后返回的文件名"),
+    filename: str = Form(..., description="文件名（调用 /upload 上传后返回的文件名, 无后缀名"),
     results: str = Form("{}", description="JSON格式的校对结果")
 ):
-    pass
+    results_list = json.loads(results)
+    wav_root = DENOISED_ROOT_PATH if denoised else SLICED_ROOT_PATH
+    wav_root = Path(wav_root) / filename
+    asr_path = Path(ASR_PATH) / filename / 'output.txt'
+
+    try:
+        if not isinstance(results_list, list):
+            raise HTTPException(
+                status_code=422,
+                detail="Invalid format: results should be a JSON array"
+            )
+
+        for item in results_list:
+            if not isinstance(item, dict):
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Invalid item format: expected dict, got {type(item)}"
+                )
+                
+            if "key" not in item or "text" not in item:
+                raise HTTPException(
+                    status_code=422,
+                    detail="Invalid item: missing 'key' or 'text' field"
+                )
+
+            wav_path = wav_root / f"{item['key']}.wav"
+            if not wav_path.exists():
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Audio file not found: {item['key']}.wav"
+                )
+
+        with open(asr_path, "w", encoding="utf-8") as f:
+            json.dump(results_list, f, ensure_ascii=False, indent=2)
+            
+        return {"success": True, "message": "ASR revision saved successfully"}
+        
+    except json.JSONDecodeError:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid JSON format in results parameter"
+        )
 
 @app.post(
     "/train",
@@ -67,9 +110,10 @@ async def asr_revision(
     tags=["模型训练"]
 )
 async def start_train(
-    filename: str = Form(..., description="训练文件名（调用 /upload 上传后返回的文件名"),
+    filename: str = Form(..., description="训练文件名（调用 /upload 上传后返回的文件名, 无后缀名"),
     epochs_sovits: int = Form(10, description="SoVITs训练轮次"),
     epochs_gpt: int = Form(10, description="GPT训练轮次"),
+    denoised: bool = Fomr(True, description="是否已降噪"),
     config: str = Form("{}", description="JSON 格式的配置参数")
 ):
     try:
@@ -78,7 +122,7 @@ async def start_train(
             file_name=filename,
             sovits_epochs=epochs_sovits,
             gpt_epochs=epochs_gpt, 
-            ifDenoise=True
+            ifDenoise=denoised
         )
         # 确保任务对象有效
         if not isinstance(task, AsyncResult):

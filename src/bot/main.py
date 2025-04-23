@@ -113,7 +113,7 @@ async def start_train(
     filename: str = Form(..., description="训练文件名（调用 /upload 上传后返回的文件名, 无后缀名"),
     epochs_sovits: int = Form(10, description="SoVITs训练轮次"),
     epochs_gpt: int = Form(10, description="GPT训练轮次"),
-    denoised: bool = Fomr(True, description="是否已降噪"),
+    denoised: bool = Form(True, description="是否已降噪"),
     config: str = Form("{}", description="JSON 格式的配置参数")
 ):
     try:

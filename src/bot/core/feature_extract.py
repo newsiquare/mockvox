@@ -71,8 +71,7 @@ class FeatureExtractor:
         wav32_dir.mkdir(parents=True, exist_ok=True)
 
         # 处理ASR结果
-        asr_file = asr_dir / 'output.json'
-        for line in load_asr_data(str(asr_file)):
+        for line in load_asr_data(asr_dir):
             wav_file = wav_dir / f"{line['key']}.wav"
             if not wav_file.exists():
                 BotLogger.warning(f"音频文件不存在: {wav_file}")

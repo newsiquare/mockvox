@@ -4,7 +4,8 @@
 """
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from typing import Optional, List
+from typing import Optional, List, Union
+from pathlib import Path
 import torch
 import json
 from bot.utils import BotLogger
@@ -60,12 +61,13 @@ class AutoSpeechRecognition:
 
         return asr_result
     
-def load_asr_data(asr_file: str) -> List[dict]:
+def load_asr_data(asr_dir: Union[str,Path]) -> List[dict]:
     """
     解析ASR识别结果文件
     返回格式: [{"key": "文件名", "text": "识别文本"}, ...]
     """
     result = []
+    asr_file = Path(asr_dir) / 'output.json'
     try:
         with open(asr_file, 'r', encoding='utf-8') as f:
             result = json.load(f)

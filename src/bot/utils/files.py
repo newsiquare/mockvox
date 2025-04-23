@@ -31,7 +31,7 @@ def save_checkpoint(model, optimizer, learning_rate, iteration, checkpoint_path)
         checkpoint_path
     )
 
-def save_checkpoint_half_latest(model, iteration, checkpoint_path):
+def save_checkpoint_half_latest(model, hps, iteration, checkpoint_path):
     BotLogger.info(
         f"Saving latest half model state at iteration {iteration} to {checkpoint_path}"
     )
@@ -49,6 +49,7 @@ def save_checkpoint_half_latest(model, iteration, checkpoint_path):
     torch.save(
         {
             "weight": half_ckpt,
+            "config": hps,
             "epoch": iteration,
             "date": datetime.now().isoformat(),
             "author": "联宇创新(Lianyu Co,L.T.D)"

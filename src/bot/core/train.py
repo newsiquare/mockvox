@@ -125,7 +125,7 @@ class GPTTrainer:
                 epochs,
                 self.gpt_weights_path
             )
-        save_checkpoint_half_latest(self.model, epochs, self.gpt_half_weights_path)        
+        save_checkpoint_half_latest(self.model, self.hparams, epochs, self.gpt_half_weights_path)        
 
         BotLogger.info(
             f"模型训练完成 | GPT参数: {self.gpt_weights_path} | \
@@ -372,7 +372,7 @@ class SoVITsTrainer:
                 self.discriminator_weights_path
             )
         
-        save_checkpoint_half_latest(self.net_g, epochs, self.sovits_weights_path)        
+        save_checkpoint_half_latest(self.net_g, self.hparams, epochs, self.sovits_weights_path)        
 
         BotLogger.info(
             f"模型训练完成 | 生成器参数: {self.generator_weights_path} | 分类器参数: {self.discriminator_weights_path} | \

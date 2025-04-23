@@ -79,7 +79,7 @@ class DataProcessor:
             return None  
 
         # 加载ASR数据
-        asr_file = os.path.join(asr_dir, 'output.txt')
+        asr_file = os.path.join(asr_dir, 'output.json')
         lines = load_asr_data(asr_file)
         
         # 逐条处理数据

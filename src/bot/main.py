@@ -58,7 +58,8 @@ def allowed_file(filename: str) -> bool:
 )
 async def asr_revision(
     filename: str = Form(..., description="文件名（调用 /upload 上传后返回的文件名, 无后缀名"),
-    results: str = Form("{}", description="JSON格式的校对结果")
+    results: str = Form("{}", description="JSON格式的校对结果"),
+    denoised: bool = Form(True, description="是否已降噪")
 ):
     results_list = json.loads(results)
     wav_root = DENOISED_ROOT_PATH if denoised else SLICED_ROOT_PATH

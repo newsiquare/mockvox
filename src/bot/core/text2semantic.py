@@ -56,7 +56,7 @@ class TextToSemantic:
         hubert_dir = processed_dir / "cnhubert"
 
         # 处理文本转语义
-        asr_file = asr_dir / 'output.txt'
+        asr_file = asr_dir / 'output.json'
         for line in load_asr_data(str(asr_file)):
             hubert_file = hubert_dir / f"{line['key']}.pt"
             if not hubert_file.exists():

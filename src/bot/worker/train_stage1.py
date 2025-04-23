@@ -10,6 +10,7 @@ from bot.utils import BotLogger
 from typing import List
 from pathlib import Path
 from collections import OrderedDict
+import json
 
 cfg = get_config()
 os.makedirs(SLICED_ROOT_PATH, exist_ok=True)
@@ -192,14 +193,15 @@ def batch_asr(file_list: List[str], output_dir: str):
 
         asr = AutoSpeechRecognition(asr_model_name=asr_model, punc_model_name=punc_model)
         Path(output_dir).mkdir(parents=True, exist_ok=True)
-        output_file = os.path.join(output_dir, "output.txt")
+        output_file = os.path.join(output_dir, "output.json")
 
         results = []
+        for file in file_list:
+            result = asr.speech_recognition(input_path=file)
+            results.extend(result)
+        
         with open(output_file, 'w', encoding='utf-8') as f:
-            for file in file_list:
-                result = asr.speech_recognition(input_path=file)
-                f.writelines(f"{item}\n" for item in result)
-                results.extend(result)
+            json.dump(results, f, ensure_ascii=False, indent=2)
         
         del asr_model, punc_model
         torch.cuda.empty_cache()

@@ -64,7 +64,7 @@ async def asr_revision(
     results_list = json.loads(results)
     wav_root = DENOISED_ROOT_PATH if denoised else SLICED_ROOT_PATH
     wav_root = Path(wav_root) / filename
-    asr_path = Path(ASR_PATH) / filename / 'output.txt'
+    asr_path = Path(ASR_PATH) / filename / 'output.json'
 
     try:
         if not isinstance(results_list, list):

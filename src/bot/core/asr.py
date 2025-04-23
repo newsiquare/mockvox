@@ -6,7 +6,7 @@ from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from typing import Optional, List
 import torch
-import ast
+import json
 from bot.utils import BotLogger
 
 class AutoSpeechRecognition:
@@ -68,14 +68,9 @@ def load_asr_data(asr_file: str) -> List[dict]:
     result = []
     try:
         with open(asr_file, 'r', encoding='utf-8') as f:
-            for line_num, line in enumerate(f, 1):
-                cleaned_line = line.strip()
-                if not cleaned_line:
-                    continue
-                try:
-                    result.append(ast.literal_eval(cleaned_line))
-                except (SyntaxError, ValueError) as e:
-                    BotLogger.error(f"ASR文件格式错误 行号:{line_num} 内容:{cleaned_line} 错误:{str(e)}")
+            result = json.load(f)
+    except (SyntaxError, ValueError) as e:
+        BotLogger.error(f"ASR文件格式错误: {str(e)}")
     except FileNotFoundError:
         BotLogger.error(f"ASR文件不存在: {asr_file}")
     return result

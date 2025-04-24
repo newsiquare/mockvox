@@ -28,7 +28,7 @@ from bot.config import (
     GPT_HALF_WEIGHTS_FILE
 )
 from bot.models import (
-    TextAudioSpeakerLoader, 
+    TextAudioSpeakerDataset, 
     TextAudioSpeakerCollate, 
     SoVITsBucketSampler,
     Text2SemanticDataset,
@@ -227,7 +227,7 @@ class SoVITsTrainer:
         self.hparams = hparams
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
-        dataset = TextAudioSpeakerLoader(self.hparams.data)
+        dataset = TextAudioSpeakerDataset(self.hparams.data)
         sampler = SoVITsBucketSampler(
             dataset, 
             batch_size=self.hparams.train.batch_size,

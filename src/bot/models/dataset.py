@@ -302,7 +302,7 @@ class GPTBucketSampler(torch.utils.data.Sampler):
         """设置随机种子 (保持API兼容性)"""
         self.seed = epoch
 
-class TextAudioSpeakerLoader(torch.utils.data.Dataset):
+class TextAudioSpeakerDataset(torch.utils.data.Dataset):
     """
     1) loads audio, speaker_id, text pairs
     2) normalizes text and converts them to sequences of integers
@@ -502,9 +502,9 @@ class TextAudioSpeakerCollate:
         # 检查维度一致性
         for x in sorted_batch:
             assert x[0].size(1) == ssl_feat_dim, \
-                f"SSL特征维度不一致！样本维度：{x[0].size()}"
+                f"SSL特征维度不一致! 样本维度: {x[0].size()}"
             assert x[1].size(0) == spec_feat_dim, \
-                f"频谱特征维度不一致！样本维度：{x[1].size()}"
+                f"频谱特征维度不一致! 样本维度: {x[1].size()}"
 
         # 计算各特征最大时间步（保持偶数）
         def get_even_max(feature_idx, time_dim):
@@ -759,7 +759,7 @@ if __name__ == '__main__':
 
     print(f"Test SoVITs training Dataset --------------------------------------------------")
     _device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    dataset = TextAudioSpeakerLoader(hps.data)
+    dataset = TextAudioSpeakerDataset(hps.data)
     collate_fn = TextAudioSpeakerCollate(_device)
     dataloader = DataLoader(dataset=dataset, collate_fn=collate_fn, batch_size=4)
     for batch_idx, (
@@ -800,8 +800,8 @@ if __name__ == '__main__':
         shuffle=False,
         collate_fn=dataset_GPT.collate,
         batch_sampler=sampler,
-        persistent_workers=True,
-        prefetch_factor=8
+        persistent_workers=False,
+        prefetch_factor=None
     )
     for idx, batch in enumerate(dataloader_GPT):
         print("batch : ", batch)

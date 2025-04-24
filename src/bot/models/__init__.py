@@ -10,7 +10,7 @@ from .SynthesizerTrn import SynthesizerTrn
 from .MultiPeriodDiscriminator import MultiPeriodDiscriminator
 from .mel import spectrogram_torch, spec_to_mel_torch, mel_spectrogram_torch
 from .dataset import (
-    TextAudioSpeakerLoader, 
+    TextAudioSpeakerDataset, 
     TextAudioSpeakerCollate, 
     SoVITsBucketSampler,
     Text2SemanticDataset,
@@ -32,7 +32,7 @@ __all__ = [
     "kl_loss",
 
     # 数据集
-    "TextAudioSpeakerLoader",
+    "TextAudioSpeakerDataset",
     "TextAudioSpeakerCollate",
     "SoVITsBucketSampler",
     "Text2SemanticDataset",

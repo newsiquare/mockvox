@@ -27,14 +27,14 @@ generate_password() {
 
 # 验证目录结构
 validate_paths() {
-  [ -f "$REDIS_CONF_TEMPLATE" ] || { echo "缺少Redis模板文件！"; exit 1; }
+  [ -f "$REDIS_CONF_TEMPLATE" ] || { echo "缺少Redis模板文件!"; exit 1; }
   mkdir -p "$REDIS_DATA_PATH"
   chmod 700 "$REDIS_DATA_PATH"
 }
 
 # 加载环境变量
 load_env() {
-  [ -f "$ENV_FILE" ] || { echo "缺少.env文件！"; exit 1; }
+  [ -f "$ENV_FILE" ] || { echo "缺少.env文件!"; exit 1; }
   export $(grep -v '^#' "$ENV_FILE" | xargs) >/dev/null 2>&1 || true
 }
 
@@ -66,7 +66,7 @@ main() {
     redis:7.0-alpine \
     sh -c "apk add gettext && envsubst < /app/redis.conf.template > /app/redis.conf && redis-server /app/redis.conf"
 
-  echo "Redis服务已启动！"
+  echo "Redis服务已启动!"
   echo "连接命令:"
   echo "docker exec -it bot-redis redis-cli -h 127.0.0.1 -p ${REDIS_PORT} -a $REDIS_PASSWORD"
 }

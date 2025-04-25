@@ -116,7 +116,7 @@ class GPTTrainer:
                     epoch,
                     self.gpt_weights_path
                 )
-            saved = True
+                saved = True
         
         if not saved:
             save_checkpoint(

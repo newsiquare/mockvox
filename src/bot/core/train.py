@@ -157,8 +157,14 @@ class GPTTrainer:
         """ 加载预训练模型 """
         if not Path(PRETRAINED_GPT_FILE).exists(): return False
         try:
+            ckpt = torch.load(
+                PRETRAINED_GPT_FILE, 
+                map_location="cpu",
+                weights_only=False
+            )
+            ckpt = {k.replace("model.", ""): v for k,v in ckpt["weight"].items()}
             self.model.load_state_dict(
-                torch.load(PRETRAINED_GPT_FILE, map_location='cpu')["weight"],
+                ckpt,
                 strict=False
             )
         except Exception as e:

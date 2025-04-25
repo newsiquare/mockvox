@@ -99,6 +99,7 @@ class GPTTrainer:
             self._load_pretrained()
         elif epochs<=epoch_done:
             BotLogger.info(f"GPT已训练轮次 {epoch_done} >= {epochs}, 训练终止.")
+            return
 
         saved = False
         BotLogger.info(f"启动GPT训练 |  路径: {self.file_name} | 时间: {datetime.now().isoformat()}")
@@ -341,6 +342,7 @@ class SoVITsTrainer:
 
         if epochs<=epoch_done:
             BotLogger.info(f"SoVITs已训练轮次 {epoch_done} >= {epochs}, 训练终止.")
+            return
 
         saved = False
         BotLogger.info(f"启动SoVITs训练 |  路径: {self.file_name} | 时间: {datetime.now().isoformat()}")

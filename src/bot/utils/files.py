@@ -8,7 +8,7 @@ from collections import OrderedDict
 from io import BytesIO
 from bot.utils import BotLogger
 
-def save_checkpoint(model, optimizer, learning_rate, iteration, checkpoint_path):
+def save_checkpoint(model, hps, optimizer, learning_rate, iteration, checkpoint_path):
     BotLogger.info(
         "Saving model and optimizer state at iteration {} to {}".format(
             iteration, checkpoint_path
@@ -22,6 +22,7 @@ def save_checkpoint(model, optimizer, learning_rate, iteration, checkpoint_path)
     torch.save(
         {
             "model": state_dict,
+            "config": hps,
             "iteration": iteration,
             "optimizer": optimizer.state_dict(),
             "learning_rate": learning_rate,

@@ -110,6 +110,7 @@ class GPTTrainer:
             if epoch % self.hparams.train.save_interval == 0:
                 save_checkpoint(
                     self.model,
+                    self.hparams,
                     self.optimizer,
                     None,
                     epoch,
@@ -120,6 +121,7 @@ class GPTTrainer:
         if not saved:
             save_checkpoint(
                 self.model,
+                self.hparams,
                 self.optimizer,
                 None,
                 epochs,
@@ -341,6 +343,7 @@ class SoVITsTrainer:
             if epoch % self.hparams.train.save_interval == 0:
                 save_checkpoint(
                     self.net_g,
+                    self.hparams,
                     self.optim_g,
                     self.hparams.train.learning_rate,
                     epoch,
@@ -348,6 +351,7 @@ class SoVITsTrainer:
                 )
                 save_checkpoint(
                     self.net_d,
+                    self.hparams,
                     self.optim_d,
                     self.hparams.train.learning_rate,
                     epoch,
@@ -359,6 +363,7 @@ class SoVITsTrainer:
         if not saved:
             save_checkpoint(
                 self.net_g,
+                self.hparams,
                 self.optim_g,
                 self.hparams.train.learning_rate,
                 epochs,
@@ -366,6 +371,7 @@ class SoVITsTrainer:
             )
             save_checkpoint(
                 self.net_d,
+                self.hparams,
                 self.optim_d,
                 self.hparams.train.learning_rate,
                 epochs,

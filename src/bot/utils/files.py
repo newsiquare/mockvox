@@ -5,6 +5,7 @@ import os
 import json
 import copy
 import torch
+from pathlib import Path
 from collections import OrderedDict
 from io import BytesIO
 from bot.utils import BotLogger
@@ -114,11 +115,13 @@ class HParams:
         return self.__dict__.values()
 
     def __getstate__(self):
-        # 序列化时将所有嵌套的 HParams 转换为字典
+        # 序列化时将 Path 转换为字符串，并处理嵌套 HParams
         state = copy.deepcopy(self.__dict__)
         for k, v in state.items():
-            if isinstance(v, HParams):
-                state[k] = v.__dict__  # 递归转换为字典
+            if isinstance(v, Path):
+                state[k] = str(v)  # Path -> 字符串
+            elif isinstance(v, HParams):
+                state[k] = v.__getstate__()  # 递归处理嵌套 HParams
         return state
 
     def __setstate__(self, state):

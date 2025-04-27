@@ -3,6 +3,7 @@ from hashlib import md5
 from datetime import datetime
 import os
 import json
+import copy
 import torch
 from collections import OrderedDict
 from io import BytesIO
@@ -126,7 +127,7 @@ class HParams:
             if isinstance(v, dict):
                 state[k] = HParams(**v)
         self.__dict__.update(state)
-        
+
     def __len__(self):
         return len(self.__dict__)
 

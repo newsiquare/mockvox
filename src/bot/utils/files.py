@@ -4,10 +4,10 @@ from datetime import datetime
 import os
 import json
 import copy
-import torch
-from pathlib import Path
+from pathlib import Path, PosixPath
 from collections import OrderedDict
 from io import BytesIO
+import torch
 from bot.utils import BotLogger
 
 def save_checkpoint(model, hps, optimizer, learning_rate, iteration, checkpoint_path):
@@ -24,7 +24,7 @@ def save_checkpoint(model, hps, optimizer, learning_rate, iteration, checkpoint_
     torch.save(
         {
             "model": state_dict,
-            "config": hps,
+            "config": hps.as_dict(),
             "iteration": iteration,
             "optimizer": optimizer.state_dict(),
             "learning_rate": learning_rate,
@@ -52,7 +52,7 @@ def save_checkpoint_half_latest(model, hps, iteration, checkpoint_path):
     torch.save(
         {
             "weight": half_ckpt,
-            "config": hps,
+            "config": hps.as_dict(),
             "epoch": iteration,
             "date": datetime.now().isoformat(),
             "author": "联宇创新(Lianyu Co,L.T.D)"
@@ -101,9 +101,20 @@ def load_checkpoint(checkpoint_path, model, optimizer=None, skip_optimizer=False
 class HParams:
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
-            if type(v) == dict:
+            if isinstance(v, dict):
                 v = HParams(**v)
             self[k] = v
+
+    def __setitem__(self, key, value):
+        if isinstance(value, dict):
+            value = HParams(**value)
+        setattr(self, key, value)
+
+    def __getitem__(self, key):
+        return getattr(self, key)
+
+    def __contains__(self, key):
+        return hasattr(self, key)
 
     def keys(self):
         return self.__dict__.keys()
@@ -114,37 +125,41 @@ class HParams:
     def values(self):
         return self.__dict__.values()
 
+    def as_dict(self):
+        """将 HParams 对象转换为纯字典, Path/PosixPath 转为字符串"""
+        def _to_dict(obj):
+            if isinstance(obj, HParams):
+                return {k: _to_dict(v) for k, v in obj.items()}
+            elif isinstance(obj, (Path, PosixPath)):
+                return str(obj)
+            elif isinstance(obj, dict):
+                return {k: _to_dict(v) for k, v in obj.items()}
+            else:
+                return obj
+        return _to_dict(self.__dict__)
+
     def __getstate__(self):
-        # 序列化时将 Path 转换为字符串，并处理嵌套 HParams
-        state = copy.deepcopy(self.__dict__)
-        for k, v in state.items():
-            if isinstance(v, Path):
-                state[k] = str(v)  # Path -> 字符串
-            elif isinstance(v, HParams):
-                state[k] = v.__getstate__()  # 递归处理嵌套 HParams
-        return state
+        return self.as_dict()
 
     def __setstate__(self, state):
-        # 反序列化时将字典转换回 HParams 对象
-        for k, v in state.items():
-            if isinstance(v, dict):
-                state[k] = HParams(**v)
-        self.__dict__.update(state)
+        """反序列化时重建嵌套 HParams"""
+        def _to_hparams(d):
+            if isinstance(d, dict):
+                return HParams(**{k: _to_hparams(v) for k, v in d.items()})
+            else:
+                return d
+        self.__dict__.update(_to_hparams(state))
+
+    @classmethod
+    def from_dict(cls, config_dict):
+        """从字典创建 HParams 对象（兼容性方法）"""
+        return cls(**config_dict)
+
+    def __repr__(self):
+        return self.as_dict().__repr__()
 
     def __len__(self):
         return len(self.__dict__)
-
-    def __getitem__(self, key):
-        return getattr(self, key)
-
-    def __setitem__(self, key, value):
-        return setattr(self, key, value)
-
-    def __contains__(self, key):
-        return key in self.__dict__
-
-    def __repr__(self):
-        return self.__dict__.__repr__()
 
 def get_hparams_from_file(config_path):
     with open(config_path, "r") as f:

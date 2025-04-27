@@ -23,7 +23,7 @@ def save_checkpoint(model, hps, optimizer, learning_rate, iteration, checkpoint_
     
     torch.save(
         {
-            "model": state_dict,
+            "weight": state_dict,
             "config": hps.as_dict(),
             "iteration": iteration,
             "optimizer": optimizer.state_dict(),
@@ -71,7 +71,7 @@ def load_checkpoint(checkpoint_path, model, optimizer=None, skip_optimizer=False
         and checkpoint_dict["optimizer"] is not None
     ):
         optimizer.load_state_dict(checkpoint_dict["optimizer"])
-    saved_state_dict = checkpoint_dict["model"]
+    saved_state_dict = checkpoint_dict["weight"]
     if hasattr(model, "module"):
         state_dict = model.module.state_dict()
     else:

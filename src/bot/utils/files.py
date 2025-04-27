@@ -112,6 +112,21 @@ class HParams:
     def values(self):
         return self.__dict__.values()
 
+    def __getstate__(self):
+        # 序列化时将所有嵌套的 HParams 转换为字典
+        state = copy.deepcopy(self.__dict__)
+        for k, v in state.items():
+            if isinstance(v, HParams):
+                state[k] = v.__dict__  # 递归转换为字典
+        return state
+
+    def __setstate__(self, state):
+        # 反序列化时将字典转换回 HParams 对象
+        for k, v in state.items():
+            if isinstance(v, dict):
+                state[k] = HParams(**v)
+        self.__dict__.update(state)
+        
     def __len__(self):
         return len(self.__dict__)
 

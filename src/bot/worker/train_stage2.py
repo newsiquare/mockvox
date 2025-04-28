@@ -5,13 +5,14 @@ from pathlib import Path
 from collections import OrderedDict
 import time
 from .worker import celeryApp
+
 from bot.utils import BotLogger
-from bot.core import (
+from bot.engine import (
     DataProcessor,
     FeatureExtractor,
     TextToSemantic
 )
-from bot.core.train import SoVITsTrainer, GPTTrainer
+from bot.engine.train import SoVITsTrainer, GPTTrainer
 from bot.config import (
     PROCESS_PATH,
     SOVITS_MODEL_CONFIG,

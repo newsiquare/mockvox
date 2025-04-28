@@ -3,14 +3,15 @@ import numpy as np
 import time
 from scipy.io import wavfile
 import torch
-from bot.config import get_config, PRETRAINED_PATH, UPLOAD_PATH, SLICED_ROOT_PATH, DENOISED_ROOT_PATH, ASR_PATH
-from bot.core import Slicer, load_audio, AudioDenoiser, AutoSpeechRecognition
-from .worker import celeryApp
-from bot.utils import BotLogger
 from typing import List
 from pathlib import Path
 from collections import OrderedDict
 import json
+
+from bot.config import get_config, PRETRAINED_PATH, UPLOAD_PATH, SLICED_ROOT_PATH, DENOISED_ROOT_PATH, ASR_PATH
+from bot.engine import Slicer, AudioDenoiser, AutoSpeechRecognition
+from .worker import celeryApp
+from bot.utils import BotLogger, load_audio
 
 cfg = get_config()
 os.makedirs(SLICED_ROOT_PATH, exist_ok=True)

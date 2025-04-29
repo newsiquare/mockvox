@@ -7,12 +7,12 @@ import time
 from .worker import celeryApp
 
 from bot.utils import BotLogger
-from bot.engine import (
+from bot.engine.v2 import (
     DataProcessor,
     FeatureExtractor,
     TextToSemantic
 )
-from bot.engine.train import SoVITsTrainer, GPTTrainer
+from bot.engine.v2.train import SoVITsTrainer, GPTTrainer
 from bot.config import (
     PROCESS_PATH,
     SOVITS_MODEL_CONFIG,

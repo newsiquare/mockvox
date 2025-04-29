@@ -21,6 +21,7 @@ PRETRAINED_S2G_FILE = os.path.join(PRETRAINED_PATH, 'GPT-SoVITS/gsv-v2final-pret
 PRETRAINED_S2D_FILE = os.path.join(PRETRAINED_PATH, 'GPT-SoVITS/gsv-v2final-pretrained/s2D2333k.pth')
 PRETRAINED_GPT_FILE = os.path.join(PRETRAINED_PATH, 'GPT-SoVITS/gsv-v2final-pretrained/s1bert25hz-5kh-longer-epoch=12-step=369668.ckpt')
 PRETRAINED_S2GV4_FILE = os.path.join(PRETRAINED_PATH, 'GPT-SoVITS/gsv-v4-pretrained/s2Gv4.pth')
+PRETRAINED_T2SV4_FILE = os.path.join(PRETRAINED_PATH, 'GPT-SoVITS/s1v3.ckpt')
 
 SOVITS_G_WEIGHTS_FILE = 'gen.pth'
 SOVITS_D_WEIGHTS_FILE = 'disc.pth'

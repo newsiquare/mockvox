@@ -9,7 +9,7 @@ from collections import OrderedDict
 import json
 
 from bot.config import get_config, PRETRAINED_PATH, UPLOAD_PATH, SLICED_ROOT_PATH, DENOISED_ROOT_PATH, ASR_PATH
-from bot.engine import Slicer, AudioDenoiser, AutoSpeechRecognition
+from bot.engine.v2 import Slicer, AudioDenoiser, AutoSpeechRecognition
 from .worker import celeryApp
 from bot.utils import BotLogger, load_audio
 

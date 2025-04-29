@@ -32,7 +32,7 @@ class Encoder(nn.Module):
         self.p_dropout = p_dropout
         self.window_size = window_size
 
-        self.drop = nn.Dropout(p_dropout)
+        self.drop = nn.Dropout(self.p_dropout)
         self.attn_layers = nn.ModuleList()
         self.norm_layers_1 = nn.ModuleList()
         self.ffn_layers = nn.ModuleList()

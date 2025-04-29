@@ -25,7 +25,7 @@ from bot.utils import (
 )
 from bot.config import (
     PRETRAINED_S2GV4_FILE, 
-    PRETRAINED_GPT_FILE,
+    PRETRAINED_T2SV4_FILE,
     WEIGHTS_PATH,
     SOVITS_G_WEIGHTS_FILE,
     SOVITS_D_WEIGHTS_FILE,
@@ -41,12 +41,17 @@ from bot.nn.AR import (
     ScaledAdam,
     WarmupCosineLRSchedule
 )
+from bot.models.v2 import (
+    Text2SemanticDecoder
+)
 
 from bot.models.v4 import (
     TextAudioSpeakerDataset, 
     TextAudioSpeakerCollate, 
     SoVITsBucketSampler,
     SynthesizerTrnV3,
+    Text2SemanticDataset,
+    GPTBucketSampler
 )
 
 class GPTTrainer:
@@ -87,8 +92,8 @@ class GPTTrainer:
 
         self.file_name = Path(self.hparams.data.semantic_path).parent.name
         (Path(WEIGHTS_PATH) / self.file_name).mkdir(parents=True, exist_ok=True)
-        # 类似 ./data/weights/20250409145258452558.1ed301dd.788fc313bf38482aa63fe2ea09781878/gpt.pth
         self.gpt_weights_path = Path(WEIGHTS_PATH) / self.file_name / GPT_WEIGHTS_FILE
+        # 类似 ./data/weights/20250409145258452558.1ed301dd.788fc313bf38482aa63fe2ea09781878/gpt.pth
         self.gpt_half_weights_path = Path(WEIGHTS_PATH) / self.file_name / GPT_HALF_WEIGHTS_FILE
 
     def train(self, epochs: Optional[int]=100):
@@ -160,10 +165,10 @@ class GPTTrainer:
     
     def _load_pretrained(self) -> bool:
         """ 加载预训练模型 """
-        if not Path(PRETRAINED_GPT_FILE).exists(): return False
+        if not Path(PRETRAINED_T2SV4_FILE).exists(): return False
         try:
             ckpt = torch.load(
-                PRETRAINED_GPT_FILE, 
+                PRETRAINED_T2SV4_FILE, 
                 map_location="cpu",
                 weights_only=False
             )
@@ -436,12 +441,12 @@ class SoVITsTrainer:
         try:
             if hasattr(self.net_g, "module"):
                 self.net_g.module.load_state_dict(
-                    torch.load(PRETRAINED_S2G_FILE, map_location="cpu")["weight"],
+                    torch.load(PRETRAINED_S2GV4_FILE, map_location="cpu")["weight"],
                     strict=False
                 )
             else:
                 self.net_g.load_state_dict(
-                    torch.load(PRETRAINED_S2G_FILE, map_location="cpu")["weight"],
+                    torch.load(PRETRAINED_S2GV4_FILE, map_location="cpu")["weight"],
                     strict=False
                 )
 
@@ -469,7 +474,7 @@ if __name__ == '__main__':
     processed_path = Path(PROCESS_PATH) / args.file
     hparams.data.processed_dir = processed_path
     trainer = SoVITsTrainer(hparams=hparams)
-    trainer.train(epochs=10)
+    trainer.train(epochs=1)
 
     from bot.config import GPT_MODEL_CONFIG
     hparams = get_hparams_from_file(GPT_MODEL_CONFIG)
@@ -477,4 +482,4 @@ if __name__ == '__main__':
     hparams.data.phoneme_path = processed_path / 'text2semantic.json'
     hparams.data.bert_path = processed_path / 'bert'
     trainer = GPTTrainer(hparams=hparams)
-    trainer.train(epochs=10)
+    trainer.train(epochs=1)

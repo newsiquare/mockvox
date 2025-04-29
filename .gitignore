@@ -6,6 +6,7 @@ data/
 log/
 # 预训练模型
 pretrained/
+ffmpeg.*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

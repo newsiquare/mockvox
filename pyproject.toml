@@ -41,7 +41,8 @@ dependencies = [
     "jieba_fast",
     "librosa",
     "tqdm",
-    "torchmetrics"
+    "torchmetrics",
+    "peft"
 ]
 
 # Optional dependencies ------------------------------------------------------------------------------------------------

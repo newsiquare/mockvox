@@ -117,7 +117,6 @@ def spec_to_mel_torch(spec, n_fft, num_mels, sampling_rate, fmin, fmax):
     """
     global mel_basis
     dtype_device = str(spec.dtype) + "_" + str(spec.device)
-    fmax = min(fmax, sampling_rate//2)
     
     # 唯一缓存键
     cache_key = f"{fmin}_{fmax}_{num_mels}_{n_fft}_{dtype_device}"

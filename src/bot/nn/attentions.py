@@ -4,8 +4,11 @@ from torch import nn
 from torch.nn import functional as F
 
 from .base import LayerNorm
-from bot.nn.AR.utils import subsequent_mask
-from bot.utils import fused_add_tanh_sigmoid_multiply, convert_pad_shape
+from bot.utils import (
+    fused_add_tanh_sigmoid_multiply, 
+    convert_pad_shape,
+    subsequent_mask
+)
 
 class Encoder(nn.Module):
     def __init__(

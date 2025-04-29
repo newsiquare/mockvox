@@ -532,14 +532,14 @@ class SoVITsTrainer:
                     strict=False
                 )
 
-            if hasattr(self.net_g, "module"):
-                self.net_g.module.load_state_dict(
-                    torch.load(PRETRAINED_S2G_FILE, map_location="cpu")["weight"],
+            if hasattr(self.net_d, "module"):
+                self.net_d.module.load_state_dict(
+                    torch.load(PRETRAINED_S2D_FILE, map_location="cpu")["weight"],
                     strict=False
                 )
             else:
-                self.net_g.load_state_dict(
-                    torch.load(PRETRAINED_S2G_FILE, map_location="cpu")["weight"],
+                self.net_d.load_state_dict(
+                    torch.load(PRETRAINED_S2D_FILE, map_location="cpu")["weight"],
                     strict=False
                 )
         except Exception as e:

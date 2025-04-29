@@ -6,6 +6,7 @@ data/
 log/
 # 预训练模型
 pretrained/
+# ffmpeg
 ffmpeg.*
 
 # Byte-compiled / optimized / DLL files

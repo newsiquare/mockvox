@@ -34,10 +34,10 @@ class DataProcessor:
             device -- 指定运行设备 (默认自动选择GPU/CPU)
         
         注意: 首次使用需通过以下命令下载模型：
-            modelscope download --model 'AI-ModelScope/GPT-SoVITS' --local_dir './pretrained/AI-ModelScope/GPT-SoVITS'
+            modelscope download --model 'AI-ModelScope/GPT-SoVITS' --local_dir './pretrained/GPT-SoVITS'
         """
         # 加载分词器和语言模型
-        model_dir = os.path.join(PRETRAINED_PATH, "AI-ModelScope/GPT-SoVITS")
+        model_dir = os.path.join(PRETRAINED_PATH, "GPT-SoVITS")
         bert_dir = os.path.join(model_dir, 'chinese-roberta-wwm-ext-large')
         self.tokenizer = AutoTokenizer.from_pretrained(bert_dir, local_files_only=True)
         self.mlm = AutoModelForMaskedLM.from_pretrained(bert_dir, local_files_only=True)

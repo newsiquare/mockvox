@@ -11,7 +11,7 @@ from typing import Optional
 class CNHubert(nn.Module):
     def __init__(self):
         super().__init__()
-        model_dir = os.path.join(PRETRAINED_PATH, "AI-ModelScope/GPT-SoVITS")
+        model_dir = os.path.join(PRETRAINED_PATH, "GPT-SoVITS")
         base_path = os.path.join(model_dir, "chinese-hubert-base")
         if os.path.exists(base_path):...
         else:raise FileNotFoundError(base_path)

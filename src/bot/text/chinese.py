@@ -16,7 +16,7 @@ pinyin_to_symbol_map = {
 }
 
 g2pw_model_path = os.path.join(PRETRAINED_PATH, 'G2PWModel')
-bert_model_path = os.path.join(PRETRAINED_PATH, 'AI-ModelScope/GPT-SoVITS/chinese-roberta-wwm-ext-large')
+bert_model_path = os.path.join(PRETRAINED_PATH, 'GPT-SoVITS/chinese-roberta-wwm-ext-large')
 g2pw = G2PWPinyin(
     model_dir=g2pw_model_path,
     model_source=bert_model_path,

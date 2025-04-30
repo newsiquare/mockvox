@@ -101,3 +101,5 @@ Thumbs.db
 Desktop.ini
 $RECYCLE.BIN/
 *~
+# 临时存储的模型
+test/*

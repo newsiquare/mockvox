@@ -284,30 +284,8 @@ class SoVITsTrainer:
         )        
         self.net_g.cfm = get_peft_model(self.net_g.cfm, lora_config)
 
-        # te_p = list(map(id, self.net_g.enc_p.text_embedding.parameters()))
-        # et_p = list(map(id, self.net_g.enc_p.encoder_text.parameters()))
-        # mrte_p = list(map(id, self.net_g.enc_p.mrte.parameters()))
-        # base_params = filter(
-        #     lambda p: id(p) not in te_p + et_p + mrte_p and p.requires_grad,
-        #     self.net_g.parameters(),
-        # )
         self.optim_g = torch.optim.AdamW(
             filter(lambda p: p.requires_grad, self.net_g.parameters()), ###默认所有层lr一致
-            # [
-            #     {"params": base_params, "lr": self.hparams.train.learning_rate},
-            #     {
-            #         "params": self.net_g.enc_p.text_embedding.parameters(),
-            #         "lr": self.hparams.train.learning_rate * self.hparams.train.text_low_lr_rate,
-            #     },
-            #     {
-            #         "params": self.net_g.enc_p.encoder_text.parameters(),
-            #         "lr": self.hparams.train.learning_rate * self.hparams.train.text_low_lr_rate,
-            #     },
-            #     {
-            #         "params": self.net_g.enc_p.mrte.parameters(),
-            #         "lr": self.hparams.train.learning_rate * self.hparams.train.text_low_lr_rate,
-            #     },
-            # ],
             self.hparams.train.learning_rate,
             betas=self.hparams.train.betas,
             eps=self.hparams.train.eps,
@@ -415,7 +393,7 @@ class SoVITsTrainer:
             self.optim_g.zero_grad()
             self.scaler.scale(loss_gen_all).backward()
             self.scaler.unscale_(self.optim_g)
-            grad_norm_g = clip_grad_value_(self.net_g.parameters(), None)
+            # grad_norm_g = clip_grad_value_(self.net_g.parameters(), None)
             self.scaler.step(self.optim_g)
             self.scaler.update()
 

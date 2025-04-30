@@ -103,19 +103,18 @@ class SynthesizerTrnV3(nn.Module):
     def forward(
         self, ssl, y, mel, ssl_lengths, y_lengths, text, text_lengths, mel_lengths, use_grad_ckpt
     ):  # ssl_lengths no need now
-        with autocast(enabled=False, device_type="cpu"):
-            y_mask = torch.unsqueeze(sequence_mask(y_lengths, y.size(2)), 1).to(y.dtype)
-            ge = self.ref_enc(y[:, :704] * y_mask, y_mask)
-            maybe_no_grad = torch.no_grad() if self.freeze_quantizer else contextlib.nullcontext()
-            with maybe_no_grad:
-                if self.freeze_quantizer:
-                    self.ssl_proj.eval()  
-                    self.quantizer.eval()
-                    self.enc_p.eval()
-                ssl = self.ssl_proj(ssl)
-                quantized, codes, commit_loss, quantized_list = self.quantizer(ssl, layers=[0])
-                quantized = F.interpolate(quantized, scale_factor=2, mode="nearest")  ##BCT
-                x, m_p, logs_p, y_mask = self.enc_p(quantized, y_lengths, text, text_lengths, ge)
+        y_mask = torch.unsqueeze(sequence_mask(y_lengths, y.size(2)), 1).to(y.dtype)
+        ge = self.ref_enc(y[:, :704] * y_mask, y_mask)
+        maybe_no_grad = torch.no_grad() if self.freeze_quantizer else contextlib.nullcontext()
+        with maybe_no_grad:
+            if self.freeze_quantizer:
+                self.ssl_proj.eval()  
+                self.quantizer.eval()
+                self.enc_p.eval()
+            ssl = self.ssl_proj(ssl)
+            quantized, codes, commit_loss, quantized_list = self.quantizer(ssl, layers=[0])
+            quantized = F.interpolate(quantized, scale_factor=2, mode="nearest")  ##BCT
+            x, m_p, logs_p, y_mask = self.enc_p(quantized, y_lengths, text, text_lengths, ge)
         fea = self.bridge(x)
         fea = F.interpolate(fea, scale_factor=2, mode="nearest")  ##BCT
         fea, y_mask_ = self.wns1(

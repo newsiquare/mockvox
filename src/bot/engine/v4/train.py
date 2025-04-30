@@ -408,7 +408,7 @@ class SoVITsTrainer:
                     text,
                     text_lengths,
                     mel_lengths,
-                    use_grad_ckpt=hps.train.grad_ckpt,
+                    use_grad_ckpt=self.hparams.train.grad_ckpt,
                 )
                 loss_gen_all = cfm_loss            
                 
@@ -468,12 +468,13 @@ if __name__ == '__main__':
     import torch.multiprocessing as mp
     mp.set_start_method('spawn', force=True)  # 强制使用 spawn 模式
 
+    device="cuda" if torch.cuda.is_available() else "cpu"
     from bot.config import PROCESS_PATH, SOVITS_MODEL_CONFIG
 
     hparams = get_hparams_from_file(SOVITS_MODEL_CONFIG)
     processed_path = Path(PROCESS_PATH) / args.file
     hparams.data.processed_dir = processed_path
-    trainer = SoVITsTrainer(hparams=hparams)
+    trainer = SoVITsTrainer(hparams=hparams, device=device)
     trainer.train(epochs=1)
 
     from bot.config import GPT_MODEL_CONFIG
@@ -481,5 +482,5 @@ if __name__ == '__main__':
     hparams.data.semantic_path = processed_path / 'name2text.json'
     hparams.data.phoneme_path = processed_path / 'text2semantic.json'
     hparams.data.bert_path = processed_path / 'bert'
-    trainer = GPTTrainer(hparams=hparams)
+    trainer = GPTTrainer(hparams=hparams,device=device)
     trainer.train(epochs=1)

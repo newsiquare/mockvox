@@ -77,3 +77,24 @@ def load_asr_data(asr_dir: Union[str,Path]) -> List[dict]:
     except FileNotFoundError:
         BotLogger.error(f"ASR文件不存在: {asr_file}")
     return result
+
+if __name__ == '__main__':
+    # 示例用法
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('file', type=str, help='processed file name.')
+    args = parser.parse_args()
+
+    asr = AutoSpeechRecognition()
+
+    asr_path = os.path.join(ASR_PATH, args.file)
+    Path(asr_path).mkdir(parents=True, exist_ok=True)
+    output_file = os.path.join(asr_path, "output.json")
+
+    results = []
+    for file in file_list:
+        result = asr.speech_recognition(input_path=file)
+        results.extend(result)
+        
+        with open(output_file, 'w', encoding='utf-8') as f:
+            json.dump(results, f, ensure_ascii=False, indent=2)

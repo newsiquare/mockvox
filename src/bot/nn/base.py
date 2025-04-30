@@ -127,7 +127,7 @@ class DDSConv(nn.Module):
         return x * x_mask
 
 
-class WaveNet(torch.nn.Module):
+class WaveNet(nn.Module):
     def __init__(
         self,
         hidden_channels,

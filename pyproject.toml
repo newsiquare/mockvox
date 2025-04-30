@@ -42,7 +42,8 @@ dependencies = [
     "librosa",
     "tqdm",
     "torchmetrics",
-    "peft"
+    "peft",
+    "x_transformers"
 ]
 
 # Optional dependencies ------------------------------------------------------------------------------------------------

@@ -31,6 +31,7 @@
         "hop_length": 320,
         "win_length": 1280,
         "n_mel_channels": 128,
+        "n_mel_channels_v4": 100,
         "mel_fmin": 0.0,
         "mel_fmax": 16000.0,   
         "add_blank": true,

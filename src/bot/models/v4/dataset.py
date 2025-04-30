@@ -340,7 +340,7 @@ class TextAudioSpeakerDataset(torch.utils.data.Dataset):
         self.filter_length = hparams.filter_length
         self.hop_length = hparams.hop_length
         self.win_length = hparams.win_length
-        self.n_mel_channels = hparams.n_mel_channels
+        self.n_mel_channels = hparams.n_mel_channels_v4
         self.mel_fmin = hparams.mel_fmin
         self.mel_fmax = hparams.mel_fmax
         self.val = val

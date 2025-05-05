@@ -37,6 +37,7 @@ dependencies = [
     "opencc>=1.1.9",
     "dotenv",
     "modelscope",
+    "funasr",
     "onnxruntime",
     "jieba_fast",
     "librosa",

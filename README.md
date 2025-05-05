@@ -40,12 +40,6 @@ conda activate bot
 pip install -e .[dev]
 # 安装依赖项(生产环境)
 pip install .
-# 安装 modelscope[audio]
-pip install modelscope[audio]
-# 安装完之后会报冲突，这是由阿里魔搭(modelscope[audio])引入的ms-funcodec这个包带来的。我们不会使用它，需要手动将其卸载:
-pip uninstall ms-funcodec
-# 重新升级被它影响到的 pypinyin 包
-pip install -U pypinyin
 ```
 
 ## 运行本项目
@@ -67,15 +61,20 @@ ffmpeg -version
 **注意** 保持当前目录为项目根目录。
 
 ```bash
+# ------------------------------------------------ ModelScope 模型 ----------------------------------------------------------------
 # 语音降噪模型
 modelscope download --model 'damo/speech_frcrn_ans_cirm_16k' --local_dir './pretrained/damo/speech_frcrn_ans_cirm_16k'
 # 语音识别模型
 modelscope download --model 'iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch' --local_dir './pretrained/iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
+# 语音端点检测
+modelscope download --model 'iic/speech_fsmn_vad_zh-cn-16k-common-pytorch' --local_dir './pretrained/iic/speech_fsmn_vad_zh-cn-16k-common-pytorch'
 # 标点恢复模型
 modelscope download --model 'iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch' --local_dir './pretrained/iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch'
-# GPT-SoVITS: 它用 git-lfs 管理大文件, 且需要你能够连接HuggingFace 
+
+# ------------------------------------------------ GPT-SoVITS 模型 ----------------------------------------------------------------
+# GPT-SoVITS: 从HuggingFace下载，需要连接HuggingFace；用 git-lfs 管理大文件, 下载时间较长。 
 git clone https://huggingface.co/lj1995/GPT-SoVITS.git ./pretrained
-# 接下来这个比较讨厌，它下载下来之后，有用的只有那个 G2PWModel_1.1.zip 文件。你需要把该文件解压之后，把原先目录中的东西都删掉，然后将解压后的内容放到 ./pretrained/G2PWModel 目录中。
+# 接下来这个比较讨厌，它下载下来之后，有用的只有那个 G2PWModel_1.1.zip 文件。需要把该文件解压之后，把原先目录中的东西都删掉，然后将解压后的内容放到 ./pretrained/G2PWModel 目录中。
 modelscope download --model 'xiaopch/G2PWModel_1.1' --local_dir './pretrained/G2PWModel'
 
 ```

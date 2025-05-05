@@ -6,7 +6,6 @@ import json
 from typing import List, Dict, Iterator
 import torch
 import torch.nn.functional as F
-from torch.nn.utils.rnn import pad_sequence
 import numpy as np
 
 from bot.text import Normalizer

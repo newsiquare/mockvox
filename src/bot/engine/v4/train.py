@@ -15,13 +15,7 @@ from bot.utils import (
     save_checkpoint,
     save_checkpoint_half_latest,
     BotLogger,
-    CustomTQDM,
-    slice_segments,
-    discriminator_loss,
-    generator_loss,
-    feature_loss,
-    kl_loss,
-    clip_grad_value_
+    CustomTQDM
 )
 from bot.config import (
     PRETRAINED_S2GV4_FILE, 
@@ -32,10 +26,6 @@ from bot.config import (
     SOVITS_HALF_WEIGHTS_FILE,
     GPT_WEIGHTS_FILE,
     GPT_HALF_WEIGHTS_FILE
-)
-from bot.nn import (
-    spec_to_mel_torch,
-    mel_spectrogram_torch
 )
 from bot.nn.AR import (
     ScaledAdam,

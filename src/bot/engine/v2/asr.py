@@ -94,7 +94,6 @@ if __name__ == '__main__':
     ]
     results = []
     for file in file_list:
-        print(file)
         result = asr.speech_recognition(input_path=file)
         results.extend(result)
         

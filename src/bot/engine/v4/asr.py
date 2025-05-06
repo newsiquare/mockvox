@@ -7,8 +7,10 @@ from typing import Optional, List, Union
 from pathlib import Path
 import torch
 import json
+import os
 
 from bot.utils import BotLogger
+from bot.config import PRETRAINED_PATH
 
 funasr_models = {}
 
@@ -26,9 +28,9 @@ class AutoSpeechRecognition:
             self.model = funasr_models[language]
         else:
             self.model = AutoModel(
-                model=asr_model_name, model_revision='v2.0.4',
-                vad_model=vad_model_name, vad_model_revision='v2.0.4',
-                punc_model=punc_model_name, punc_model_revision='v2.0.4',
+                model=os.path.join(PRETRAINED_PATH,asr_model_name), model_revision='v2.0.4',
+                vad_model=os.path.join(PRETRAINED_PATH,vad_model_name), vad_model_revision='v2.0.4',
+                punc_model=os.path.join(PRETRAINED_PATH,punc_model_name), punc_model_revision='v2.0.4',
                 device=self.device,
                 disable_update=True
             )

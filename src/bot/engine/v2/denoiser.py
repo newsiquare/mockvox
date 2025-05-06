@@ -5,7 +5,7 @@ from typing import Optional
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 
-from bot.config import DENOISED_ROOT_PATH
+from bot.config import DENOISED_ROOT_PATH, PRETRAINED_PATH
 
 class AudioDenoiser:
     def __init__(self,
@@ -15,7 +15,8 @@ class AudioDenoiser:
 
         self.ans = pipeline(
             task=Tasks.acoustic_noise_suppression,
-            model=model_name)
+            model=os.path.join(PRETRAINED_PATH,model_name)
+        )
 
     def denoise(self, 
             input_path: str,

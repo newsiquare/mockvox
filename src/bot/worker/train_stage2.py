@@ -9,10 +9,13 @@ from .worker import celeryApp
 from bot.utils import BotLogger
 from bot.engine.v2 import (
     DataProcessor,
-    FeatureExtractor,
-    TextToSemantic
+    FeatureExtractor
 )
-from bot.engine.v2.train import SoVITsTrainer, GPTTrainer
+from bot.engine.v4 import TextToSemantic
+from bot.engine.v4.train import (
+    SoVITsTrainer, 
+    GPTTrainer
+)
 from bot.config import (
     PROCESS_PATH,
     SOVITS_MODEL_CONFIG,

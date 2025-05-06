@@ -33,7 +33,7 @@ class TextToSemantic:
                 torch.load(PRETRAINED_S2GV4_FILE, map_location="cpu")["weight"], strict=False
             )
         except FileNotFoundError:
-            BotLogger.error(f"预训练模型文件不存在: {PRETRAINED_S2G_FILE}")
+            BotLogger.error(f"预训练模型文件不存在: {PRETRAINED_S2GV4_FILE}")
     
     def process(self, file_path: str) -> List:
         results = []

@@ -9,7 +9,7 @@ import numpy as np
 import librosa
 from bot.models.HuBERT import CNHubert
 from bot.text import chinese
-from bot.text import cleaned_text_to_sequence
+from bot.text import Normalizer
 from bot.text import symbols 
 from transformers import AutoTokenizer, AutoModelForMaskedLM
 import traceback
@@ -188,7 +188,7 @@ class Inferener:
 
     def clean_text_inf(self,text, language):
         phones, word2ph, norm_text = self.clean_text(text, language)
-        phones = cleaned_text_to_sequence(phones)
+        phones = Normalizer.cleaned_text_to_sequence(phones)
         return phones, word2ph, norm_text
 
 

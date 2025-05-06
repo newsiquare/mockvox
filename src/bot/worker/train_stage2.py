@@ -4,6 +4,7 @@ import torch.multiprocessing as mp
 from pathlib import Path
 from collections import OrderedDict
 import time
+import gc
 from .worker import celeryApp
 
 from bot.utils import BotLogger
@@ -48,8 +49,13 @@ def train_task(
         hps_sovits.data.processed_dir = processed_path
         trainer_sovits = SoVITsTrainer(hparams=hps_sovits)
         trainer_sovits.train(epochs=sovits_epochs)
-        del trainer_sovits
-        torch.cuda.empty_cache()
+
+        del trainer_sovits, hps_sovits
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            torch.cuda.ipc_collect()
+            gc.collect()
 
         hps_gpt = get_hparams_from_file(GPT_MODEL_CONFIG)
         hps_gpt.data.semantic_path = processed_path / 'name2text.json'
@@ -57,8 +63,12 @@ def train_task(
         hps_gpt.data.bert_path = processed_path / 'bert'
         trainer_gpt = GPTTrainer(hparams=hps_gpt)
         trainer_gpt.train(epochs=gpt_epochs)
-        del trainer_gpt
-        torch.cuda.empty_cache()
+        del trainer_gpt, hps_gpt
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            torch.cuda.ipc_collect()
+            gc.collect()
 
         sovits_half_weights_path = Path(WEIGHTS_PATH) / file_name / SOVITS_HALF_WEIGHTS_FILE
         gpt_half_weights_path = Path(WEIGHTS_PATH) / file_name / GPT_HALF_WEIGHTS_FILE
@@ -71,7 +81,7 @@ def train_task(
             "results": results,
             "time":time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
         }
-
+        
     except Exception as e:
         BotLogger.error(
             f"训练失败 | 文件: {file_name} | 错误跟踪:\n{traceback.format_exc()}"

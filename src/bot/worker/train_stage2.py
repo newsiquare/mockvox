@@ -42,7 +42,13 @@ def train_task(
         extractor.extract(file_path=file_name, denoised=ifDenoise)
         t2s = TextToSemantic()
         t2s.process(file_name)
-
+        del processor, extractor, t2s
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            torch.cuda.ipc_collect()
+            gc.collect()
+            
         mp.set_start_method('spawn', force=True)  # 强制使用 spawn 模式
         hps_sovits = get_hparams_from_file(SOVITS_MODEL_CONFIG)
         processed_path = Path(PROCESS_PATH) / file_name

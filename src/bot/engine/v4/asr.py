@@ -12,8 +12,6 @@ import os
 from bot.utils import BotLogger
 from bot.config import PRETRAINED_PATH
 
-funasr_models = {}
-
 class AutoSpeechRecognition:
     def __init__(self,
                  language: str = 'zh',
@@ -24,19 +22,14 @@ class AutoSpeechRecognition:
         ): 
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         # 语音识别
-        if language in funasr_models:
-            self.model = funasr_models[language]
-        else:
-            self.model = AutoModel(
-                model=os.path.join(PRETRAINED_PATH,asr_model_name), model_revision='v2.0.4',
-                vad_model=os.path.join(PRETRAINED_PATH,vad_model_name), vad_model_revision='v2.0.4',
-                punc_model=os.path.join(PRETRAINED_PATH,punc_model_name), punc_model_revision='v2.0.4',
-                device=self.device,
-                disable_update=True
-            )
+        self.model = AutoModel(
+            model=os.path.join(PRETRAINED_PATH,asr_model_name), model_revision='v2.0.4',
+            vad_model=os.path.join(PRETRAINED_PATH,vad_model_name), vad_model_revision='v2.0.4',
+            punc_model=os.path.join(PRETRAINED_PATH,punc_model_name), punc_model_revision='v2.0.4',
+            device=self.device,
+            disable_update=True
+        )
 
-            funasr_models[language]=self.model
-        
     def speech_recognition(self, input_path: str) -> List:
         try:
             asr_result = self.model.generate(input=input_path)

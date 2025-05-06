@@ -7,6 +7,7 @@ from typing import List
 from pathlib import Path
 from collections import OrderedDict
 import json
+import gc
 
 from bot.config import get_config, PRETRAINED_PATH, UPLOAD_PATH, SLICED_ROOT_PATH, DENOISED_ROOT_PATH, ASR_PATH
 from bot.engine.v2 import Slicer, AudioDenoiser, AutoSpeechRecognition
@@ -164,6 +165,13 @@ def batch_denoise(file_list: List[str], output_dir: str) -> List[str]:
         for file in file_list:
             denoised_file = denoiser.denoise(file, output_dir=output_dir)
             denoised_files.append(denoised_file)
+        
+        del denoiser
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            torch.cuda.ipc_collect()
+            gc.collect()
         return denoised_files
     
     except Exception as e:
@@ -204,8 +212,12 @@ def batch_asr(file_list: List[str], output_dir: str):
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(results, f, ensure_ascii=False, indent=2)
         
-        del asr_model, punc_model
-        torch.cuda.empty_cache()
+        del asr
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            torch.cuda.ipc_collect()
+            gc.collect()
         return results
 
     except Exception as e:

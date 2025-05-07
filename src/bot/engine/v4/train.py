@@ -130,8 +130,10 @@ class GPTTrainer:
         save_checkpoint_half_latest(self.model, self.hparams, epochs, self.gpt_half_weights_path)        
 
         BotLogger.info(
-            f"GPT模型训练完成 \n GPT参数: {self.gpt_weights_path} \n \
-            半精度GPT推理参数: {self.gpt_half_weights_path} \n时间: {datetime.now().isoformat()}"
+            f"GPT模型训练完成. \n \
+            GPT参数: {self.gpt_weights_path} \n \
+            半精度GPT推理参数: {self.gpt_half_weights_path} \n \
+            时间: {datetime.now().isoformat()}"
         )
 
     def _do_train(self, epoch):
@@ -342,8 +344,10 @@ class SoVITsTrainer:
         save_checkpoint_half_latest(self.net_g, self.hparams, epochs, self.sovits_weights_path)        
 
         BotLogger.info(
-            f"模型训练完成 \n 生成器参数: {self.generator_weights_path} \n \
-            半精度SoVITs推理参数: {self.sovits_weights_path} \n时间: {datetime.now().isoformat()}"
+            f"模型训练完成 \n \
+            生成器参数: {self.generator_weights_path} \n \
+            半精度SoVITs推理参数: {self.sovits_weights_path} \n \
+            时间: {datetime.now().isoformat()}"
         )
 
     def _do_train(self, epoch):

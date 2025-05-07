@@ -33,7 +33,7 @@ def wait_for_task_completion(task_id: str, timeout: int = 30) -> dict:
             return {"status": task.status, "result": task.result}
         if task.status == "FAILURE":
             return {"status": task.status, "error": str(task.result)}
-        time.sleep(0.5)
+        time.sleep(5)
     return {"status": "TIMEOUT"}
 
 def test_valid_upload_e2e(test_client):

@@ -16,7 +16,7 @@ import traceback
 from bot.models.mel import spectrogram_torch
 from bot.models.AR.t2s_model import Text2SemanticDecoder
 
-class Inferener:
+class Inferencer:
     def __init__(
         self,
         gpt_path: Optional[str] = None,

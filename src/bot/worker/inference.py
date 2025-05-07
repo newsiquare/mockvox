@@ -1,5 +1,5 @@
 # from .worker import app
-from bot.core.inference import Inferener
+from bot.core.inference import Inferencer
 from bot.utils import i18n
 import os
 from fastapi import Form
@@ -18,7 +18,7 @@ async def inference_task(GPT_model_path:str = Form(..., description="GPT模型�
                    top_k:int = Form(..., description="GPT采样参数(无参考文本时不要太低。不懂就用默认)："), 
                    temperature:int = Form(..., description="温度"), 
                    speed:int = Form(..., description="语速")):
-    inference = Inferener(GPT_model_path,SoVITS_model_path)
+    inference = Inferencer(GPT_model_path,SoVITS_model_path)
 
     # Synthesize audio
     synthesis_result = inference.inference(ref_wav_path=ref_audio_path,# 参考音频 
@@ -36,7 +36,7 @@ async def inference_task(GPT_model_path:str = Form(..., description="GPT模型�
     pass
 
 if __name__ == "__main__":
-    inference = Inferener("/home/easyman/zjh/bot/test/gpt.pth","/home/easyman/zjh/bot/test/sovits.pth")
+    inference = Inferencer("/home/easyman/zjh/bot/test/gpt.pth","/home/easyman/zjh/bot/test/sovits.pth")
     # Synthesize audio
     synthesis_result = inference.inference(ref_wav_path="/home/easyman/zjh/bot/test/LIYUNLONG.WAV",# 参考音频 
                                 prompt_text="少给老子谈什么清规戒律。说，是不是偷喝我酒了？哈哈哈。你小子嘴还挺硬。那我的酒怎么少了。", # 参考文本

@@ -60,7 +60,7 @@ class Inferencer:
         self.punctuation = set(['!', '?', '…', ',', '.', '-'," "])
         self.hz = 50
         self.t2s_model,self.config,self.max_sec = self._change_gpt_weights(gpt_path)
-        
+        self.resample_transform_dict={}
         self.vq_model, self.hps = self._change_sovits_weights(sovits_path)
         self.hifigan_model = self._init_hifigan()
 
@@ -73,17 +73,12 @@ class Inferencer:
             upsample_rates=[10, 6, 2, 2, 2],
             upsample_initial_channel=512,
             upsample_kernel_sizes=[20, 12, 4, 4, 4],
-            gin_channels=0, is_bias=True
+            gin_channels=0,is_bias=True
         )
         hifigan_model.eval()
         hifigan_model.remove_weight_norm()
         state_dict_g = torch.load("pretrained/GPT-SoVITS/gsv-v4-pretrained/vocoder.pth", map_location="cpu")
         print("loading vocoder",hifigan_model.load_state_dict(state_dict_g))
-        if bigvgan_model:
-            bigvgan_model=bigvgan_model.cpu()
-            bigvgan_model=None
-            try:torch.cuda.empty_cache()
-            except:pass
 
         return hifigan_model.half().to(self.device)
         
@@ -124,7 +119,8 @@ class Inferencer:
         else:
             gv4_model,if_lora_v3 = self._load_sovits_new("pretrained/GPT-SoVITS/gsv-v4-pretrained/s2Gv4.pth")
             vq_model.load_state_dict(gv4_model["weight"], strict=False)
-            lora_rank = dict_s2["lora_rank"]
+            print(hps)
+            lora_rank = hps["train"]["lora_rank"]
             lora_config = LoraConfig(
                 target_modules=["to_k", "to_q", "to_v", "to_out.0"],
                 r=lora_rank,
@@ -538,10 +534,10 @@ class Inferencer:
                 ref_audio = ref_audio.mean(0).unsqueeze(0)
             tgt_sr= 32000
             if sr != tgt_sr:
-                ref_audio = resample(ref_audio, sr,tgt_sr)
+                ref_audio = self.resample(ref_audio, sr,tgt_sr)
             # print("ref_audio",ref_audio.abs().mean())
             mel2 = self.mel_fn_v4(ref_audio)
-            mel2 = norm_spec(mel2)
+            mel2 = self.norm_spec(mel2)
             T_min = min(mel2.shape[2], fea_ref.shape[2])
             mel2 = mel2[:, :, :T_min]
             fea_ref = fea_ref[:, :, :T_min]
@@ -570,7 +566,7 @@ class Inferencer:
                 fea_ref = fea_todo_chunk[:, :, -T_min:]
                 cfm_resss.append(cfm_res)
             cfm_res = torch.cat(cfm_resss, 2)
-            cfm_res = denorm_spec(cfm_res)
+            cfm_res = self.denorm_spec(cfm_res)
             if self.hifigan_model == None:
                 self._init_hifigan()
             vocoder_model=self.hifigan_model
@@ -591,22 +587,22 @@ class Inferencer:
 
         yield opt_st, (audio_opt* 32767).astype(np.int16)
 
-def norm_spec(self,x):
-    spec_min = -12
-    spec_max = 2
-    return (x - spec_min) / (spec_max - spec_min) * 2 - 1
+    def norm_spec(self,x):
+        spec_min = -12
+        spec_max = 2
+        return (x - spec_min) / (spec_max - spec_min) * 2 - 1
 
-def denorm_spec(x):
-    spec_min = -12
-    spec_max = 2
-    return (x + 1) / 2 * (spec_max - spec_min) + spec_min
+    def denorm_spec(self,x):
+        spec_min = -12
+        spec_max = 2
+        return (x + 1) / 2 * (spec_max - spec_min) + spec_min
 
-def resample(self,audio_tensor, sr0,sr1):
-    global resample_transform_dict
-    key="%s-%s"%(sr0,sr1)
-    if key not in resample_transform_dict:
-        resample_transform_dict[key] = torchaudio.transforms.Resample(sr0, sr1).to(self.device)
-    return resample_transform_dict[key](audio_tensor)
+    def resample(self,audio_tensor, sr0,sr1):
+        
+        key="%s-%s"%(sr0,sr1)
+        if key not in self.resample_transform_dict:
+            self.resample_transform_dict[key] = torchaudio.transforms.Resample(sr0, sr1).to(self.device)
+        return self.resample_transform_dict[key](audio_tensor)
 
 class DictToAttrRecursive(dict):
     def __init__(self, input_dict):

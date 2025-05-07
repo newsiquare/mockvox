@@ -372,7 +372,7 @@ class Generator(torch.nn.Module):
         upsample_rates,
         upsample_initial_channel,
         upsample_kernel_sizes,
-        gin_channels=0,
+        gin_channels=0,is_bias=False
     ):
         super(Generator, self).__init__()
         self.num_kernels = len(resblock_kernel_sizes)
@@ -404,7 +404,7 @@ class Generator(torch.nn.Module):
             ):
                 self.resblocks.append(resblock(ch, k, d))
 
-        self.conv_post = nn.Conv1d(ch, 1, 7, 1, padding=3, bias=False)
+        self.conv_post = nn.Conv1d(ch, 1, 7, 1, padding=3, bias=is_bias)
         self.ups.apply(init_weights)
 
         if gin_channels != 0:

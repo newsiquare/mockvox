@@ -9,6 +9,7 @@ from bot.utils import (
     init_weights, 
     get_padding, 
     fused_add_tanh_sigmoid_multiply, 
+    LRELU_SLOPE,
     piecewise_rational_quadratic_transform
 )
 

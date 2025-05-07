@@ -3,6 +3,7 @@ from hashlib import md5
 from datetime import datetime
 import os
 import json
+import traceback
 from pathlib import Path, PosixPath
 from collections import OrderedDict
 import torch
@@ -94,7 +95,7 @@ def load_checkpoint(checkpoint_path, model, optimizer=None, skip_optimizer=False
         except:
             traceback.print_exc()
             BotLogger.error(
-                "error, %s is not in the checkpoint" % k
+                f"error, {k} is not in the checkpoint. {traceback.format_exc()}"
             )  # shape不对也会，比如text_embedding当cleaner修改时
             new_state_dict[k] = v
     if hasattr(model, "module"):

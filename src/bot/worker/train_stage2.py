@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import traceback
 import torch
 import torch.multiprocessing as mp
@@ -48,7 +49,7 @@ def train_task(
             torch.cuda.synchronize()
             torch.cuda.ipc_collect()
             gc.collect()
-            
+
         mp.set_start_method('spawn', force=True)  # 强制使用 spawn 模式
         hps_sovits = get_hparams_from_file(SOVITS_MODEL_CONFIG)
         processed_path = Path(PROCESS_PATH) / file_name

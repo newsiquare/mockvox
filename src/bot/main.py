@@ -11,15 +11,14 @@ from pathlib import Path
 
 from bot.config import get_config, UPLOAD_PATH, DENOISED_ROOT_PATH, SLICED_ROOT_PATH, ASR_PATH
 from bot.worker import celeryApp, process_file_task, train_task
-from bot.utils import BotLogger, generate_unique_filename
+from bot.utils import BotLogger, generate_unique_filename, allowed_file
 
 cfg = get_config()
-MAX_UPLOAD_SIZE = cfg.MAX_UPLOAD_SIZE*1024*1024
 
 class SizeLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         content_length = int(request.headers.get("content-length", 0))
-        if content_length > MAX_UPLOAD_SIZE:
+        if content_length > cfg.MAX_UPLOAD_SIZE:
             return JSONResponse(
                 status_code=413,
                 content={"detail": "文件大小超过限制"}
@@ -41,14 +40,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# 文件存储配置
-os.makedirs(UPLOAD_PATH, exist_ok=True)
-ALLOWED_EXTENSIONS = {'wav'}
-
-def allowed_file(filename: str) -> bool:
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.post(
     "/revision",
@@ -167,11 +158,11 @@ async def upload_audio(file: UploadFile = File(..., description="音频文件，
     try:
         # 验证文件类型
         if not allowed_file(file.filename):
-            raise HTTPException(status_code=400, detail="不支持的文件格式")
+            raise HTTPException(status_code=400, detail="Unsupported file format")
 
         # 实际文件大小验证
-        if file.size > MAX_UPLOAD_SIZE:
-            raise HTTPException(413, "文件大小超过限制")
+        if file.size > cfg.MAX_UPLOAD_SIZE:
+            raise HTTPException(413, "File size exceeds the limit")
 
         # 生成唯一文件名
         filename = generate_unique_filename(file.filename)

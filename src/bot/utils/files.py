@@ -3,12 +3,19 @@ from hashlib import md5
 from datetime import datetime
 import os
 import json
-import copy
 from pathlib import Path, PosixPath
 from collections import OrderedDict
-from io import BytesIO
 import torch
 from bot.utils import BotLogger
+from bot.config import UPLOAD_PATH
+
+# 文件存储配置
+os.makedirs(UPLOAD_PATH, exist_ok=True)
+ALLOWED_EXTENSIONS = {'wav'}
+
+def allowed_file(filename: str) -> bool:
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def save_checkpoint(model, hps, optimizer, learning_rate, iteration, checkpoint_path):
     BotLogger.info(

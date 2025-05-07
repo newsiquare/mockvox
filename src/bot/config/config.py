@@ -40,7 +40,7 @@ class Settings:
     MAIN_PORT: int = int(os.environ.get("MAIN_PORT", "5000"))  # 端口号转int
 
     # 上传文件
-    MAX_UPLOAD_SIZE: int = int(os.environ.get("MAX_UPLOAD_SIZE", "10")) # (单位：MB)
+    MAX_UPLOAD_SIZE: int = int(os.environ.get("MAX_UPLOAD_SIZE", "10"))*1024*1024 # (单位：MB)
 
     # Slice 配置
     THRESHOLD: int = int(os.environ.get("THRESHOLD", "-34"))

@@ -1,11 +1,13 @@
 import torch
 from pathlib import Path
 import os
-from typing import Optional
+import gc
+from typing import Optional, List
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 
 from bot.config import DENOISED_ROOT_PATH, PRETRAINED_PATH
+from bot.utils import BotLogger
 
 class AudioDenoiser:
     def __init__(self,
@@ -39,3 +41,42 @@ class AudioDenoiser:
         self.ans(input_path, output_path=output_path / output_file, device=self.device)
         
         return str(output_file)
+    
+def batch_denoise(file_list: List[str], output_dir: str) -> List[str]:
+    """批量降噪函数
+    
+    Args:
+        file_list: 切片文件名数组
+        output_dir: 降噪输出目录
+        
+    Returns:
+        降噪输出文件名(数组)
+        
+    Raises:
+        RuntimeError: 降噪处理失败
+    """
+    try:
+        denoise_model = os.path.join(PRETRAINED_PATH, 'damo/speech_frcrn_ans_cirm_16k')
+        denoise_model = denoise_model if os.path.exists(denoise_model) else 'damo/speech_frcrn_ans_cirm_16k'
+        denoiser = AudioDenoiser(model_name=denoise_model)     
+        Path(output_dir).mkdir(parents=True, exist_ok=True)   
+
+        denoised_files = []        
+        for file in file_list:
+            denoised_file = denoiser.denoise(file, output_dir=output_dir)
+            denoised_files.append(denoised_file)
+        
+        del denoiser
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            torch.cuda.ipc_collect()
+            gc.collect()
+        return denoised_files
+    
+    except Exception as e:
+        BotLogger.error(
+            f"降噪异常 | 路径: {output_dir} | 错误: {str(e)}",
+            extra={"action": "denoise_error"}
+        )
+        raise RuntimeError(f"降噪失败: {str(e)}") from e

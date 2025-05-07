@@ -7,6 +7,7 @@ from typing import Optional, List, Union
 from pathlib import Path
 import torch
 import os
+import gc
 import json
 
 from bot.config import PRETRAINED_PATH
@@ -56,6 +57,52 @@ def load_asr_data(asr_dir: Union[str,Path]) -> List[dict]:
     except FileNotFoundError:
         BotLogger.error(f"ASR文件不存在: {asr_file}")
     return result
+
+def batch_asr(file_list: List[str], output_dir: str):
+    """批量识别函数
+    
+    Args:
+        file_list: 降噪文件名数组
+        output_dir: 语音识别输出目录
+        
+    Returns:
+        语音识别结果(数组)
+        
+    Raises:
+        RuntimeError: 识别处理失败
+    """
+    try:
+        asr_model = os.path.join(PRETRAINED_PATH, 'iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch')
+        asr_model = asr_model if os.path.exists(asr_model) else 'iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
+        punc_model = os.path.join(PRETRAINED_PATH, 'iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch')
+        punc_model = punc_model if os.path.exists(punc_model) else 'iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch'
+
+        asr = AutoSpeechRecognition(asr_model_name=asr_model, punc_model_name=punc_model)
+        Path(output_dir).mkdir(parents=True, exist_ok=True)
+        output_file = os.path.join(output_dir, "output.json")
+
+        results = []
+        for file in file_list:
+            result = asr.speech_recognition(input_path=file)
+            results.extend(result)
+        
+        with open(output_file, 'w', encoding='utf-8') as f:
+            json.dump(results, f, ensure_ascii=False, indent=2)
+        
+        del asr
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            torch.cuda.ipc_collect()
+            gc.collect()
+        return results
+
+    except Exception as e:
+        BotLogger.error(
+            f"语音识别异常 | 路径: {output_dir} | 错误: {str(e)}",
+            extra={"action": "asr_error"}
+        )
+        raise RuntimeError(f"语音识别失败: {str(e)}") from e
 
 if __name__ == '__main__':
     # 示例用法

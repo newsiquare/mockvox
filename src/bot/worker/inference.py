@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from .worker import app
 
 @app.task(name="inference", bind=True)

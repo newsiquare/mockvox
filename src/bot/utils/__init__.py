@@ -6,7 +6,8 @@ from .files import (
     load_checkpoint,
     save_checkpoint,
     save_checkpoint_half_latest,
-    HParams
+    HParams,
+    allowed_file
 )
 from .TQDM import CustomTQDM
 from .loss import discriminator_loss, generator_loss, feature_loss, kl_loss
@@ -23,6 +24,7 @@ __all__ = [
     "save_checkpoint",
     "save_checkpoint_half_latest",
     "HParams",
+    "allowed_file",
     "CustomTQDM",
 
     # loss

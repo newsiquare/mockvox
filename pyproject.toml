@@ -57,12 +57,15 @@ dev = [
 docs = [
 ]
 
+[project.scripts]
+mockvoi = "bot.cli:main"
+
+# Tools settings -------------------------------------------------------------------------------------------------------
 [[tool.poetry.source]]
 name = "modelscope-oss"
 url = "https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html"
 priority = "supplemental"
 
-# Tools settings -------------------------------------------------------------------------------------------------------
 [tool.setuptools]  # configuration specific to the `setuptools` build backend.
 packages = { find = { where = ["src"], include = ["*"] } }
 package-dir = {"" = "src"}

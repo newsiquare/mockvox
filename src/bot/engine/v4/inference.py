@@ -11,7 +11,6 @@ from bot.text import chinese
 from bot.text import Normalizer
 from bot.text import symbols 
 from transformers import AutoTokenizer, AutoModelForMaskedLM
-import traceback
 import torchaudio
 from bot.nn.mel import spectrogram_torch
 from bot.models.v2.t2s_model import Text2SemanticDecoder
@@ -27,7 +26,7 @@ class Inferencer:
         gpt_path: Optional[str] = None,
         sovits_path: Optional[str] = None
     ):
-        self.device = "cuda:0"
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.dict_language = {
             i18n("中文"): "all_zh",#全部按中文识别
             i18n("英文"): "en",#全部按英文识别#######不变

@@ -19,6 +19,7 @@ from bot.nn.f5_tts import DiT
 def set_no_grad(net_g):
     for name, param in net_g.named_parameters():
         param.requires_grad=False
+        
 class SynthesizerTrnV3(nn.Module):
     """
     Synthesizer for Training

@@ -93,7 +93,8 @@ class GPTTrainer:
         epoch_done = self._resume()
         if not epoch_done:
             epoch_done = 0
-            self._load_pretrained()
+            if not self._load_pretrained():
+                raise RuntimeError("预训练模型加载失败")
         elif epochs<=epoch_done:
             BotLogger.info(f"GPT已训练轮次 {epoch_done} >= {epochs}, 训练终止.")
             return
@@ -305,7 +306,8 @@ class SoVITsTrainer:
                 self.scheduler_g.step()
         else:
             epoch_done=0
-            self._load_pretrained()
+            if not self._load_pretrained():
+                raise RuntimeError("预训练模型加载失败")
 
         if epochs<=epoch_done:
             BotLogger.info(f"SoVITS已训练轮次 {epoch_done} >= {epochs}, 训练终止.")

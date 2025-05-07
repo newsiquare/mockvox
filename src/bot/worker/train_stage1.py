@@ -133,7 +133,7 @@ def slice_audio(input_path: str, output_dir: str) -> List[str]:
                 (chunk * 32767).astype(np.int16)
             )
 
-        del slicer
+        del slicer, audio
         return sliced_files
 
     except Exception as e:

@@ -115,7 +115,7 @@ def handle_train(args):
         gpt_half_weights_path = Path(WEIGHTS_PATH) / args.fileID / GPT_HALF_WEIGHTS_FILE
 
         BotLogger.info(f"Train done. \n \
-                       Sovits checkpoint saved in: {sovits_half_weights_path} \n \
+                        Sovits checkpoint saved in: {sovits_half_weights_path} \n \
                         GPT checkpoint saved in: {gpt_half_weights_path}")
 
     except Exception as e:

@@ -46,6 +46,7 @@ class SynthesizerTrnV3(nn.Module):
         use_sdp=True,
         semantic_frame_rate=None,
         freeze_quantizer=None,
+        commit_loss_weight=0.25,
         version="v3",
         **kwargs,
     ):
@@ -67,6 +68,7 @@ class SynthesizerTrnV3(nn.Module):
         self.segment_size = segment_size
         self.n_speakers = n_speakers
         self.gin_channels = gin_channels
+        self.commit_loss_weight = commit_loss_weight
         self.version = version
 
         self.model_dim = 512
@@ -126,7 +128,7 @@ class SynthesizerTrnV3(nn.Module):
         mel = mel[:, :, :minn]
         fea = fea[:, :, :minn]
         cfm_loss = self.cfm(mel, mel_lengths, prompt_len, fea, use_grad_ckpt)
-        return cfm_loss
+        return cfm_loss + commit_loss * self.commit_loss_weight
 
     @torch.no_grad()
     def decode_encp(self, codes, text, refer, ge=None, speed=1):

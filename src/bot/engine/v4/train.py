@@ -15,6 +15,7 @@ from bot.utils import (
     save_checkpoint,
     save_checkpoint_half_latest,
     BotLogger,
+    clip_grad_value_,
     CustomTQDM
 )
 from bot.config import (
@@ -389,7 +390,7 @@ class SoVITsTrainer:
             self.optim_g.zero_grad()
             self.scaler.scale(loss_gen_all).backward()
             self.scaler.unscale_(self.optim_g)
-            # grad_norm_g = clip_grad_value_(self.net_g.parameters(), None)
+            clip_grad_value_(self.net_g.parameters(), None)
             self.scaler.step(self.optim_g)
             self.scaler.update()
 
@@ -425,6 +426,11 @@ class SoVITsTrainer:
                 betas=self.hparams.train.betas,
                 eps=self.hparams.train.eps,                
             )
+            # 加载后冻结量化器
+            if self.hparams.model.freeze_quantizer:
+                for name, param in self.net_g.named_parameters():
+                    if "ssl_proj" in name or "quantizer" in name or "enc_p" in name:
+                        param.requires_grad = False
 
         except Exception as e:
             BotLogger.error(

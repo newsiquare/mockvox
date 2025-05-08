@@ -118,8 +118,9 @@ class Inferencer:
         else:
             gv4_model,if_lora_v3 = self._load_sovits_new("pretrained/GPT-SoVITS/gsv-v4-pretrained/s2Gv4.pth")
             vq_model.load_state_dict(gv4_model["weight"], strict=False)
-            print(hps)
-            lora_rank = hps["train"]["lora_rank"]
+            print(dict_s2)
+            # lora_rank = hps["train"]["lora_rank"]
+            lora_rank = 32
             lora_config = LoraConfig(
                 target_modules=["to_k", "to_q", "to_v", "to_out.0"],
                 r=lora_rank,
@@ -255,6 +256,7 @@ class Inferencer:
 
 
     def clean_text_inf(self,text, language):
+        language = language.replace("all_", "")
         phones, word2ph, norm_text = self.clean_text(text, language)
         phones = Normalizer.cleaned_text_to_sequence(phones)
         return phones, word2ph, norm_text
@@ -272,7 +274,7 @@ class Inferencer:
         ]
         for special_s, special_l, target_symbol in special:
             if special_s in text and language == special_l:
-                return self.clean_special(text, language, special_s, target_symbol)
+                return self.clean_special(text, special_s, target_symbol)
         chinesen = chinese.ChineseNormalizer()
         norm_text = chinesen.do_normalize(text)
         if language == "zh" or language=="yue":##########
@@ -291,7 +293,7 @@ class Inferencer:
         return phones, word2ph, norm_text
 
 
-    def clean_special(self, text, language, special_s, target_symbol):
+    def clean_special(self, text, special_s, target_symbol):
         
         """
         特殊静音段sp符号处理
@@ -338,32 +340,33 @@ class Inferencer:
 
     def get_phones_and_bert(self, text,language,final=False):
         
-        language = language.replace("all_","")
-        formattext = text
-        while "  " in formattext:
-            formattext = formattext.replace("  ", " ")
-        if language == "zh":
-            if re.search(r'[A-Za-z]', formattext):
-                formattext = re.sub(r'[a-z]', lambda x: x.group(0).upper(), formattext)
+        if language in {"en", "all_zh", "all_ja", "all_ko", "all_yue"}:
+            formattext = text
+            while "  " in formattext:
+                formattext = formattext.replace("  ", " ")
+            if language == "all_zh":
+                if re.search(r"[A-Za-z]", formattext):
+                    formattext = re.sub(r"[a-z]", lambda x: x.group(0).upper(), formattext)
+                    formattext = chinese.mix_text_normalize(formattext)
+                    return self.get_phones_and_bert(formattext, "zh")
+                else:
+                    phones, word2ph, norm_text = self.clean_text_inf(formattext, language)
+                    bert = self.get_bert_feature(norm_text, word2ph).to(self.device)
+            elif language == "all_yue" and re.search(r"[A-Za-z]", formattext):
+                formattext = re.sub(r"[a-z]", lambda x: x.group(0).upper(), formattext)
                 formattext = chinese.mix_text_normalize(formattext)
-                return self.get_phones_and_bert(formattext,"zh")
+                return self.get_phones_and_bert(formattext, "yue")
             else:
                 phones, word2ph, norm_text = self.clean_text_inf(formattext, language)
-                bert = self.get_bert_feature(norm_text, word2ph).to(self.device)
-        elif language == "yue" and re.search(r'[A-Za-z]', formattext):
-                formattext = re.sub(r'[a-z]', lambda x: x.group(0).upper(), formattext)
-                formattext = chinese.mix_text_normalize(formattext)
-                return self.get_phones_and_bert(formattext,"yue")
-        else:
-            phones, word2ph, norm_text = self.clean_text_inf(formattext, language)
-            bert = torch.zeros(
-                (1024, len(phones)),
-                dtype=torch.float16,
-            ).to(self.device)
-        if not final and len(phones) < 6:
-            return self.get_phones_and_bert("." + text,language,final=True)
+                bert = torch.zeros(
+                    (1024, len(phones)),
+                    dtype=torch.float16,
+                ).to(self.device)
 
-        return phones,bert.to(torch.float16),norm_text
+        if not final and len(phones) < 6:
+            return self.get_phones_and_bert("." + text, language, final=True)
+
+        return phones, bert.to(torch.float16), norm_text
 
 
     def get_bert_inf(self, phones, word2ph, norm_text, language):

@@ -275,18 +275,6 @@ class SoVITsTrainer:
             lora_alpha=lora_rank,
             init_lora_weights=True,
         )        
-        self.net_g.cfm = get_peft_model(self.net_g.cfm, self.lora_config)
-
-        self.optim_g = torch.optim.AdamW(
-            filter(lambda p: p.requires_grad, self.net_g.parameters()), ###默认所有层lr一致
-            self.hparams.train.learning_rate,
-            betas=self.hparams.train.betas,
-            eps=self.hparams.train.eps,
-        )
-
-        self.scheduler_g = torch.optim.lr_scheduler.ExponentialLR(
-            self.optim_g, gamma=self.hparams.train.lr_decay, last_epoch=-1
-        )
         self.scaler = GradScaler(enabled=self.hparams.train.fp16_run)
 
         self.file_name = Path(self.hparams.data.processed_dir).name
@@ -301,10 +289,7 @@ class SoVITsTrainer:
         epochs = epochs or self.hparams.train.epochs
         # 如果训练过, 尝试加载最后一次模型参数
         epoch_done = self._resume()
-        if epoch_done:
-            for _ in range(epoch_done):
-                self.scheduler_g.step()
-        else:
+        if not epoch_done:
             epoch_done=0
             if not self._load_pretrained():
                 raise RuntimeError("预训练模型加载失败")
@@ -312,6 +297,14 @@ class SoVITsTrainer:
         if epochs<=epoch_done:
             BotLogger.info(f"SoVITS已训练轮次 {epoch_done} >= {epochs}, 训练终止.")
             return
+        
+        self.scheduler_g = torch.optim.lr_scheduler.ExponentialLR(
+            self.optim_g, 
+            gamma=self.hparams.train.lr_decay, 
+            last_epoch=-1
+        )
+        for _ in range(epoch_done):
+            self.scheduler_g.step()
 
         saved = False
         BotLogger.info(f"启动SoVITS训练 |  路径: {self.file_name} | 时间: {datetime.now().isoformat()}")
@@ -398,16 +391,26 @@ class SoVITsTrainer:
         if self.hparams.train.resume:
             if not self.generator_weights_path.exists(): return None
             try:                
+                self.net_g.cfm = get_peft_model(self.net_g.cfm, self.lora_config)
+                self.net_g.to(self.device)
+                self.optim_g = torch.optim.AdamW(
+                    filter(lambda p: p.requires_grad, self.net_g.parameters()), ###默认所有层lr一致
+                    self.hparams.train.learning_rate,
+                    betas=self.hparams.train.betas,
+                    eps=self.hparams.train.eps,                
+                )                
                 self.net_g, self.optim_g, self.hparams.train.learning_rate, epoch = load_checkpoint(
                     self.generator_weights_path,
                     self.net_g,
                     self.optim_g)
+                return epoch
+        
             except Exception as e:
                 BotLogger.error(
                     f"模型参数加载异常 | 文件: {self.file_name} | 错误: {str(e)}"
                 )
                 return None
-        return epoch
+        return None
 
     def _load_pretrained(self) -> bool:
         """ 加载预训练模型 """
@@ -425,6 +428,12 @@ class SoVITsTrainer:
                 betas=self.hparams.train.betas,
                 eps=self.hparams.train.eps,                
             )
+
+            no_grad_names = set()
+            for name, param in self.net_g.named_parameters():
+                if not param.requires_grad:
+                    no_grad_names.add(name)
+            print(no_grad_names)
 
         except Exception as e:
             BotLogger.error(

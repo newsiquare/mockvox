@@ -45,7 +45,7 @@ class SynthesizerTrnV3(nn.Module):
         gin_channels=0,
         use_sdp=True,
         semantic_frame_rate=None,
-        freeze_quantizer=None,
+        freeze_quantizer=True,
         commit_loss_weight=0.25,
         version="v3",
         **kwargs,

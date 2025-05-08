@@ -10,6 +10,7 @@ import librosa
 from bot.models import CNHubert
 from bot.text import chinese
 from bot.text import Normalizer
+from bot.config import PRETRAINED_PATH
 from bot.text import symbols 
 from transformers import AutoTokenizer, AutoModelForMaskedLM
 import traceback
@@ -110,7 +111,6 @@ class Inferencer:
                 tmp_str = ""
         if tmp_str != "":
             opts.append(tmp_str)
-        # print(opts)
         if len(opts) > 1 and len(opts[-1]) < 50:  ##如果最后一个太短了，和前一个合一起
             opts[-2] = opts[-2] + opts[-1]
             opts = opts[:-1]
@@ -204,10 +204,10 @@ class Inferencer:
         ]
         for special_s, special_l, target_symbol in special:
             if special_s in text and language == special_l:
-                return self.clean_special(text, language, special_s, target_symbol)
+                return self.clean_special(text, special_s, target_symbol)
         chinesen = chinese.ChineseNormalizer()
         norm_text = chinesen.do_normalize(text)
-        if language == "zh" or language=="yue":##########
+        if language == "zh" or language=="yue":
             phones, word2ph = chinesen.g2p(norm_text)
             assert len(phones) == sum(word2ph)
             assert len(norm_text) == len(word2ph)
@@ -223,7 +223,7 @@ class Inferencer:
         return phones, word2ph, norm_text
 
 
-    def clean_special(self, text, language, special_s, target_symbol):
+    def clean_special(self, text, special_s, target_symbol):
         
         """
         特殊静音段sp符号处理
@@ -248,7 +248,7 @@ class Inferencer:
 
     def get_bert_feature(self, text, word2ph):
         bert_path = os.environ.get(
-        "bert_path", "pretrained/GPT-SoVITS/chinese-roberta-wwm-ext-large"
+        "bert_path", os.path.join(PRETRAINED_PATH, 'GPT-SoVITS/chinese-roberta-wwm-ext-large')
         )
         tokenizer = AutoTokenizer.from_pretrained(bert_path)
         bert_model = AutoModelForMaskedLM.from_pretrained(bert_path)
@@ -350,8 +350,7 @@ class Inferencer:
 
 
 
-    def inference(self,ref_wav_path, prompt_text, prompt_language, text, text_language, how_to_cut=i18n("按标点符号切"), top_k=20, top_p=0.6, temperature=0.6, ref_free = False,speed=1,inp_refs=None):
-        print(self.hps)
+    def inference(self,ref_wav_path, prompt_text, prompt_language, text, text_language, how_to_cut=i18n("凑四句一切"), top_k=15, top_p=1, temperature=1, ref_free = False,speed=1,inp_refs=None):
         if ref_wav_path:pass
         else:BotLogger.error(i18n('请上传参考音频'))
         if text:pass
@@ -364,10 +363,10 @@ class Inferencer:
             prompt_text = prompt_text.strip("\n")
             if prompt_text[-1] not in self.splits:
                 prompt_text += "。" if prompt_language != "en" else "."
-            print(i18n("实际输入的参考文本:"), prompt_text)
+            BotLogger.info(i18n("实际输入的参考文本:"), prompt_text)
         text = text.strip("\n")
 
-        print(i18n("实际输入的目标文本:"), text)
+        BotLogger.info(i18n("实际输入的目标文本:"), text)
         zero_wav = np.zeros(
             int(self.hps.data.sampling_rate * 0.3),
             dtype=np.float16,
@@ -416,9 +415,9 @@ class Inferencer:
             if (len(text.strip()) == 0):
                 continue
             if (text[-1] not in self.splits): text += "。" if text_language != "en" else "."
-            print(i18n("实际输入的目标文本(每句):"), text)
+            BotLogger.info(i18n("实际输入的目标文本(每句):"), text)
             phones2,bert2,norm_text2=self.get_phones_and_bert(text, text_language)
-            print(i18n("前端处理后的文本(每句):"), norm_text2)
+            BotLogger.info(i18n("前端处理后的文本(每句):"), norm_text2)
             bert = torch.cat([bert1, bert2], 1)
             all_phoneme_ids = torch.LongTensor(phones1+phones2).to(self.device).unsqueeze(0)
 
@@ -458,7 +457,7 @@ class Inferencer:
             t4 = ttime()
             t.extend([t2 - t1,t3 - t2, t4 - t3])
             t1 = ttime()
-        print("%.3f\t%.3f\t%.3f\t%.3f" % (t[0], sum(t[1::3]), sum(t[2::3]), sum(t[3::3])))
+        BotLogger.info("%.3f\t%.3f\t%.3f\t%.3f" % (t[0], sum(t[1::3]), sum(t[2::3]), sum(t[3::3])))
         audio_opt = torch.cat(audio_opt, 0)
         sr=self.hps.data.sampling_rate 
         yield sr, (audio_opt.cpu().detach().numpy()* 32767).astype(np.int16)

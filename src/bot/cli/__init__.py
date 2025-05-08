@@ -10,6 +10,8 @@ import traceback
 from bot.utils import BotLogger, allowed_file, generate_unique_filename
 from bot.config import get_config, SLICED_ROOT_PATH, DENOISED_ROOT_PATH, ASR_PATH
 from bot.engine.v2 import slice_audio, batch_denoise, batch_asr
+from bot.engine.v4.inference import Inferencer as v4
+from bot.engine.v2.inference import Inferencer as v2
 from bot.engine.v2 import (
     DataProcessor,
     FeatureExtractor 
@@ -25,8 +27,11 @@ from bot.config import (
     GPT_MODEL_CONFIG,
     WEIGHTS_PATH,
     SOVITS_HALF_WEIGHTS_FILE,
-    GPT_HALF_WEIGHTS_FILE
+    GPT_HALF_WEIGHTS_FILE,
+    REASONING_RESULT_PATH,
+    REASONING_RESULT_FILE
 )
+import soundfile as sf
 from bot.utils import get_hparams_from_file
 
 CLI_HELP_MSG = f"""
@@ -123,6 +128,33 @@ def handle_train(args):
             f"Train failed | File: {args.fileID} | Traceback :\n{traceback.format_exc()}"
         )
 
+def handle_inference(args):
+    try:
+        if args.version == 'v2':
+            inference = v2(Path(WEIGHTS_PATH) / args.fileID / GPT_HALF_WEIGHTS_FILE,Path(WEIGHTS_PATH) / args.fileID / SOVITS_HALF_WEIGHTS_FILE)
+        else:
+            inference = v4(Path(WEIGHTS_PATH) / args.fileID / GPT_HALF_WEIGHTS_FILE,Path(WEIGHTS_PATH) / args.fileID / SOVITS_HALF_WEIGHTS_FILE)
+        reasoning_result_path = Path(REASONING_RESULT_PATH) / args.fileID / REASONING_RESULT_FILE
+        # Synthesize audio
+        synthesis_result = inference.inference(ref_wav_path=args.refWavFilePath,# 参考音频 
+                                    prompt_text=args.promptText, # 参考文本
+                                    prompt_language="中文", 
+                                    text=args.targetText, # 目标文本
+                                    text_language="中文", top_p=1, temperature=1, top_k=15, speed=1)
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            torch.cuda.ipc_collect()
+            gc.collect()
+        result_list = list(synthesis_result)
+        if result_list:
+            last_sampling_rate, last_audio_data = result_list[-1]
+            sf.write({reasoning_result_path}, last_audio_data, last_sampling_rate)
+            BotLogger.info(f"Audio saved to {reasoning_result_path}")
+    except Exception as e:
+        BotLogger.error(
+            f"inference failed | File: {args.fileID} | Traceback :\n{traceback.format_exc()}"
+        )
 def main():
     parser = argparse.ArgumentParser(prog='mockvoi', description=CLI_HELP_MSG)
     subparsers = parser.add_subparsers(dest='command', help='')
@@ -134,6 +166,18 @@ def main():
                                help='disable denoise processing (default: enable denoise).')
     parser_upload.set_defaults(denoise=True)
     parser_upload.set_defaults(func=handle_upload)
+
+    # inference 子命令
+    parser_inference = subparsers.add_parser('inference', help='')
+    parser_inference.add_argument('fileID', type=str, help='returned train id from train.')
+    parser_inference.add_argument('refWavFilePath', type=str, help='returned file id from upload.')
+    parser_inference.add_argument('promptText', type=str, help='prompt text.')
+    parser_inference.add_argument('targetText', type=str, help='target text.')
+    parser_inference.add_argument('--no-denoise', dest='denoise', action='store_false', 
+                               help='disable denoise processing (default: enable denoise).')
+    parser_inference.set_defaults(denoise=True)
+    parser_inference.add_argument('--version', type=str, default='v4', help='the default version is v4.')
+    parser_inference.set_defaults(func=handle_inference)
 
     # train 子命令
     parser_train = subparsers.add_parser('train', help='train specified file id.')

@@ -13,6 +13,7 @@ DENOISED_ROOT_PATH = os.path.join(DATA_PATH, "denoised")
 ASR_PATH = os.path.join(DATA_PATH, "asr")
 PROCESS_PATH = os.path.join(DATA_PATH, "process")
 WEIGHTS_PATH = os.path.join(DATA_PATH, "weights")
+REASONING_RESULT_PATH = os.path.join(DATA_PATH, "reasoningResult")
 
 SOVITS_MODEL_CONFIG = os.path.join(BASE_PATH, "src/bot/config/s2.json")
 GPT_MODEL_CONFIG = os.path.join(BASE_PATH, "src/bot/config/s1.json")
@@ -21,6 +22,7 @@ PRETRAINED_S2G_FILE = os.path.join(PRETRAINED_PATH, 'GPT-SoVITS/gsv-v2final-pret
 PRETRAINED_S2D_FILE = os.path.join(PRETRAINED_PATH, 'GPT-SoVITS/gsv-v2final-pretrained/s2D2333k.pth')
 PRETRAINED_GPT_FILE = os.path.join(PRETRAINED_PATH, 'GPT-SoVITS/gsv-v2final-pretrained/s1bert25hz-5kh-longer-epoch=12-step=369668.ckpt')
 PRETRAINED_S2GV4_FILE = os.path.join(PRETRAINED_PATH, 'GPT-SoVITS/gsv-v4-pretrained/s2Gv4.pth')
+PRETRAINED_VOCODER_FILE = os.path.join(PRETRAINED_PATH, 'GPT-SoVITS/gsv-v4-pretrained/vocoder.pth')
 PRETRAINED_T2SV4_FILE = os.path.join(PRETRAINED_PATH, 'GPT-SoVITS/s1v3.ckpt')
 
 SOVITS_G_WEIGHTS_FILE = 'gen.pth'
@@ -28,6 +30,7 @@ SOVITS_D_WEIGHTS_FILE = 'disc.pth'
 SOVITS_HALF_WEIGHTS_FILE = 'sovits.pth'
 GPT_WEIGHTS_FILE = 'decoder.pth'
 GPT_HALF_WEIGHTS_FILE = 'gpt.pth'
+REASONING_RESULT_FILE = 'output.wav'
 
 load_dotenv(BASE_PATH / ".env", override=True)  # 加载.env文件
 

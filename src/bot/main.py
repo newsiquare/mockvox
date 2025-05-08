@@ -10,7 +10,7 @@ import json
 from pathlib import Path
 
 from bot.config import get_config, UPLOAD_PATH, DENOISED_ROOT_PATH, SLICED_ROOT_PATH, ASR_PATH
-from bot.worker import celeryApp, process_file_task, train_task
+from bot.worker import celeryApp, process_file_task, train_task, inference_task
 from bot.utils import BotLogger, generate_unique_filename, allowed_file
 
 cfg = get_config()
@@ -146,6 +146,72 @@ async def start_train(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"训练过程错误: {str(e)}")
+
+@app.post(
+    "/inference",
+    summary="启动推理",
+    response_description="返回存储位置",
+    tags=["模型推理"]
+)
+async def start_inference(gpt_model_path:str = Form(..., description="GPT模型路径"), 
+                   soVITS_model_path:str = Form(..., description="sovits模型路径") , 
+                   ref_audio_path:str = Form(..., description="参考音频路径"), 
+                   ref_text:str = Form(..., description="参考音频文字"), 
+                   ref_language:str = Form(..., description="参考音频语言"), 
+                   target_text:str = Form(..., description="要生成的文字"), 
+                   target_language:str = Form(..., description="要生成音频语言"), 
+                   output_path:str = Form(..., description="结果保存路径"), 
+                   top_p:int = Form(..., description="top_p"), 
+                   top_k:int = Form(..., description="GPT采样参数(无参考文本时不要太低。不懂就用默认)："), 
+                   temperature:int = Form(..., description="温度"), 
+                   speed:int = Form(..., description="语速"),
+                   version:str = Form('v4', description="版本")
+):
+    try:
+        # 发送异步任务
+        task = inference_task.delay(
+                    gpt_model_path = gpt_model_path, 
+                    soVITS_model_path = soVITS_model_path , 
+                    ref_audio_path = ref_audio_path, 
+                    ref_text = ref_text, 
+                    ref_language = ref_language, 
+                    target_text = target_text, 
+                    target_language = target_language, 
+                    output_path = output_path, 
+                    top_p = top_p, 
+                    top_k = top_k, 
+                    temperature = temperature, 
+                    speed = speed,
+                    version = version
+        )
+        # 确保任务对象有效
+        if not isinstance(task, AsyncResult):
+            BotLogger.error(f"Celery推理任务提交异常")
+            raise HTTPException(500, "Celery推理任务提交失败")
+
+        # 记录任务提交日志
+        BotLogger.info(
+            "推理任务已提交",
+            extra={
+                "action": "default",
+                "task_id": task.id
+            }
+        )
+
+        return {
+            "message": "推理任务已进入处理队列",
+            "task_id": task.id
+        }
+
+    except HTTPException as he:
+        raise he
+    
+    except ConnectionError as ce:
+        BotLogger.critical("消息队列连接失败", exc_info=True)
+        raise HTTPException(503, "系统暂时不可用")
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"推理过程错误: {str(e)}")
 
 
 @app.post(

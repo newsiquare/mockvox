@@ -10,6 +10,10 @@ from bot.models import CNHubert
 from bot.text import chinese
 from bot.text import Normalizer
 from bot.text import symbols 
+from bot.config import (
+    PRETRAINED_PATH,
+    PRETRAINED_S2GV4_FILE,
+    PRETRAINED_VOCODER_FILE)
 from transformers import AutoTokenizer, AutoModelForMaskedLM
 import torchaudio
 from bot.nn.mel import spectrogram_torch
@@ -76,8 +80,8 @@ class Inferencer:
         )
         hifigan_model.eval()
         hifigan_model.remove_weight_norm()
-        state_dict_g = torch.load("pretrained/GPT-SoVITS/gsv-v4-pretrained/vocoder.pth", map_location="cpu")
-        print("loading vocoder",hifigan_model.load_state_dict(state_dict_g))
+        state_dict_g = torch.load(PRETRAINED_VOCODER_FILE, map_location="cpu")
+        BotLogger.info("loading vocoder",hifigan_model.load_state_dict(state_dict_g))
 
         return hifigan_model.half().to(self.device)
         
@@ -116,11 +120,10 @@ class Inferencer:
         if if_lora_v3 == False:
             vq_model.load_state_dict(dict_s2["weight"], strict=False)
         else:
-            gv4_model,if_lora_v3 = self._load_sovits_new("pretrained/GPT-SoVITS/gsv-v4-pretrained/s2Gv4.pth")
+            gv4_model,if_lora_v3 = self._load_sovits_new(PRETRAINED_S2GV4_FILE)
             vq_model.load_state_dict(gv4_model["weight"], strict=False)
-            print(dict_s2)
-            # lora_rank = hps["train"]["lora_rank"]
-            lora_rank = 32
+            lora_rank = hps["train"]["lora_rank"]
+            # lora_rank = 32
             lora_config = LoraConfig(
                 target_modules=["to_k", "to_q", "to_v", "to_out.0"],
                 r=lora_rank,
@@ -128,7 +131,7 @@ class Inferencer:
                 init_lora_weights=True,
             )
             vq_model.cfm = get_peft_model(vq_model.cfm, lora_config)
-            print("loading sovits_v4_lora%s" % (lora_rank))
+            BotLogger.info("loading sovits_v4_lora%s" % (lora_rank))
             vq_model.load_state_dict(dict_s2["weight"], strict=False)
             vq_model.cfm = vq_model.cfm.merge_and_unload()
             vq_model.eval()
@@ -179,7 +182,6 @@ class Inferencer:
                 tmp_str = ""
         if tmp_str != "":
             opts.append(tmp_str)
-        # print(opts)
         if len(opts) > 1 and len(opts[-1]) < 50:  ##如果最后一个太短了，和前一个合一起
             opts[-2] = opts[-2] + opts[-1]
             opts = opts[:-1]
@@ -318,7 +320,7 @@ class Inferencer:
 
     def get_bert_feature(self, text, word2ph):
         bert_path = os.environ.get(
-        "bert_path", "pretrained/GPT-SoVITS/chinese-roberta-wwm-ext-large"
+        "bert_path", os.path.join(PRETRAINED_PATH, 'GPT-SoVITS/chinese-roberta-wwm-ext-large')
         )
         tokenizer = AutoTokenizer.from_pretrained(bert_path)
         bert_model = AutoModelForMaskedLM.from_pretrained(bert_path)
@@ -421,7 +423,7 @@ class Inferencer:
 
 
 
-    def inference(self,ref_wav_path, prompt_text, prompt_language, text, text_language, how_to_cut=i18n("按标点符号切"), top_k=20, top_p=0.6, temperature=0.6, ref_free = False,speed=1,inp_refs=None,if_freeze=False):
+    def inference(self,ref_wav_path, prompt_text, prompt_language, text, text_language, how_to_cut=i18n("凑四句一切"), top_k=15, top_p=1, temperature=1, ref_free = False,speed=1,if_freeze=False):
         if ref_wav_path:pass
         else:BotLogger.error(i18n('请上传参考音频'))
         if text:pass
@@ -437,10 +439,10 @@ class Inferencer:
             prompt_text = prompt_text.strip("\n")
             if prompt_text[-1] not in self.splits:
                 prompt_text += "。" if prompt_language != "en" else "."
-            print(i18n("实际输入的参考文本:"), prompt_text)
+            BotLogger.info(i18n("实际输入的参考文本:"), prompt_text)
         text = text.strip("\n")
 
-        print(i18n("实际输入的目标文本:"), text)
+        BotLogger.info(i18n("实际输入的目标文本:"), text)
         zero_wav = np.zeros(
             int(self.hps.data.sampling_rate * 0.3),
             dtype=np.float16,
@@ -495,9 +497,9 @@ class Inferencer:
                 continue
             if (text[-1] not in self.splits): 
                 text += "。" if text_language != "en" else "."
-            print(i18n("实际输入的目标文本(每句):"), text)
+            BotLogger.info(i18n("实际输入的目标文本(每句):"), text)
             phones2,bert2,norm_text2=self.get_phones_and_bert(text, text_language)
-            print(i18n("前端处理后的文本(每句):"), norm_text2)
+            BotLogger.info(i18n("前端处理后的文本(每句):"), norm_text2)
             if not ref_free:
                 bert = torch.cat([bert1, bert2], 1)
                 all_phoneme_ids = torch.LongTensor(phones1+phones2).to(self.device).unsqueeze(0)
@@ -537,7 +539,6 @@ class Inferencer:
             tgt_sr= 32000
             if sr != tgt_sr:
                 ref_audio = self.resample(ref_audio, sr,tgt_sr)
-            # print("ref_audio",ref_audio.abs().mean())
             mel2 = self.mel_fn_v4(ref_audio)
             mel2 = self.norm_spec(mel2)
             T_min = min(mel2.shape[2], fea_ref.shape[2])
@@ -582,7 +583,7 @@ class Inferencer:
             t4 = ttime()
             t.extend([t2 - t1,t3 - t2, t4 - t3])
             t1 = ttime()
-        print("%.3f\t%.3f\t%.3f\t%.3f" % (t[0], sum(t[1::3]), sum(t[2::3]), sum(t[3::3])))
+        BotLogger.info("%.3f\t%.3f\t%.3f\t%.3f" % (t[0], sum(t[1::3]), sum(t[2::3]), sum(t[3::3])))
         audio_opt = torch.cat(audio_opt, 0)
         opt_st = 48000
         audio_opt = audio_opt.cpu().detach().numpy()

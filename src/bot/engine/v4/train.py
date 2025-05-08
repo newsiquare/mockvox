@@ -69,7 +69,7 @@ class GPTTrainer:
         )
         self.dataloader = DataLoader(
             dataset,
-            num_workers=8,
+            num_workers=4,
             shuffle=False,
             collate_fn=dataset.collate,
             batch_sampler=sampler,
@@ -244,15 +244,14 @@ class SoVITsTrainer:
             dataset, 
             batch_size=self.hparams.train.batch_size,
             boundaries=[
-                32, 300, 400, 500, 600, 700, 800, 900, 
-                1000
+                32, 300, 400, 500, 600, 700, 800, 900, 1000
             ],
             shuffle=True
         )
         collate_fn = TextAudioSpeakerCollate(self.device)
         self.dataloader = DataLoader(
             dataset,
-            num_workers=8,
+            num_workers=4,
             shuffle=False,
             # pin_memory=True,
             collate_fn=collate_fn,
@@ -426,11 +425,6 @@ class SoVITsTrainer:
                 betas=self.hparams.train.betas,
                 eps=self.hparams.train.eps,                
             )
-            # 加载后冻结量化器
-            if self.hparams.model.freeze_quantizer:
-                for name, param in self.net_g.named_parameters():
-                    if "ssl_proj" in name or "quantizer" in name or "enc_p" in name:
-                        param.requires_grad = False
 
         except Exception as e:
             BotLogger.error(

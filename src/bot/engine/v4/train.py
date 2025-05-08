@@ -269,13 +269,13 @@ class SoVITsTrainer:
         ).to(self.device)
 
         lora_rank = int(self.hparams.train.lora_rank)
-        lora_config = LoraConfig(
+        self.lora_config = LoraConfig(
             target_modules=["to_k", "to_q", "to_v", "to_out.0"],
             r=lora_rank,
             lora_alpha=lora_rank,
             init_lora_weights=True,
         )        
-        self.net_g.cfm = get_peft_model(self.net_g.cfm, lora_config)
+        self.net_g.cfm = get_peft_model(self.net_g.cfm, self.lora_config)
 
         self.optim_g = torch.optim.AdamW(
             filter(lambda p: p.requires_grad, self.net_g.parameters()), ###默认所有层lr一致
@@ -413,16 +413,18 @@ class SoVITsTrainer:
         """ 加载预训练模型 """
         if not Path(PRETRAINED_S2GV4_FILE).exists(): return False
         try:
-            if hasattr(self.net_g, "module"):
-                self.net_g.module.load_state_dict(
-                    torch.load(PRETRAINED_S2GV4_FILE, map_location="cpu")["weight"],
-                    strict=False
-                )
-            else:
-                self.net_g.load_state_dict(
-                    torch.load(PRETRAINED_S2GV4_FILE, map_location="cpu")["weight"],
-                    strict=False
-                )
+            self.net_g.load_state_dict(
+                torch.load(PRETRAINED_S2GV4_FILE, map_location="cpu")["weight"],
+                strict=False
+            )
+            self.net_g.cfm =  get_peft_model(self.net_g.cfm, self.lora_config)
+            self.net_g.to(self.device)
+            self.optim_g = torch.optim.AdamW(
+                filter(lambda p: p.requires_grad, self.net_g.parameters()), ###默认所有层lr一致
+                self.hparams.train.learning_rate,
+                betas=self.hparams.train.betas,
+                eps=self.hparams.train.eps,                
+            )
 
         except Exception as e:
             BotLogger.error(

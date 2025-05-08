@@ -39,7 +39,7 @@ class DataProcessor:
         """
         # 加载分词器和语言模型
         model_dir = os.path.join(PRETRAINED_PATH, "GPT-SoVITS")
-        bert_dir = os.path.join(model_dir, 'chinese-roberta-wwm-ext-large')
+        bert_dir = os.path.join(model_dir, bert_model)
         self.tokenizer = AutoTokenizer.from_pretrained(bert_dir, local_files_only=True)
         self.mlm = AutoModelForMaskedLM.from_pretrained(bert_dir, local_files_only=True)
         self.language = language
@@ -139,7 +139,7 @@ class DataProcessor:
         """
         # 特殊符号处理
         for special_s, special_l, target_symbol in special:
-            if special_s in text and language == special_l:
+            if special_s in text and self.language == special_l:
                 text = text.replace(special_s, ",")
                 norm_text = self.normalizer.do_normalize(text)
                 phones = self.normalizer.g2p(norm_text)
@@ -155,11 +155,11 @@ class DataProcessor:
         norm_text = self.normalizer.do_normalize(text)
 
         # 不同语言的分词处理
-        if self.language == "zh" or language=="cant":
+        if self.language=="zh" or self.language=="cant":
             phones, word2ph = self.normalizer.g2p(norm_text)
             assert len(phones) == sum(word2ph)
             assert len(norm_text) == len(word2ph)
-        elif self.language == "en":
+        elif self.language=="en":
             phones = self.normalizer.g2p(norm_text)
             if len(phones) < 4:  # 确保最小长度
                 phones = [','] + phones

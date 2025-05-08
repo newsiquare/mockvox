@@ -44,12 +44,7 @@ class TextToSemantic:
         # 已处理
         if semantic_file.exists():
             BotLogger.info(
-                "语义转换已处理",
-                extra={
-                    "action": "text_to_semantic",
-                    "file_name": file_path,
-                    "json_file": semantic_file
-                }
+                f"语义转换已处理 {semantic_file}"
             )
             return None
 

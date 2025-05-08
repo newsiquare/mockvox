@@ -69,7 +69,7 @@ class GPTTrainer:
         )
         self.dataloader = DataLoader(
             dataset,
-            num_workers=4,
+            num_workers=0,
             shuffle=False,
             collate_fn=dataset.collate,
             batch_sampler=sampler,
@@ -251,7 +251,7 @@ class SoVITsTrainer:
         collate_fn = TextAudioSpeakerCollate(self.device)
         self.dataloader = DataLoader(
             dataset,
-            num_workers=4,
+            num_workers=0,
             shuffle=False,
             # pin_memory=True,
             collate_fn=collate_fn,

@@ -429,12 +429,6 @@ class SoVITsTrainer:
                 eps=self.hparams.train.eps,                
             )
 
-            no_grad_names = set()
-            for name, param in self.net_g.named_parameters():
-                if not param.requires_grad:
-                    no_grad_names.add(name)
-            print(no_grad_names)
-
         except Exception as e:
             BotLogger.error(
                 f"预训练模型加载异常 | 错误: {str(e)}"

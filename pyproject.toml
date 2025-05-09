@@ -44,7 +44,11 @@ dependencies = [
     "tqdm",
     "torchmetrics",
     "peft",
-    "x_transformers"
+    "x_transformers",
+    "ToJyutping",
+    "wordsegment",
+    "g2p-en",
+    "g2p"
 ]
 
 # Optional dependencies ------------------------------------------------------------------------------------------------

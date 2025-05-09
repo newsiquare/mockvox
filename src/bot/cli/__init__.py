@@ -170,7 +170,7 @@ def main():
     # inference 子命令
     parser_inference = subparsers.add_parser('inference', help='')
     parser_inference.add_argument('fileID', type=str, help='returned train id from train.')
-    parser_inference.add_argument('refWavFilePath', type=str, help='returned file id from upload.')
+    parser_inference.add_argument('refWavFilePath', type=str, help='reference file full path.')
     parser_inference.add_argument('promptText', type=str, help='prompt text.')
     parser_inference.add_argument('targetText', type=str, help='target text.')
     parser_inference.add_argument('--no-denoise', dest='denoise', action='store_false', 

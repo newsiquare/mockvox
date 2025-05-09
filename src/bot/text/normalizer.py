@@ -1,5 +1,6 @@
 from .symbols import symbols
 from .chinese import ChineseNormalizer
+from .cantonese import CantoneseNormalizer
 
 symbol_to_id = {s: i for i, s in enumerate(symbols)}
 
@@ -10,7 +11,7 @@ class NormalizerFactory:
         # 'en': EnglishNormalizer,
         # 'ja': JapaneseNormalizer,
         # 'ko': KoreanNormalizer,
-        # 'can': CantoneseNormalizer
+        'can': CantoneseNormalizer
     }
 
     @classmethod

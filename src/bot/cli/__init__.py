@@ -130,11 +130,20 @@ def handle_train(args):
 
 def handle_inference(args):
     try:
+        gpt_path = Path(WEIGHTS_PATH) / args.fileID / GPT_HALF_WEIGHTS_FILE
+        sovits_path = Path(WEIGHTS_PATH) / args.fileID / SOVITS_HALF_WEIGHTS_FILE
+        reasoning_result_path = Path(REASONING_RESULT_PATH) / args.fileID
+        if not os.path.exists(gpt_path):
+            BotLogger.error("路径错误！找不到GPT模型")
+        if not os.path.exists(sovits_path):
+            BotLogger.error("路径错误！找不到SOVITS模型")
+        if not os.path.exists(reasoning_result_path):
+            os.makedirs(reasoning_result_path, exist_ok=True)
         if args.version == 'v2':
-            inference = v2(Path(WEIGHTS_PATH) / args.fileID / GPT_HALF_WEIGHTS_FILE,Path(WEIGHTS_PATH) / args.fileID / SOVITS_HALF_WEIGHTS_FILE)
+            inference = v2(gpt_path, sovits_path)
         else:
-            inference = v4(Path(WEIGHTS_PATH) / args.fileID / GPT_HALF_WEIGHTS_FILE,Path(WEIGHTS_PATH) / args.fileID / SOVITS_HALF_WEIGHTS_FILE)
-        reasoning_result_path = Path(REASONING_RESULT_PATH) / args.fileID / REASONING_RESULT_FILE
+            inference = v4(gpt_path, sovits_path)
+        
         # Synthesize audio
         synthesis_result = inference.inference(ref_wav_path=args.refWavFilePath,# 参考音频 
                                     prompt_text=args.promptText, # 参考文本
@@ -149,8 +158,8 @@ def handle_inference(args):
         result_list = list(synthesis_result)
         if result_list:
             last_sampling_rate, last_audio_data = result_list[-1]
-            sf.write({reasoning_result_path}, last_audio_data, last_sampling_rate)
-            BotLogger.info(f"Audio saved to {reasoning_result_path}")
+            sf.write(reasoning_result_path / REASONING_RESULT_FILE, last_audio_data, last_sampling_rate)
+            BotLogger.info(f"Audio saved to {reasoning_result_path / REASONING_RESULT_FILE}")
     except Exception as e:
         BotLogger.error(
             f"inference failed | File: {args.fileID} | Traceback :\n{traceback.format_exc()}"

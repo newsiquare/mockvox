@@ -81,7 +81,7 @@ class Inferencer:
         hifigan_model.eval()
         hifigan_model.remove_weight_norm()
         state_dict_g = torch.load(PRETRAINED_VOCODER_FILE, map_location="cpu")
-        BotLogger.info("loading vocoder",hifigan_model.load_state_dict(state_dict_g))
+        BotLogger.info(f"loading vocoder {hifigan_model.load_state_dict(state_dict_g)}")
 
         return hifigan_model.half().to(self.device)
         
@@ -131,7 +131,7 @@ class Inferencer:
                 init_lora_weights=True,
             )
             vq_model.cfm = get_peft_model(vq_model.cfm, lora_config)
-            BotLogger.info("loading sovits_v4_lora%s" % (lora_rank))
+            BotLogger.info(f"loading sovits_v4_lora{lora_rank}")
             vq_model.load_state_dict(dict_s2["weight"], strict=False)
             vq_model.cfm = vq_model.cfm.merge_and_unload()
             vq_model.eval()
@@ -439,10 +439,10 @@ class Inferencer:
             prompt_text = prompt_text.strip("\n")
             if prompt_text[-1] not in self.splits:
                 prompt_text += "。" if prompt_language != "en" else "."
-            BotLogger.info(i18n("实际输入的参考文本:"), prompt_text)
+            BotLogger.info(i18n("实际输入的参考文本:")+prompt_text)
         text = text.strip("\n")
 
-        BotLogger.info(i18n("实际输入的目标文本:"), text)
+        BotLogger.info(i18n("实际输入的目标文本:")+text)
         zero_wav = np.zeros(
             int(self.hps.data.sampling_rate * 0.3),
             dtype=np.float16,
@@ -497,9 +497,9 @@ class Inferencer:
                 continue
             if (text[-1] not in self.splits): 
                 text += "。" if text_language != "en" else "."
-            BotLogger.info(i18n("实际输入的目标文本(每句):"), text)
+            BotLogger.info(i18n("实际输入的目标文本(每句):")+text)
             phones2,bert2,norm_text2=self.get_phones_and_bert(text, text_language)
-            BotLogger.info(i18n("前端处理后的文本(每句):"), norm_text2)
+            BotLogger.info(i18n("前端处理后的文本(每句):")+norm_text2)
             if not ref_free:
                 bert = torch.cat([bert1, bert2], 1)
                 all_phoneme_ids = torch.LongTensor(phones1+phones2).to(self.device).unsqueeze(0)

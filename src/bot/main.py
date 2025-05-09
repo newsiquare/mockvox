@@ -168,6 +168,12 @@ async def start_inference(gpt_model_path:str = Form(..., description="GPT模型�
                    version:str = Form('v4', description="版本")
 ):
     try:
+        if not os.path.exists(gpt_model_path):
+            BotLogger.error("路径错误！找不到GPT模型")
+        if not os.path.exists(soVITS_model_path):
+            BotLogger.error("路径错误！找不到SOVITS模型")
+        if not os.path.exists(output_path):
+            os.makedirs(output_path, exist_ok=True)
         # 发送异步任务
         task = inference_task.delay(
                     gpt_model_path = gpt_model_path, 

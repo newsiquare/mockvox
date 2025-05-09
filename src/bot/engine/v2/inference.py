@@ -363,10 +363,10 @@ class Inferencer:
             prompt_text = prompt_text.strip("\n")
             if prompt_text[-1] not in self.splits:
                 prompt_text += "。" if prompt_language != "en" else "."
-            BotLogger.info(i18n("实际输入的参考文本:"), prompt_text)
+            BotLogger.info(i18n("实际输入的参考文本:")+prompt_text)
         text = text.strip("\n")
 
-        BotLogger.info(i18n("实际输入的目标文本:"), text)
+        BotLogger.info(i18n("实际输入的目标文本:")+text)
         zero_wav = np.zeros(
             int(self.hps.data.sampling_rate * 0.3),
             dtype=np.float16,
@@ -415,9 +415,9 @@ class Inferencer:
             if (len(text.strip()) == 0):
                 continue
             if (text[-1] not in self.splits): text += "。" if text_language != "en" else "."
-            BotLogger.info(i18n("实际输入的目标文本(每句):"), text)
+            BotLogger.info(i18n("实际输入的目标文本(每句):")+text)
             phones2,bert2,norm_text2=self.get_phones_and_bert(text, text_language)
-            BotLogger.info(i18n("前端处理后的文本(每句):"), norm_text2)
+            BotLogger.info(i18n("前端处理后的文本(每句):")+norm_text2)
             bert = torch.cat([bert1, bert2], 1)
             all_phoneme_ids = torch.LongTensor(phones1+phones2).to(self.device).unsqueeze(0)
 

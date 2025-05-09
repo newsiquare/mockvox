@@ -6,13 +6,14 @@ import wordsegment
 from g2p_en import G2p
 from builtins import str as unicode
 import nltk
-from nltk.tokenize import TweetTokenizer
+# from nltk.tokenize import TweetTokenizer
+# from nltk.tokenize import word_tokenize
 
 from bot.text.en_normalization import normalize
 from bot.text import symbols, punctuation
 from bot.utils import BotLogger
 
-word_tokenize = TweetTokenizer().tokenize
+# word_tokenize = TweetTokenizer().tokenize
 
 current_file_path = os.path.dirname(__file__)
 CMU_DICT_PATH = os.path.join(current_file_path, "cmudict.rep")
@@ -149,7 +150,7 @@ class EnglishNormalizer:
 class en_G2p(G2p):
     def __init__(self):
         super().__init__()
-        self._load_nltk_resources()
+        self._check_nltk_resources()
         # 分词初始化
         wordsegment.load()
 
@@ -169,19 +170,21 @@ class en_G2p(G2p):
             "JJ",
         )
 
-    def _load_nltk_resources(self):
+    def _check_nltk_resources(self):
+        pass
         try:
-            model_path = nltk.data.find('taggers/averaged_perceptron_tagger')
+            nltk.data.find("taggers/averaged_perceptron_tagger")
+            nltk.data.find("tokenizers/punkt_tab")
+            nltk.data.find("taggers/averaged_perceptron_tagger_eng")
         except LookupError:
-            nltk.download('averaged_perceptron_tagger', quiet=True)
-            model_path = nltk.data.find('taggers/averaged_perceptron_tagger')
-
-        self.model = nltk.data.load(model_path, format='pickle')
+            nltk.download('averaged_perceptron_tagger')
+            nltk.download('punkt_tab')
+            nltk.download('averaged_perceptron_tagger_eng')
 
     def __call__(self, text):
         # tokenization
-        words = word_tokenize(text)
-        tokens = nltk.pos_tag(words, tagger=self.model)  # tuples of (word, tag)
+        words = nltk.word_tokenize(text)
+        tokens = nltk.pos_tag(words) #, tagger=self.model)  # tuples of (word, tag)
 
         # steps
         prons = []
@@ -344,5 +347,5 @@ if __name__ == '__main__':
     normalizer = EnglishNormalizer()
     text = "e.g. I used openai's AI tool to draw a picture."
     text = normalizer.do_normalize(text)
-    phones, word2ph = normalizer.g2p(text)
-    print(phones, word2ph)    
+    phones = normalizer.g2p(text)
+    print(phones)    

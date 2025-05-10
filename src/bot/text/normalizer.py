@@ -2,6 +2,8 @@ from .symbols import symbols
 from .chinese import ChineseNormalizer
 from .cantonese import CantoneseNormalizer
 from .english import EnglishNormalizer
+from .japanese import JapaneseNormalizer
+from .korean import KoreanNormalizer
 
 symbol_to_id = {s: i for i, s in enumerate(symbols)}
 
@@ -10,8 +12,8 @@ class NormalizerFactory:
     NORMALIZER_MAP = {
         'zh': ChineseNormalizer,
         'en': EnglishNormalizer,
-        # 'ja': JapaneseNormalizer,
-        # 'ko': KoreanNormalizer,
+        'ja': JapaneseNormalizer,
+        'ko': KoreanNormalizer,
         'can': CantoneseNormalizer
     }
 

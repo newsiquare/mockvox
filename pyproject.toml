@@ -49,7 +49,9 @@ dependencies = [
     "wordsegment",
     "g2p-en",
     "g2p",
-    "pyopenjtalk"
+    "pyopenjtalk",
+    "ko_pron",
+    "g2pk2"
 ]
 
 # Optional dependencies ------------------------------------------------------------------------------------------------

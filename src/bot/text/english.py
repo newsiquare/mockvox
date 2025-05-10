@@ -6,14 +6,10 @@ import wordsegment
 from g2p_en import G2p
 from builtins import str as unicode
 import nltk
-# from nltk.tokenize import TweetTokenizer
-# from nltk.tokenize import word_tokenize
 
 from bot.text.en_normalization import normalize
 from bot.text import symbols, punctuation
 from bot.utils import BotLogger
-
-# word_tokenize = TweetTokenizer().tokenize
 
 current_file_path = os.path.dirname(__file__)
 CMU_DICT_PATH = os.path.join(current_file_path, "cmudict.rep")
@@ -155,8 +151,8 @@ class en_G2p(G2p):
         wordsegment.load()
 
         # 扩展过时字典, 添加姓名字典
-        self.cmu = get_dict()
-        self.namedict = get_namedict()
+        self.cmu = self._get_dict()
+        self.namedict = self._get_namedict()
 
         # 剔除读音错误的几个缩写
         for word in ["AE", "AI", "AR", "IOS", "HUD", "OS"]:
@@ -174,12 +170,15 @@ class en_G2p(G2p):
         pass
         try:
             nltk.data.find("taggers/averaged_perceptron_tagger")
-            nltk.data.find("tokenizers/punkt_tab")
             nltk.data.find("taggers/averaged_perceptron_tagger_eng")
+            nltk.data.find("tokenizers/punkt_tab")
+            nltk.data.find("corpora/cmudict")
+
         except LookupError:
             nltk.download('averaged_perceptron_tagger')
-            nltk.download('punkt_tab')
             nltk.download('averaged_perceptron_tagger_eng')
+            nltk.download('punkt_tab')
+            nltk.download('cmudict')
 
     def __call__(self, text):
         # tokenization
@@ -213,14 +212,14 @@ class en_G2p(G2p):
                     pron = pron2
             else:
                 # 递归查找预测
-                pron = self.qryword(o_word)
+                pron = self._qryword(o_word)
 
             prons.extend(pron)
             prons.extend([" "])
 
         return prons[:-1]
 
-    def qryword(self, o_word):
+    def _qryword(self, o_word):
         word = o_word.lower()
 
         # 查字典, 单字母除外
@@ -246,7 +245,7 @@ class en_G2p(G2p):
 
         # 尝试分离所有格
         if re.match(r"^([a-z]+)('s)$", word):
-            phones = self.qryword(word[:-2])[:]
+            phones = self._qryword(word[:-2])[:]
             # P T K F TH HH 无声辅音结尾 's 发 ['S']
             if phones[-1] in ["P", "T", "K", "F", "TH", "HH"]:
                 phones.extend(["S"])
@@ -268,80 +267,84 @@ class en_G2p(G2p):
             return self.predict(word)
 
         # 可以分词的递归处理
-        return [phone for comp in comps for phone in self.qryword(comp)]
+        return [phone for comp in comps for phone in self._qryword(comp)]
 
-def get_dict():
-    if os.path.exists(CACHE_PATH):
-        with open(CACHE_PATH, "rb") as pickle_file:
-            g2p_dict = pickle.load(pickle_file)
-    else:
-        g2p_dict = read_dict()
-        cache_dict(g2p_dict, CACHE_PATH)
+    def _get_dict(self):
+        if os.path.exists(CACHE_PATH):
+            with open(CACHE_PATH, "rb") as pickle_file:
+                g2p_dict = pickle.load(pickle_file)
+        else:
+            g2p_dict = self._read_dict()
+            self._cache_dict(g2p_dict, CACHE_PATH)
 
-    g2p_dict = hot_reload_hot(g2p_dict)
+        g2p_dict = self._hot_reload_hot(g2p_dict)
 
-    return g2p_dict
+        return g2p_dict
 
-def get_namedict():
-    if os.path.exists(NAMECACHE_PATH):
-        with open(NAMECACHE_PATH, "rb") as pickle_file:
-            name_dict = pickle.load(pickle_file)
-    else:
-        name_dict = {}
+    @staticmethod
+    def _get_namedict():
+        if os.path.exists(NAMECACHE_PATH):
+            with open(NAMECACHE_PATH, "rb") as pickle_file:
+                name_dict = pickle.load(pickle_file)
+        else:
+            name_dict = {}
 
-    return name_dict
+        return name_dict
 
-def read_dict():
-    g2p_dict = {}
-    with open(CMU_DICT_PATH) as f:
-        line = f.readline()
-        line_index = 1
-        while line:
-            if line_index >= 57:
-                line = line.strip()
-                word_split = line.split("  ")
-                word = word_split[0].lower()
-                g2p_dict[word] = [word_split[1].split(" ")]
-
-            line_index = line_index + 1
+    @staticmethod
+    def _read_dict():
+        g2p_dict = {}
+        with open(CMU_DICT_PATH) as f:
             line = f.readline()
+            line_index = 1
+            while line:
+                if line_index >= 57:
+                    line = line.strip()
+                    word_split = line.split("  ")
+                    word = word_split[0].lower()
+                    g2p_dict[word] = [word_split[1].split(" ")]
 
-    with open(CMU_DICT_FAST_PATH) as f:
-        line = f.readline()
-        line_index = 1
-        while line:
-            if line_index >= 0:
-                line = line.strip()
-                word_split = line.split(" ")
-                word = word_split[0].lower()
-                if word not in g2p_dict:
+                line_index = line_index + 1
+                line = f.readline()
+
+        with open(CMU_DICT_FAST_PATH) as f:
+            line = f.readline()
+            line_index = 1
+            while line:
+                if line_index >= 0:
+                    line = line.strip()
+                    word_split = line.split(" ")
+                    word = word_split[0].lower()
+                    if word not in g2p_dict:
+                        g2p_dict[word] = [word_split[1:]]
+
+                line_index = line_index + 1
+                line = f.readline()
+
+        return g2p_dict
+
+    @staticmethod
+    def _cache_dict(g2p_dict, file_path):
+        with open(file_path, "wb") as pickle_file:
+            pickle.dump(g2p_dict, pickle_file)
+
+    @staticmethod
+    def _hot_reload_hot(g2p_dict):
+        with open(CMU_DICT_HOT_PATH) as f:
+            line = f.readline()
+            line_index = 1
+            while line:
+                if line_index >= 0:
+                    line = line.strip()
+                    word_split = line.split(" ")
+                    word = word_split[0].lower()
+                    # 自定义发音词直接覆盖字典
                     g2p_dict[word] = [word_split[1:]]
 
-            line_index = line_index + 1
-            line = f.readline()
+                line_index = line_index + 1
+                line = f.readline()
 
-    return g2p_dict
-
-def cache_dict(g2p_dict, file_path):
-    with open(file_path, "wb") as pickle_file:
-        pickle.dump(g2p_dict, pickle_file)
-
-def hot_reload_hot(g2p_dict):
-    with open(CMU_DICT_HOT_PATH) as f:
-        line = f.readline()
-        line_index = 1
-        while line:
-            if line_index >= 0:
-                line = line.strip()
-                word_split = line.split(" ")
-                word = word_split[0].lower()
-                # 自定义发音词直接覆盖字典
-                g2p_dict[word] = [word_split[1:]]
-
-            line_index = line_index + 1
-            line = f.readline()
-
-    return g2p_dict
+        return g2p_dict
 
 if __name__ == '__main__':
     normalizer = EnglishNormalizer()

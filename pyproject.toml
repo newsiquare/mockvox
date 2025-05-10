@@ -48,7 +48,8 @@ dependencies = [
     "ToJyutping",
     "wordsegment",
     "g2p-en",
-    "g2p"
+    "g2p",
+    "pyopenjtalk"
 ]
 
 # Optional dependencies ------------------------------------------------------------------------------------------------

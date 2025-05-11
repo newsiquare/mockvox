@@ -51,7 +51,8 @@ dependencies = [
     "g2p",
     "pyopenjtalk",
     "ko_pron",
-    "g2pk2"
+    "g2pk2",
+    "faster-whisper"
 ]
 
 # Optional dependencies ------------------------------------------------------------------------------------------------

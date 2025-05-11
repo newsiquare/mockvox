@@ -2,7 +2,6 @@
 """
 语音识别(Auto Speech Recognition, asr)模块
 """
-from funasr import AutoModel
 from typing import Optional, List, Union
 from pathlib import Path
 import torch
@@ -10,11 +9,14 @@ import os
 import gc
 import json
 
+from funasr import AutoModel
+from faster_whisper import WhisperModel
+
 from bot.config import PRETRAINED_PATH
 from bot.utils import BotLogger
 
-class AutoSpeechRecognition:
-    def __init__(self,                
+class ChineseASR:
+    def __init__(self,
                  asr_model_name: str = 'iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch',
                  vad_model_name: str = 'iic/speech_fsmn_vad_zh-cn-16k-common-pytorch',
                  punc_model_name: str = 'iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch',
@@ -30,7 +32,7 @@ class AutoSpeechRecognition:
             disable_update=True
         )
         
-    def speech_recognition(self, input_path: str) -> List:
+    def execute(self, input_path: str) -> List:
         try:
             asr_result = self.model.generate(input=input_path)
             if not isinstance(asr_result, list) or len(asr_result) == 0:
@@ -40,6 +42,99 @@ class AutoSpeechRecognition:
             raise RuntimeError(f"语音识别&标点恢复失败: {str(e)}") from e
 
         return asr_result
+
+class CantoneseASR:
+    def __init__(self,
+                 asr_model_name: str = 'iic/speech_UniASR_asr_2pass-cantonese-CHS-16k-common-vocab1468-tensorflow1-online',
+                 device: Optional[str] = None
+        ): 
+        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        # 语音识别
+        self.model = AutoModel(
+            model=os.path.join(PRETRAINED_PATH,asr_model_name), model_revision='v2.0.4',
+            vad_model=None, vad_model_revision=None,
+            punc_model=None, punc_model_revision=None,
+            device=self.device,
+            disable_update=True
+        )
+        
+    def execute(self, input_path: str) -> List:
+        try:
+            asr_result = self.model.generate(input=input_path)
+            if not isinstance(asr_result, list) or len(asr_result) == 0:
+                raise ValueError("ASR结果必须是包含至少一个元素的列表")
+
+        except Exception as e:
+            raise RuntimeError(f"语音识别&标点恢复失败: {str(e)}") from e
+
+        return asr_result
+
+class FasterWhisperASR:
+    def __init__(self,
+        language: str = "auto",
+        asr_model_name: str = 'faster-whisper-large-v3',
+        device: Optional[str] = None
+    ): 
+        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        self.language = language
+        if self.language == "auto":
+            self.language = None
+
+        self.model = WhisperModel(
+            os.path.join(PRETRAINED_PATH, asr_model_name), 
+            device=self.device, 
+            compute_type="default"
+        )
+
+    def execute(self, input_path: str) -> List:
+        try:
+            asr_result, info = self.model.transcribe(
+                audio=input_path,
+                beam_size=5,
+                vad_filter=True,
+                vad_parameters=dict(min_silence_duration_ms=700),
+                language=self.language
+            )
+
+            if info.language == 'zh':
+                asr = ChineseASR()
+                asr_result = asr.execute(input_path)
+
+            if not isinstance(asr_result, list) or len(asr_result) == 0:
+                raise ValueError("ASR结果必须是包含至少一个元素的列表")
+
+        except Exception as e:
+            raise RuntimeError(f"语音识别&标点恢复失败: {str(e)}") from e
+
+        return asr_result
+
+class ASRFactory:
+    # 定义语言码与ASR类的映射关系
+    ASR_MAP = {
+        'zh': ChineseASR,
+        'can': CantoneseASR,  # 粤语
+        'en': FasterWhisperASR,
+        'ja': FasterWhisperASR,
+        'ko': FasterWhisperASR
+    }
+
+    @classmethod
+    def get_asr(cls, language_code, *args, **kwargs):
+        """根据语言码返回asr实例"""
+        asr_class = cls.ASR_MAP.get(language_code)
+        if not asr_class:
+            raise ValueError(f"Unsupported language code: {language_code}")
+        return asr_class(*args, **kwargs)
+
+class AutoSpeechRecognition:
+    '''
+    每个语言的ASR类, 都需要实现 execute 方法
+    '''
+    def __init__(self, language, *args, **kwargs):
+        self.asr = ASRFactory.get_asr(language, *args, **kwargs)
+
+    def execute(self, input_path):
+        return self.asr.execute(input_path)
     
 def load_asr_data(asr_dir: Union[str,Path]) -> List[dict]:
     """
@@ -57,10 +152,11 @@ def load_asr_data(asr_dir: Union[str,Path]) -> List[dict]:
         BotLogger.error(f"ASR文件不存在: {asr_file}")
     return result
 
-def batch_asr(file_list: List[str], output_dir: str):
+def batch_asr(language, file_list: List[str], output_dir: str):
     """批量识别函数
     
     Args:
+        language: 语言
         file_list: 降噪文件名数组
         output_dir: 语音识别输出目录
         
@@ -79,11 +175,11 @@ def batch_asr(file_list: List[str], output_dir: str):
             )
             return
 
-        asr = AutoSpeechRecognition()
+        asr = AutoSpeechRecognition(language)
 
         results = []
         for file in file_list:
-            result = asr.speech_recognition(input_path=file)
+            result = asr.execute(input_path=file)
             results.extend(result)
         
         with open(output_file, 'w', encoding='utf-8') as f:
@@ -108,14 +204,16 @@ if __name__ == '__main__':
     # 示例用法
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('file', type=str, help='processed file name.')
+    parser.add_argument('file', type=str, help='processed file name')
+    parser.add_argument('language', type=str, help='language code')
+    parser.set_defaults(language='zh')
     parser.add_argument('--no-denoised', action='store_false', dest='denoised',  # 添加反向参数
                         help='disable denoised processing (default: enable denoised)')
     parser.set_defaults(denoised=True)
 
     args = parser.parse_args()
 
-    asr = AutoSpeechRecognition()
+    asr = AutoSpeechRecognition(args.language)
 
     from bot.config import ASR_PATH, DENOISED_ROOT_PATH, SLICED_ROOT_PATH
     import os
@@ -136,7 +234,7 @@ if __name__ == '__main__':
     ]
     results = []
     for file in file_list:
-        result = asr.speech_recognition(input_path=file)
+        result = asr.execute(input_path=file)
         results.extend(result)
         
         with open(output_file, 'w', encoding='utf-8') as f:

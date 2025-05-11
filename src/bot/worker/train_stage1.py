@@ -1,14 +1,8 @@
 # -*- coding: utf-8 -*-
 import os, traceback
-import numpy as np
 import time
-from scipy.io import wavfile
-import torch
-from typing import List
 from pathlib import Path
 from collections import OrderedDict
-import json
-import gc
 
 from bot.config import get_config, UPLOAD_PATH, SLICED_ROOT_PATH, DENOISED_ROOT_PATH, ASR_PATH
 from bot.engine.v2 import slice_audio, batch_denoise, batch_asr

@@ -64,12 +64,14 @@ ffmpeg -version
 # ------------------------------------------------ 前置模型 ----------------------------------------------------------------
 # 语音降噪模型
 modelscope download --model 'damo/speech_frcrn_ans_cirm_16k' --local_dir './pretrained/damo/speech_frcrn_ans_cirm_16k'
-# 语音识别模型
+# 普通话语音识别模型
 modelscope download --model 'iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch' --local_dir './pretrained/iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
 # 语音端点检测
 modelscope download --model 'iic/speech_fsmn_vad_zh-cn-16k-common-pytorch' --local_dir './pretrained/iic/speech_fsmn_vad_zh-cn-16k-common-pytorch'
 # 标点恢复模型
 modelscope download --model 'iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch' --local_dir './pretrained/iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch'
+# [可选] 粤语语音识别模型
+modelscope download --model 'iic/speech_UniASR_asr_2pass-cantonese-CHS-16k-common-vocab1468-tensorflow1-online' --local_dir './pretrained/iic/speech_UniASR_asr_2pass-cantonese-CHS-16k-common-vocab1468-tensorflow1-online'
 
 # 文字转拼音 (从HuggingFace下载，需要连接HuggingFace；用 git-lfs 管理大文件, 下载时间较长。)
 git clone https://huggingface.co/alextomcat/G2PWModel.git ./pretrained

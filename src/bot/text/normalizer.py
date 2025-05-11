@@ -14,7 +14,7 @@ class NormalizerFactory:
         'en': EnglishNormalizer,
         'ja': JapaneseNormalizer,
         'ko': KoreanNormalizer,
-        'can': CantoneseNormalizer
+        'can': CantoneseNormalizer  # 粤语
     }
 
     @classmethod

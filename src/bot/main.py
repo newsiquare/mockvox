@@ -153,42 +153,45 @@ async def start_train(
     response_description="返回存储位置",
     tags=["模型推理"]
 )
-async def start_inference(gpt_model_path:str = Form(..., description="GPT模型路径"), 
-                   soVITS_model_path:str = Form(..., description="sovits模型路径") , 
-                   ref_audio_path:str = Form(..., description="参考音频路径"), 
-                   ref_text:str = Form(..., description="参考音频文字"), 
-                   ref_language:str = Form(..., description="参考音频语言"), 
-                   target_text:str = Form(..., description="要生成的文字"), 
-                   target_language:str = Form(..., description="要生成音频语言"), 
-                   output_path:str = Form(..., description="结果保存路径"), 
-                   top_p:int = Form(..., description="top_p"), 
-                   top_k:int = Form(..., description="GPT采样参数(无参考文本时不要太低。不懂就用默认)："), 
-                   temperature:int = Form(..., description="温度"), 
-                   speed:int = Form(..., description="语速"),
-                   version:str = Form('v4', description="版本")
+async def start_inference(
+    gpt_model_path:str = Form(..., description="GPT模型路径"), 
+    soVITS_model_path:str = Form(..., description="sovits模型路径") , 
+    ref_audio_path:str = Form(..., description="参考音频路径"), 
+    ref_text:str = Form(..., description="参考音频文字"), 
+    ref_language:str = Form(..., description="参考音频语言"), 
+    target_text:str = Form(..., description="要生成的文字"), 
+    target_language:str = Form(..., description="要生成音频语言"), 
+    output_path:str = Form(..., description="结果保存路径"), 
+    top_p:float = Form(..., description="top_p"), 
+    top_k:int = Form(..., description="GPT采样参数(无参考文本时不要太低。不懂就用默认)："), 
+    temperature:float = Form(..., description="温度"), 
+    speed:float = Form(..., description="语速"),
+    version:str = Form('v4', description="版本")
 ):
     try:
         if not os.path.exists(gpt_model_path):
             BotLogger.error("路径错误！找不到GPT模型")
         if not os.path.exists(soVITS_model_path):
             BotLogger.error("路径错误！找不到SOVITS模型")
+        if ".wav" in output_path.lower():
+            output_path = output_path.rsplit('/',1)[0]
         if not os.path.exists(output_path):
             os.makedirs(output_path, exist_ok=True)
         # 发送异步任务
         task = inference_task.delay(
-                    gpt_model_path = gpt_model_path, 
-                    soVITS_model_path = soVITS_model_path , 
-                    ref_audio_path = ref_audio_path, 
-                    ref_text = ref_text, 
-                    ref_language = ref_language, 
-                    target_text = target_text, 
-                    target_language = target_language, 
-                    output_path = output_path, 
-                    top_p = top_p, 
-                    top_k = top_k, 
-                    temperature = temperature, 
-                    speed = speed,
-                    version = version
+            gpt_model_path,                   
+            soVITS_model_path , 
+            ref_audio_path , 
+            ref_text , 
+            ref_language, 
+            target_text , 
+            target_language , 
+            output_path , 
+            top_p , 
+            top_k , 
+            temperature , 
+            speed,
+            version
         )
         # 确保任务对象有效
         if not isinstance(task, AsyncResult):

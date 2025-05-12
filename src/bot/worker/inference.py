@@ -8,8 +8,8 @@ import gc
 from .worker import celeryApp
 
 # @app.task(name="inference", bind=True)
-@celeryApp.task(name="inference_task", bind=True)
-async def inference_task(gpt_model_path:str , 
+@celeryApp.task(name="inference", bind=True)
+def inference_task(self,gpt_model_path:str , 
                    soVITS_model_path:str, 
                    ref_audio_path:str , 
                    ref_text:str , 
@@ -17,10 +17,10 @@ async def inference_task(gpt_model_path:str ,
                    target_text:str , 
                    target_language:str, 
                    output_path:str, 
-                   top_p:int, 
+                   top_p:float, 
                    top_k:int, 
-                   temperature:int, 
-                   speed:int,
+                   temperature:float, 
+                   speed:float,
                    version:str):
     if version == "v2":
         inference = v2(gpt_model_path,soVITS_model_path)
@@ -41,8 +41,8 @@ async def inference_task(gpt_model_path:str ,
     if result_list:
         last_sampling_rate, last_audio_data = result_list[-1]
         # output_path = os.path.join("/home/easyman/zjh/bot/", "output.wav")
-        sf.write(output_path, last_audio_data, last_sampling_rate)
-        return f"Audio saved to {output_path}"
+        sf.write(f"{output_path}/output.wav", last_audio_data, last_sampling_rate)
+        return f"Audio saved to {output_path}/output.wav"
     pass
 
 if __name__ == "__main__":

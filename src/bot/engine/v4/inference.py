@@ -493,9 +493,9 @@ class Inferencer:
         cache = {}
         for i_text,text in enumerate(texts):
             # 解决输入目标文本的空行导致报错的问题
-            if (len(text.strip()) == 0):
+            if len(text.strip()) == 0:
                 continue
-            if (text[-1] not in self.splits): 
+            if text[-1] not in self.splits: 
                 text += "。" if text_language != "en" else "."
             BotLogger.info(i18n("实际输入的目标文本(每句):")+text)
             phones2,bert2,norm_text2=self.get_phones_and_bert(text, text_language)

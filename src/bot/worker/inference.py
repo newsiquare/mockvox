@@ -7,7 +7,6 @@ import torch
 import gc
 from .worker import celeryApp
 
-# @app.task(name="inference", bind=True)
 @celeryApp.task(name="inference", bind=True)
 def inference_task(self,gpt_model_path:str , 
                    soVITS_model_path:str, 

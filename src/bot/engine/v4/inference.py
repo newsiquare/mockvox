@@ -51,20 +51,18 @@ class Inferencer:
         }
         self.splits = {"，", "。", "？", "！", ",", ".", "?", "!", "~", ":", "：", "—", "…", }
         self.mel_fn_v4 = lambda x: mel_spectrogram_torch(
-        x,
-        **{
-            "n_fft": 1280,
-            "win_size": 1280,
-            "hop_size": 320,
-            "num_mels": 100,
-            "sampling_rate": 32000,
-            "fmin": 0,
-            "fmax": None,
-            "center": False,
-        },
-    )
-        
-        
+            x,
+            **{
+                "n_fft": 1280,
+                "win_size": 1280,
+                "hop_size": 320,
+                "num_mels": 100,
+                "sampling_rate": 32000,
+                "fmin": 0,
+                "fmax": None,
+                "center": False,
+            },
+        )               
         self.punctuation = set(['!', '?', '…', ',', '.', '-'," "])
         self.hz = 50
         self.t2s_model,self.config,self.max_sec = self._change_gpt_weights(gpt_path)
@@ -103,8 +101,6 @@ class Inferencer:
         t2s_model = t2s_model.to(self.device)
         t2s_model.eval()
         return t2s_model,config,max_sec
-
-    
 
     def _change_sovits_weights(self, sovits_path):
 
@@ -169,7 +165,6 @@ class Inferencer:
         opts = [item for item in opts if not set(item).issubset(self.punctuation)]
         return "\n".join(opts)
 
-
     def cut2(self,inp):
         inp = inp.strip("\n")
         inps = self.split(inp)
@@ -193,7 +188,6 @@ class Inferencer:
         opts = [item for item in opts if not set(item).issubset(self.punctuation)]
         return "\n".join(opts)
 
-
     def cut3(self, inp):
         inp = inp.strip("\n")
         opts = ["%s" % item for item in inp.strip("。").split("。")]
@@ -205,8 +199,6 @@ class Inferencer:
         opts = re.split(r'(?<!\d)\.(?!\d)', inp.strip("."))
         opts = [item for item in opts if not set(item).issubset(self.punctuation)]
         return "\n".join(opts)
-
-
     
     def cut5(self, inp):
         inp = inp.strip("\n")
@@ -231,7 +223,6 @@ class Inferencer:
         opt = [item for item in mergeitems if not set(item).issubset(punds)]
         return "\n".join(opt)
 
-
     def process_text(self, texts):
         _text=[]
         if all(text in [None, " ", "\n",""] for text in texts):
@@ -242,7 +233,6 @@ class Inferencer:
             else:
                 _text.append(text)
         return _text
-
 
     def merge_short_text_in_array(self, texts, threshold):
         if (len(texts)) < 2:
@@ -261,16 +251,11 @@ class Inferencer:
                 result[len(result) - 1] += text
         return result
 
-
     def clean_text_inf(self,text, language):
         language = language.replace("all_", "")
         phones, word2ph, norm_text = self.clean_text(text, language)
         phones = Normalizer.cleaned_text_to_sequence(phones)
         return phones, word2ph, norm_text
-
-
-
-
 
     def clean_text(self, text, language):
         special = [
@@ -307,9 +292,7 @@ class Inferencer:
         phones = ['UNK' if ph not in symbols else ph for ph in phones]
         return phones, word2ph, norm_text
 
-
-    def clean_special(self, text, special_s, target_symbol, normalizer):
-        
+    def clean_special(self, text, special_s, target_symbol, normalizer):        
         """
         特殊静音段sp符号处理
         """
@@ -324,11 +307,6 @@ class Inferencer:
             else:
                 new_ph.append(ph)
         return new_ph, phones[1], norm_text
-
-
-
-
-
 
     def get_bert_feature(self, text, word2ph):
         bert_path = os.environ.get(
@@ -351,9 +329,7 @@ class Inferencer:
         phone_level_feature = torch.cat(phone_level_feature, dim=0)
         return phone_level_feature.T
 
-
-    def get_phones_and_bert(self, text,language,final=False):
-        
+    def get_phones_and_bert(self, text,language,final=False):        
         if language in {"en", "all_zh", "all_ja", "all_ko", "all_yue"}:
             formattext = text
             while "  " in formattext:
@@ -416,7 +392,6 @@ class Inferencer:
 
         return phones, bert.to(torch.float16), norm_text
 
-
     def get_bert_inf(self, phones, word2ph, norm_text, language):
         language=language.replace("all_","")
         if language == "zh":
@@ -426,9 +401,7 @@ class Inferencer:
                 (1024, len(phones)),
                 dtype=torch.float16,
             ).to(self.device)
-
         return bert
-
 
     def split(self,todo_text):
         todo_text = str(todo_text).replace("……", "。").replace("——", "，")
@@ -448,7 +421,6 @@ class Inferencer:
                 i_split_head += 1
         return todo_texts
 
-
     def get_spepc(self, hps, filename):
         # audio = load_audio(filename, int(hps.data.sampling_rate))
         audio, sampling_rate = librosa.load(filename, sr=int(hps.data.sampling_rate))
@@ -465,9 +437,6 @@ class Inferencer:
             center=False,
         )
         return spec
-
-
-
 
     def inference(self,ref_wav_path, prompt_text, prompt_language, text, text_language, how_to_cut=i18n("凑四句一切"), top_k=15, top_p=1, temperature=1, ref_free = False,speed=1,if_freeze=False):
         if ref_wav_path:pass
@@ -492,8 +461,7 @@ class Inferencer:
         zero_wav = np.zeros(
             int(self.hps.data.sampling_rate * 0.3),
             dtype=np.float16,
-        )
-        
+        )        
 
         ssl_model = CNHubert()
         ssl_model.eval()
@@ -646,8 +614,7 @@ class Inferencer:
         spec_max = 2
         return (x + 1) / 2 * (spec_max - spec_min) + spec_min
 
-    def resample(self,audio_tensor, sr0,sr1):
-        
+    def resample(self,audio_tensor, sr0,sr1):        
         key="%s-%s"%(sr0,sr1)
         if key not in self.resample_transform_dict:
             self.resample_transform_dict[key] = torchaudio.transforms.Resample(sr0, sr1).to(self.device)
@@ -679,4 +646,3 @@ class DictToAttrRecursive(dict):
             del self[item]
         except KeyError:
             raise AttributeError(f"Attribute {item} not found")
-

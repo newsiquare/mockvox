@@ -8,6 +8,10 @@ import numpy as np
 import librosa
 from bot.models import CNHubert
 from bot.text import chinese
+from bot.text import japanese
+from bot.text import english
+from bot.text import korean
+from bot.text import cantonese
 from bot.text import Normalizer
 from bot.text import symbols 
 from bot.config import (
@@ -23,6 +27,7 @@ from bot.models.v4.synthesizer import SynthesizerTrnV3
 from bot.models.v2.SynthesizerTrn import Generator
 from peft import LoraConfig, get_peft_model
 from bot.nn import mel_spectrogram_torch
+from bot.text.LangSegmenter import LangSegmenter
 
 class Inferencer:
     def __init__(
@@ -182,7 +187,7 @@ class Inferencer:
                 tmp_str = ""
         if tmp_str != "":
             opts.append(tmp_str)
-        if len(opts) > 1 and len(opts[-1]) < 50:  ##如果最后一个太短了，和前一个合一起
+        if len(opts) > 1 and len(opts[-1]) < 50:  
             opts[-2] = opts[-2] + opts[-1]
             opts = opts[:-1]
         opts = [item for item in opts if not set(item).issubset(self.punctuation)]
@@ -202,7 +207,7 @@ class Inferencer:
         return "\n".join(opts)
 
 
-    # contributed by https://github.com/AI-Hobbyist/GPT-SoVITS/blob/main/GPT_SoVITS/inference_webui.py
+    
     def cut5(self, inp):
         inp = inp.strip("\n")
         punds = {',', '.', ';', '?', '!', '、', '，', '。', '？', '！', ';', '：', '…'}
@@ -269,15 +274,23 @@ class Inferencer:
 
     def clean_text(self, text, language):
         special = [
-        # ("%", "zh", "SP"),
         ("￥", "zh", "SP2"),
         ("^", "zh", "SP3"),
-        # ('@', 'zh', "SP4")#不搞鬼畜了，和第二版保持一致吧
         ]
+        if language == "zh":
+            chinesen = chinese.ChineseNormalizer()
+        elif language == "ja":
+            chinesen = japanese.JapaneseNormalizer()
+        elif language == "en":
+            chinesen = english.EnglishNormalizer()
+        elif language == "ko":
+            chinesen = korean.KoreanNormalizer()
+        elif language == "yue":
+            chinesen = cantonese.CantoneseNormalizer()
         for special_s, special_l, target_symbol in special:
             if special_s in text and language == special_l:
-                return self.clean_special(text, special_s, target_symbol)
-        chinesen = chinese.ChineseNormalizer()
+                return self.clean_special(text, special_s, target_symbol,chinesen)
+        
         norm_text = chinesen.do_normalize(text)
         if language == "zh" or language=="yue":##########
             phones, word2ph = chinesen.g2p(norm_text)
@@ -295,12 +308,11 @@ class Inferencer:
         return phones, word2ph, norm_text
 
 
-    def clean_special(self, text, special_s, target_symbol):
+    def clean_special(self, text, special_s, target_symbol, chinesen):
         
         """
         特殊静音段sp符号处理
         """
-        chinesen = chinese.ChineseNormalizer()
         text = text.replace(special_s, ",")
         norm_text = chinesen.do_normalize(text)
         phones = chinesen.g2p(norm_text)
@@ -346,17 +358,18 @@ class Inferencer:
             formattext = text
             while "  " in formattext:
                 formattext = formattext.replace("  ", " ")
+            chinesen = chinese.ChineseNormalizer()
             if language == "all_zh":
                 if re.search(r"[A-Za-z]", formattext):
                     formattext = re.sub(r"[a-z]", lambda x: x.group(0).upper(), formattext)
-                    formattext = chinese.mix_text_normalize(formattext)
+                    formattext = chinesen.do_normalize(formattext)
                     return self.get_phones_and_bert(formattext, "zh")
                 else:
                     phones, word2ph, norm_text = self.clean_text_inf(formattext, language)
                     bert = self.get_bert_feature(norm_text, word2ph).to(self.device)
             elif language == "all_yue" and re.search(r"[A-Za-z]", formattext):
                 formattext = re.sub(r"[a-z]", lambda x: x.group(0).upper(), formattext)
-                formattext = chinese.mix_text_normalize(formattext)
+                formattext = chinesen.do_normalize(formattext)
                 return self.get_phones_and_bert(formattext, "yue")
             else:
                 phones, word2ph, norm_text = self.clean_text_inf(formattext, language)
@@ -364,7 +377,40 @@ class Inferencer:
                     (1024, len(phones)),
                     dtype=torch.float16,
                 ).to(self.device)
-
+        elif language in {"zh", "ja", "ko", "yue", "auto", "auto_yue"}:
+            textlist = []
+            langlist = []
+            if language == "auto":
+                for tmp in LangSegmenter.getTexts(text):
+                    langlist.append(tmp["lang"])
+                    textlist.append(tmp["text"])
+            elif language == "auto_yue":
+                for tmp in LangSegmenter.getTexts(text):
+                    if tmp["lang"] == "zh":
+                        tmp["lang"] = "yue"
+                    langlist.append(tmp["lang"])
+                    textlist.append(tmp["text"])
+            else:
+                for tmp in LangSegmenter.getTexts(text):
+                    if tmp["lang"] == "en":
+                        langlist.append(tmp["lang"])
+                    else:
+                        # 因无法区别中日韩文汉字,以用户输入为准
+                        langlist.append(language)
+                    textlist.append(tmp["text"])
+            phones_list = []
+            bert_list = []
+            norm_text_list = []
+            for i in range(len(textlist)):
+                lang = langlist[i]
+                phones, word2ph, norm_text = self.clean_text_inf(textlist[i], lang)
+                bert = self.get_bert_inf(phones, word2ph, norm_text, lang)
+                phones_list.append(phones)
+                norm_text_list.append(norm_text)
+                bert_list.append(bert)
+            bert = torch.cat(bert_list, dim=1)
+            phones = sum(phones_list, [])
+            norm_text = "".join(norm_text_list)
         if not final and len(phones) < 6:
             return self.get_phones_and_bert("." + text, language, final=True)
 
@@ -385,7 +431,7 @@ class Inferencer:
 
 
     def split(self,todo_text):
-        todo_text = todo_text.replace("……", "。").replace("——", "，")
+        todo_text = str(todo_text).replace("……", "。").replace("——", "，")
         if todo_text[-1] not in self.splits:
             todo_text += "。"
         i_split_head = i_split_tail = 0

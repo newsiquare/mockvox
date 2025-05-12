@@ -34,7 +34,7 @@ class AutoSpeechRecognition:
         try:
             asr_result = self.model.generate(input=input_path)
             if not isinstance(asr_result, list) or len(asr_result) == 0:
-                raise ValueError("ASR结果必须是包含至少一个元素的列表")
+                raise ValueError(f"ASR结果必须是包含至少一个元素的列表: {input_path}")
 
         except Exception as e:
             raise RuntimeError(f"语音识别&标点恢复失败: {str(e)}") from e

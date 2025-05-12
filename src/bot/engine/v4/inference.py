@@ -278,44 +278,44 @@ class Inferencer:
         ("^", "zh", "SP3"),
         ]
         if language == "zh":
-            chinesen = chinese.ChineseNormalizer()
+            normalizer = chinese.ChineseNormalizer()
         elif language == "ja":
-            chinesen = japanese.JapaneseNormalizer()
+            normalizer = japanese.JapaneseNormalizer()
         elif language == "en":
-            chinesen = english.EnglishNormalizer()
+            normalizer = english.EnglishNormalizer()
         elif language == "ko":
-            chinesen = korean.KoreanNormalizer()
+            normalizer = korean.KoreanNormalizer()
         elif language == "yue":
-            chinesen = cantonese.CantoneseNormalizer()
+            normalizer = cantonese.CantoneseNormalizer()
         for special_s, special_l, target_symbol in special:
             if special_s in text and language == special_l:
-                return self.clean_special(text, special_s, target_symbol,chinesen)
+                return self.clean_special(text, special_s, target_symbol,normalizer)
         
-        norm_text = chinesen.do_normalize(text)
+        norm_text = normalizer.do_normalize(text)
         if language == "zh" or language=="yue":##########
-            phones, word2ph = chinesen.g2p(norm_text)
+            phones, word2ph = normalizer.g2p(norm_text)
             assert len(phones) == sum(word2ph)
             assert len(norm_text) == len(word2ph)
         elif language == "en":
-            phones = chinesen.g2p(norm_text)
+            phones = normalizer.g2p(norm_text)
             if len(phones) < 4:
                 phones = [','] + phones
             word2ph = None
         else:
-            phones = chinesen.g2p(norm_text)
+            phones = normalizer.g2p(norm_text)
             word2ph = None
         phones = ['UNK' if ph not in symbols else ph for ph in phones]
         return phones, word2ph, norm_text
 
 
-    def clean_special(self, text, special_s, target_symbol, chinesen):
+    def clean_special(self, text, special_s, target_symbol, normalizer):
         
         """
         特殊静音段sp符号处理
         """
         text = text.replace(special_s, ",")
-        norm_text = chinesen.do_normalize(text)
-        phones = chinesen.g2p(norm_text)
+        norm_text = normalizer.do_normalize(text)
+        phones = normalizer.g2p(norm_text)
         new_ph = []
         for ph in phones[0]:
             assert ph in symbols
@@ -358,18 +358,18 @@ class Inferencer:
             formattext = text
             while "  " in formattext:
                 formattext = formattext.replace("  ", " ")
-            chinesen = chinese.ChineseNormalizer()
+            normalizer = chinese.ChineseNormalizer()
             if language == "all_zh":
                 if re.search(r"[A-Za-z]", formattext):
                     formattext = re.sub(r"[a-z]", lambda x: x.group(0).upper(), formattext)
-                    formattext = chinesen.do_normalize(formattext)
+                    formattext = normalizer.do_normalize(formattext)
                     return self.get_phones_and_bert(formattext, "zh")
                 else:
                     phones, word2ph, norm_text = self.clean_text_inf(formattext, language)
                     bert = self.get_bert_feature(norm_text, word2ph).to(self.device)
             elif language == "all_yue" and re.search(r"[A-Za-z]", formattext):
                 formattext = re.sub(r"[a-z]", lambda x: x.group(0).upper(), formattext)
-                formattext = chinesen.do_normalize(formattext)
+                formattext = normalizer.do_normalize(formattext)
                 return self.get_phones_and_bert(formattext, "yue")
             else:
                 phones, word2ph, norm_text = self.clean_text_inf(formattext, language)

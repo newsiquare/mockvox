@@ -70,18 +70,25 @@ modelscope download --model 'iic/speech_paraformer-large_asr_nat-zh-cn-16k-commo
 modelscope download --model 'iic/speech_fsmn_vad_zh-cn-16k-common-pytorch' --local_dir './pretrained/iic/speech_fsmn_vad_zh-cn-16k-common-pytorch'
 # 标点恢复模型
 modelscope download --model 'iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch' --local_dir './pretrained/iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch'
+# 文字转拼音 (需要连接HuggingFace. git-lfs 大文件, 下载时间较长)
+git clone https://huggingface.co/alextomcat/G2PWModel.git ./pretrained/G2PWModel
+
 # [可选] 粤语语音识别模型
 modelscope download --model 'iic/speech_UniASR_asr_2pass-cantonese-CHS-16k-common-vocab1468-tensorflow1-online' --local_dir './pretrained/iic/speech_UniASR_asr_2pass-cantonese-CHS-16k-common-vocab1468-tensorflow1-online'
-
-# 文字转拼音 (从HuggingFace下载，需要连接HuggingFace；用 git-lfs 管理大文件, 下载时间较长。)
-git clone https://huggingface.co/alextomcat/G2PWModel.git ./pretrained
-
-# [可选] 如果只处理中文，就没必要下载FastWhisper
-git clone https://huggingface.co/Systran/faster-whisper-large-v3.git ./pretrained
+# [可选] 多语言(英语, 日语, 韩语) FastWhisper ASR
+git clone https://huggingface.co/Systran/faster-whisper-large-v3.git ./pretrained/faster-whisper-large-v3
+# [可选] 英语BERT模型
+git clone https://huggingface.co/FacebookAI/roberta-large.git ./pretrained/FacebookAI/roberta-large
+# [可选] 日语BERT模型
+git clone https://huggingface.co/tohoku-nlp/bert-base-japanese-v3.git ./pretrained/tohoku-nlp/bert-base-japanese-v3
+# [可选] 韩语BERT模型
+git clone https://huggingface.co/klue/bert-base.git ./pretrained/klue/bert-base
+# [可选] 多语言BERT模型
+git clone https://huggingface.co/FacebookAI/xlm-roberta-large.git ./pretrained/FacebookAI/xlm-roberta-large
 
 # ------------------------------------------------ GPT-SoVITS 模型 ----------------------------------------------------------------
 # GPT-SoVITS:  
-git clone https://huggingface.co/lj1995/GPT-SoVITS.git ./pretrained
+git clone https://huggingface.co/lj1995/GPT-SoVITS.git ./pretrained/GPT-SoVITS
 ```
 
 本项目需要在docker环境中运行redis, 请确保您的运行环境中已经安装了docker。

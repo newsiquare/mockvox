@@ -2,7 +2,7 @@
 """
 语音识别(Auto Speech Recognition, asr)模块
 """
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Dict
 from pathlib import Path
 import torch
 import os
@@ -32,16 +32,16 @@ class ChineseASR:
             disable_update=True
         )
         
-    def execute(self, input_path: str) -> List:
+    def execute(self, input_path: str):
         try:
             asr_result = self.model.generate(input=input_path)
             if not isinstance(asr_result, list) or len(asr_result) == 0:
-                raise ValueError("ASR结果必须是包含至少一个元素的列表")
+                raise ValueError(f"ASR结果必须是包含至少一个元素的列表: {input_path}")
 
         except Exception as e:
             raise RuntimeError(f"语音识别&标点恢复失败: {str(e)}") from e
 
-        return asr_result
+        return asr_result, "zh"
 
 class CantoneseASR:
     def __init__(self,
@@ -58,16 +58,16 @@ class CantoneseASR:
             disable_update=True
         )
         
-    def execute(self, input_path: str) -> List:
+    def execute(self, input_path: str):
         try:
             asr_result = self.model.generate(input=input_path)
             if not isinstance(asr_result, list) or len(asr_result) == 0:
-                raise ValueError("ASR结果必须是包含至少一个元素的列表")
+                raise ValueError(f"ASR结果必须是包含至少一个元素的列表: {input_path}")
 
         except Exception as e:
             raise RuntimeError(f"语音识别&标点恢复失败: {str(e)}") from e
 
-        return asr_result
+        return asr_result, "can"
 
 class FasterWhisperASR:
     def __init__(self,
@@ -86,9 +86,9 @@ class FasterWhisperASR:
             compute_type="default"
         )
 
-    def execute(self, input_path: str) -> List:
+    def execute(self, input_path: str):
         try:
-            asr_result, info = self.model.transcribe(
+            segments, info = self.model.transcribe(
                 audio=input_path,
                 beam_size=5,
                 vad_filter=True,
@@ -96,17 +96,25 @@ class FasterWhisperASR:
                 language=self.language
             )
 
-            if info.language == 'zh':
-                asr = ChineseASR()
-                asr_result = asr.execute(input_path)
+            # if info.language == 'zh':
+            #     asr = ChineseASR()
+            #     asr_result = asr.execute(input_path)
+            #     return asr_result, "zh"
+
+            asr_result=[]
+            for segment in segments:
+                asr_result.extend({
+                    "key": Path(input_path).stem,
+                    "text": segment.text
+                })
 
             if not isinstance(asr_result, list) or len(asr_result) == 0:
-                raise ValueError("ASR结果必须是包含至少一个元素的列表")
+                raise ValueError(f"ASR结果必须是包含至少一个元素的列表: {input_path}")
 
         except Exception as e:
             raise RuntimeError(f"语音识别&标点恢复失败: {str(e)}") from e
 
-        return asr_result
+        return asr_result, info.language
 
 class ASRFactory:
     # 定义语言码与ASR类的映射关系
@@ -134,9 +142,14 @@ class AutoSpeechRecognition:
         self.asr = ASRFactory.get_asr(language, *args, **kwargs)
 
     def execute(self, input_path):
+        """
+        返回值: 
+            asr_result - list [{key, text}]
+            language   - str     
+        """
         return self.asr.execute(input_path)
     
-def load_asr_data(asr_dir: Union[str,Path]) -> List[dict]:
+def load_asr_data(asr_dir: Union[str,Path]) -> Dict:
     """
     解析ASR识别结果文件
     返回格式: [{"key": "文件名", "text": "识别文本"}, ...]
@@ -177,13 +190,18 @@ def batch_asr(language, file_list: List[str], output_dir: str):
 
         asr = AutoSpeechRecognition(language)
 
-        results = []
+        combined_results = []
         for file in file_list:
-            result = asr.execute(input_path=file)
-            results.extend(result)
-        
+            results, language = asr.execute(input_path=file)
+            for result in results:
+                combined_results.extend({
+                    "key": result.key,
+                    "text": result.text,
+                    "language": language
+                }) 
+
         with open(output_file, 'w', encoding='utf-8') as f:
-            json.dump(results, f, ensure_ascii=False, indent=2)
+            json.dump(combined_results, f, ensure_ascii=False, indent=2)
         
         del asr
         if torch.cuda.is_available():
@@ -232,10 +250,15 @@ if __name__ == '__main__':
         for f in os.listdir(root_dir)
         if os.path.isfile(os.path.join(root_dir, f))  # 过滤掉目录
     ]
-    results = []
+    combined_results = []
     for file in file_list:
-        result = asr.execute(input_path=file)
-        results.extend(result)
+        results, language = asr.execute(input_path=file)
+        for result in results:
+            combined_results.extend({
+                "key": result.key,
+                "text": result.text,
+                "language": language
+            })
         
         with open(output_file, 'w', encoding='utf-8') as f:
-            json.dump(results, f, ensure_ascii=False, indent=2)
+            json.dump(combined_results, f, ensure_ascii=False, indent=2)

@@ -17,6 +17,7 @@ from bot.utils import BotLogger
 
 class ChineseASR:
     def __init__(self,
+                 language: str = "zh",
                  asr_model_name: str = 'iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch',
                  vad_model_name: str = 'iic/speech_fsmn_vad_zh-cn-16k-common-pytorch',
                  punc_model_name: str = 'iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch',
@@ -45,6 +46,7 @@ class ChineseASR:
 
 class CantoneseASR:
     def __init__(self,
+                 language: str = "can",
                  asr_model_name: str = 'iic/speech_UniASR_asr_2pass-cantonese-CHS-16k-common-vocab1468-tensorflow1-online',
                  device: Optional[str] = None
         ): 
@@ -132,7 +134,7 @@ class ASRFactory:
         asr_class = cls.ASR_MAP.get(language_code)
         if not asr_class:
             raise ValueError(f"Unsupported language code: {language_code}")
-        return asr_class(*args, **kwargs)
+        return asr_class(language=language_code, *args, **kwargs)
 
 class AutoSpeechRecognition:
     '''
@@ -231,8 +233,6 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    asr = AutoSpeechRecognition(args.language)
-
     from bot.config import ASR_PATH, DENOISED_ROOT_PATH, SLICED_ROOT_PATH
     import os
 
@@ -250,6 +250,8 @@ if __name__ == '__main__':
         for f in os.listdir(root_dir)
         if os.path.isfile(os.path.join(root_dir, f))  # 过滤掉目录
     ]
+
+    asr = AutoSpeechRecognition(args.language)
     combined_results = []
     for file in file_list:
         results, language = asr.execute(input_path=file)

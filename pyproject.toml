@@ -52,7 +52,8 @@ dependencies = [
     "pyopenjtalk",
     "ko_pron",
     "g2pk2",
-    "faster-whisper"
+    "faster-whisper",
+    "split_lang"
 ]
 
 # Optional dependencies ------------------------------------------------------------------------------------------------

@@ -9,7 +9,7 @@ import torch
 from bot.models.v4 import SynthesizerTrnV3
 from bot.config import ASR_PATH, PROCESS_PATH, SOVITS_MODEL_CONFIG, PRETRAINED_S2GV4_FILE
 from bot.utils import get_hparams_from_file, BotLogger
-from bot.engine.v4 import load_asr_data
+from bot.engine.v4.asr import load_asr_data
 
 class TextToSemantic:
     def __init__(

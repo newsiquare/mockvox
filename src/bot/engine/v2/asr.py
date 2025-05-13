@@ -34,7 +34,7 @@ class AutoSpeechRecognition:
         try:
             asr_result = self.model.generate(input=input_path)
             if not isinstance(asr_result, list) or len(asr_result) == 0:
-                raise ValueError(f"ASR结果必须是包含至少一个元素的列表: {input_path}")
+                return None
 
         except Exception as e:
             raise RuntimeError(f"语音识别&标点恢复失败: {str(e)}") from e
@@ -84,7 +84,8 @@ def batch_asr(file_list: List[str], output_dir: str):
         results = []
         for file in file_list:
             result = asr.speech_recognition(input_path=file)
-            results.extend(result)
+            if result:
+                results.extend(result)
         
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(results, f, ensure_ascii=False, indent=2)
@@ -137,7 +138,8 @@ if __name__ == '__main__':
     results = []
     for file in file_list:
         result = asr.speech_recognition(input_path=file)
-        results.extend(result)
+        if result:
+            results.extend(result)
         
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(results, f, ensure_ascii=False, indent=2)

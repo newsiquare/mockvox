@@ -9,14 +9,14 @@ import traceback
 
 from bot.utils import BotLogger, allowed_file, generate_unique_filename
 from bot.config import get_config, SLICED_ROOT_PATH, DENOISED_ROOT_PATH, ASR_PATH
-from bot.engine.v2 import slice_audio, batch_denoise, batch_asr
-from bot.engine.v4.inference import Inferencer as v4
+from bot.engine.v2 import slice_audio, batch_denoise
 from bot.engine.v2.inference import Inferencer as v2
+from bot.engine.v4.inference import Inferencer as v4
 from bot.engine.v2 import (
     DataProcessor,
-    FeatureExtractor 
+    FeatureExtractor,
+    TextToSemantic
 )
-from bot.engine.v4 import TextToSemantic
 from bot.engine.v4.train import (
     SoVITsTrainer, 
     GPTTrainer
@@ -47,6 +47,11 @@ def handle_upload(args):
 
     fileID = generate_unique_filename(Path(args.file).name)
     stem = Path(fileID).stem
+
+    if(args.version=='v2'):
+        from bot.engine.v2 import batch_asr
+    else:
+        from bot.engine.v4 import batch_asr
 
     try:
         # 文件切割
@@ -134,9 +139,9 @@ def handle_inference(args):
         sovits_path = Path(WEIGHTS_PATH) / args.fileID / SOVITS_HALF_WEIGHTS_FILE
         reasoning_result_path = Path(REASONING_RESULT_PATH) / args.fileID
         if not os.path.exists(gpt_path):
-            BotLogger.error("路径错误！找不到GPT模型")
+            BotLogger.error("路径错误! 找不到GPT模型")
         if not os.path.exists(sovits_path):
-            BotLogger.error("路径错误！找不到SOVITS模型")
+            BotLogger.error("路径错误！ 找不到SOVITS模型")
         if not os.path.exists(reasoning_result_path):
             os.makedirs(reasoning_result_path, exist_ok=True)
         if args.version == 'v2':
@@ -174,6 +179,7 @@ def main():
     parser_upload.add_argument('--no-denoise', dest='denoise', action='store_false', 
                                help='disable denoise processing (default: enable denoise).')
     parser_upload.set_defaults(denoise=True)
+    parser_upload.add_argument('--version', type=str, default='v4', help='the default version is v4.')
     parser_upload.set_defaults(func=handle_upload)
 
     # inference 子命令

@@ -17,7 +17,7 @@ from bot.utils import BotLogger
 
 class ChineseASR:
     def __init__(self,
-                 language: str = "zh",
+                 language: str = "zh",  # 为了统一输入参数
                  asr_model_name: str = 'iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch',
                  vad_model_name: str = 'iic/speech_fsmn_vad_zh-cn-16k-common-pytorch',
                  punc_model_name: str = 'iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch',
@@ -37,7 +37,7 @@ class ChineseASR:
         try:
             asr_result = self.model.generate(input=input_path)
             if not isinstance(asr_result, list) or len(asr_result) == 0:
-                raise ValueError(f"ASR结果必须是包含至少一个元素的列表: {input_path}")
+                return None
 
         except Exception as e:
             raise RuntimeError(f"语音识别&标点恢复失败: {str(e)}") from e
@@ -64,7 +64,7 @@ class CantoneseASR:
         try:
             asr_result = self.model.generate(input=input_path)
             if not isinstance(asr_result, list) or len(asr_result) == 0:
-                raise ValueError(f"ASR结果必须是包含至少一个元素的列表: {input_path}")
+                return None
 
         except Exception as e:
             raise RuntimeError(f"语音识别&标点恢复失败: {str(e)}") from e
@@ -111,7 +111,7 @@ class FasterWhisperASR:
                 })
 
             if not isinstance(asr_result, list) or len(asr_result) == 0:
-                raise ValueError(f"ASR结果必须是包含至少一个元素的列表: {input_path}")
+                return None
 
         except Exception as e:
             raise RuntimeError(f"语音识别&标点恢复失败: {str(e)}") from e
@@ -156,7 +156,7 @@ def load_asr_data(asr_dir: Union[str,Path]) -> Dict:
     解析ASR识别结果文件
     返回格式: [{"key": "文件名", "text": "识别文本"}, ...]
     """
-    result = []
+    result = {}
     asr_file = Path(asr_dir) / 'output.json'
     try:
         with open(asr_file, 'r', encoding='utf-8') as f:
@@ -202,8 +202,13 @@ def batch_asr(language, file_list: List[str], output_dir: str):
                     "language": language
                 }) 
 
+        output_data = {
+            "version": "v4",
+            "results": combined_results            
+        }
+
         with open(output_file, 'w', encoding='utf-8') as f:
-            json.dump(combined_results, f, ensure_ascii=False, indent=2)
+            json.dump(output_data, f, ensure_ascii=False, indent=2)
         
         del asr
         if torch.cuda.is_available():

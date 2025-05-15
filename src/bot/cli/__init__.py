@@ -110,7 +110,7 @@ def train_v4(args):
     asr_file = os.path.join(ASR_PATH, args.fileID)
     asr_data = load_asr_data(asr_file)
     try:
-        if(not isinstance(asr_data, dict)) or asr_data['versoin']!="v4":
+        if(not isinstance(asr_data, dict)) or asr_data['version']!="v4":
             BotLogger.error(f"ASR version mismatch: {asr_file}")
             return
     except Exception as e:

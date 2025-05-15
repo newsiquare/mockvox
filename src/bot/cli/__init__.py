@@ -10,8 +10,31 @@ import traceback
 from bot.utils import BotLogger, allowed_file, generate_unique_filename
 from bot.config import get_config, SLICED_ROOT_PATH, DENOISED_ROOT_PATH, ASR_PATH
 from bot.engine.v2 import slice_audio, batch_denoise
-from bot.engine.v2.inference import Inferencer as v2
-from bot.engine.v4.inference import Inferencer as v4
+from bot.engine.v2.inference import Inferencer as InferencerV2
+from bot.engine.v4.inference import Inferencer as InferencerV4
+from bot.engine.v2 import batch_asr as batch_asr_v2
+from bot.engine.v4 import batch_asr as batch_asr_v4
+from bot.engine.v2 import (
+    DataProcessor as DataProcessorV2,
+    FeatureExtractor as FeatureExtractorV2,
+    TextToSemantic as TextToSemanticV2
+)
+from bot.engine.v2.train import (
+    SoVITsTrainer as SoVITsTrainerV2, 
+    GPTTrainer as GPTTrainerV2
+)
+
+from bot.engine.v4 import (
+    DataProcessor,
+    FeatureExtractor,
+    TextToSemantic
+)
+from bot.engine.v4.train import (
+    SoVITsTrainer, 
+    GPTTrainer
+)            
+# v4需要从ASR结果中读取language信息
+from bot.engine.v4.asr import load_asr_data
 
 from bot.config import (
     PROCESS_PATH,
@@ -21,7 +44,8 @@ from bot.config import (
     SOVITS_HALF_WEIGHTS_FILE,
     GPT_HALF_WEIGHTS_FILE,
     REASONING_RESULT_PATH,
-    REASONING_RESULT_FILE
+    REASONING_RESULT_FILE,
+    ASR_PATH
 )
 import soundfile as sf
 from bot.utils import get_hparams_from_file
@@ -40,11 +64,6 @@ def handle_upload(args):
     fileID = generate_unique_filename(Path(args.file).name)
     stem = Path(fileID).stem
 
-    if(args.version=='v2'):
-        from bot.engine.v2 import batch_asr
-    else:
-        from bot.engine.v4 import batch_asr
-
     try:
         # 文件切割
         sliced_path = os.path.join(SLICED_ROOT_PATH, stem)
@@ -61,14 +80,14 @@ def handle_upload(args):
         asr_path = os.path.join(ASR_PATH, stem)
         if(args.version=='v2'):
             if(args.denoise):
-                batch_asr(denoised_files, asr_path)
+                batch_asr_v2(denoised_files, asr_path)
             else:
-                batch_asr(sliced_files, asr_path)
+                batch_asr_v2(sliced_files, asr_path)
         else:
             if(args.denoise):
-                batch_asr(args.language, denoised_files, asr_path)
+                batch_asr_v4(args.language, denoised_files, asr_path)
             else:
-                batch_asr(args.language, sliced_files, asr_path)
+                batch_asr_v4(args.language, sliced_files, asr_path)
 
         BotLogger.info(f"ASR done. Results saved in: {os.path.join(asr_path, 'output.json')}")
 
@@ -78,45 +97,82 @@ def handle_upload(args):
         )
 
 def handle_train(args):
-    try:
-        if(args.version=='v2'):
-            from bot.engine.v2 import (
-                DataProcessor,
-                FeatureExtractor,
-                TextToSemantic
-            )
-            from bot.engine.v2.train import (
-                SoVITsTrainer, 
-                GPTTrainer
-            )
-            processor = DataProcessor()
-        elif(args.version=='v4'):
-            from bot.engine.v4 import (
-                DataProcessor,
-                FeatureExtractor,
-                TextToSemantic
-            )
-            from bot.engine.v4.train import (
-                SoVITsTrainer, 
-                GPTTrainer
-            )            
-            # 从ASR结果中读取language信息
-            from bot.engine.v4.asr import load_asr_data
-            from bot.config import ASR_PATH
-            asr_file = os.path.join(ASR_PATH, args.fileID, 'output.json')
-            asr_data = load_asr_data(asr_file)
-            try:
-                if(not isinstance(asr_data, dict)) or asr_data['versoin']!="v4":
-                    BotLogger.error(f"ASR version mismatch: {asr_file}")
-                    return
-            except Exception as e:
-                BotLogger.error(f"ASR version mismatch: {asr_file}")
-                return    
-            processor = DataProcessor(language=asr_data['language'])
-        else:
-            BotLogger.error(f"Not supported version: {args.version}")
-            return
+    if(args.version=='v2'):
+        train_v2(args)
+    elif(args.version=='v4'):
+        train_v4(args)
+    else:
+        BotLogger.error(f"Not supported version: {args.version}")
+        return       
 
+def train_v4(args)
+    # 从ASR结果中读取language信息
+    asr_file = os.path.join(ASR_PATH, args.fileID, 'output.json')
+    asr_data = load_asr_data(asr_file)
+    try:
+        if(not isinstance(asr_data, dict)) or asr_data['versoin']!="v4":
+            BotLogger.error(f"ASR version mismatch: {asr_file}")
+            return
+    except Exception as e:
+        BotLogger.error(f"ASR version mismatch: {asr_file}")
+        return    
+    
+    try:      
+        processor = DataProcessor(language=asr_data['language'])
+        processor.process(args.fileID)
+        extractor = FeatureExtractor()
+        extractor.extract(file_path=args.fileID, denoised=args.denoise)
+        t2s = TextToSemantic()
+        t2s.process(args.fileID)
+        del processor, extractor, t2s
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            torch.cuda.ipc_collect()
+            gc.collect()       
+
+        mp.set_start_method('spawn', force=True)  # 强制使用 spawn 模式
+        hps_sovits = get_hparams_from_file(SOVITS_MODEL_CONFIG)
+        processed_path = Path(PROCESS_PATH) / args.fileID
+        hps_sovits.data.processed_dir = processed_path
+        trainer_sovits = SoVITsTrainer(hparams=hps_sovits)
+        trainer_sovits.train(epochs=args.epochs_sovits)
+
+        del trainer_sovits, hps_sovits
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            torch.cuda.ipc_collect()
+            gc.collect()
+
+        hps_gpt = get_hparams_from_file(GPT_MODEL_CONFIG)
+        hps_gpt.data.semantic_path = processed_path / 'name2text.json'
+        hps_gpt.data.phoneme_path = processed_path / 'text2semantic.json'
+        hps_gpt.data.bert_path = processed_path / 'bert'
+        trainer_gpt = GPTTrainer(hparams=hps_gpt)
+        trainer_gpt.train(epochs=args.epochs_gpt)
+        del trainer_gpt, hps_gpt
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            torch.cuda.ipc_collect()
+            gc.collect()
+
+        sovits_half_weights_path = Path(WEIGHTS_PATH) / args.fileID / SOVITS_HALF_WEIGHTS_FILE
+        gpt_half_weights_path = Path(WEIGHTS_PATH) / args.fileID / GPT_HALF_WEIGHTS_FILE
+
+        BotLogger.info(f"Train done. \n \
+                        Sovits checkpoint saved in: {sovits_half_weights_path} \n \
+                        GPT checkpoint saved in: {gpt_half_weights_path}")
+
+    except Exception as e:
+        BotLogger.error(
+            f"Train failed | File: {args.fileID} | Traceback :\n{traceback.format_exc()}"
+        )
+
+def train_v2(args):
+    try:      
+        processor = DataProcessor()
         processor.process(args.fileID)
         extractor = FeatureExtractor()
         extractor.extract(file_path=args.fileID, denoised=args.denoise)
@@ -180,9 +236,9 @@ def handle_inference(args):
         if not os.path.exists(reasoning_result_path):
             os.makedirs(reasoning_result_path, exist_ok=True)
         if args.version == 'v2':
-            inference = v2(gpt_path, sovits_path)
+            inference = InferencerV2(gpt_path, sovits_path)
         else:
-            inference = v4(gpt_path, sovits_path)
+            inference = InferencerV4(gpt_path, sovits_path)
         
         # Synthesize audio
         synthesis_result = inference.inference(ref_wav_path=args.refWavFilePath,# 参考音频 

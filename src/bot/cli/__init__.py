@@ -107,7 +107,7 @@ def handle_train(args):
 
 def train_v4(args):
     # 从ASR结果中读取language信息
-    asr_file = os.path.join(ASR_PATH, args.fileID, 'output.json')
+    asr_file = os.path.join(ASR_PATH, args.fileID)
     asr_data = load_asr_data(asr_file)
     try:
         if(not isinstance(asr_data, dict)) or asr_data['versoin']!="v4":

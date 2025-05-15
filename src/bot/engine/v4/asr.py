@@ -246,8 +246,8 @@ def batch_asr(language, file_list: List[str], output_dir: str):
             if results:
                 for result in results:
                     combined_results.extend({
-                        "key": result.key,
-                        "text": result.text
+                        "key": result['key'],
+                        "text": result['text']
                     }) 
 
         output_data = {

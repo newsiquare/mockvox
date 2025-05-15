@@ -153,7 +153,7 @@ class EnglishASR:
 
             asr_result=[]
             for output in outputs:
-                asr_result.extend({
+                asr_result.append({
                     "key": Path(input_path).stem,
                     "text": output.text
                 })
@@ -245,7 +245,7 @@ def batch_asr(language, file_list: List[str], output_dir: str):
             results = asr.execute(input_path=file)
             if results:
                 for result in results:
-                    combined_results.extend({
+                    combined_results.append({
                         "key": result['key'],
                         "text": result['text']
                     }) 

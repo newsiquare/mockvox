@@ -105,7 +105,7 @@ def handle_train(args):
         BotLogger.error(f"Not supported version: {args.version}")
         return       
 
-def train_v4(args)
+def train_v4(args):
     # 从ASR结果中读取language信息
     asr_file = os.path.join(ASR_PATH, args.fileID, 'output.json')
     asr_data = load_asr_data(asr_file)

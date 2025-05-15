@@ -70,6 +70,12 @@ git clone https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2.git ./pretrained/nv
 modelscope download --model 'iic/speech_UniASR_asr_2pass-ja-16k-common-vocab93-tensorflow1-offline'  --local_dir './pretrained/iic/speech_UniASR_asr_2pass-ja-16k-common-vocab93-tensorflow1-offline'
 # [可选] 韩语ASR模型
 modelscope download --model 'iic/speech_UniASR_asr_2pass-ko-16k-common-vocab6400-tensorflow1-offline' --local_dir './pretrained/iic/speech_UniASR_asr_2pass-ko-16k-common-vocab6400-tensorflow1-offline'
+# [可选] 英语BERT模型
+git clone https://huggingface.co/FacebookAI/roberta-large.git ./pretrained/FacebookAI/roberta-large
+# [可选] 日语BERT模型
+git clone https://huggingface.co/tohoku-nlp/bert-base-japanese-v3.git ./pretrained/tohoku-nlp/bert-base-japanese-v3
+# [可选] 韩语BERT模型
+git clone https://huggingface.co/klue/bert-base.git ./pretrained/klue/bert-base
 
 # ------------------------------------------------ GPT-SoVITS 模型 --------------------------------------------------------
 # GPT-SoVITS:  

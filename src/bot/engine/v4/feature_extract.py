@@ -70,7 +70,17 @@ class FeatureExtractor:
         wav32_dir.mkdir(parents=True, exist_ok=True)
 
         # 处理ASR结果
-        for line in load_asr_data(asr_dir):
+        asr_data = load_asr_data(asr_dir)
+        try:
+            if(not isinstance(asr_data, dict)) or asr_data['versoin']!="v4":
+                BotLogger.error(f"ASR version mismatch: {asr_dir}")
+                raise RuntimeError(f"ASR version mismatch: {str(e)}") from e
+        except Exception as e:
+            BotLogger.error(f"ASR version mismatch: {asr_dir}")
+            raise RuntimeError(f"ASR version mismatch: {str(e)}") from e       
+
+        lines = asr_data["results"]
+        for line in lines:
             wav_file = wav_dir / f"{line['key']}.wav"
             if not wav_file.exists():
                 BotLogger.warning(f"音频文件不存在: {wav_file}")

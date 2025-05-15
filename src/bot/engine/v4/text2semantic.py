@@ -9,7 +9,7 @@ import torch
 from bot.models.v4 import SynthesizerTrnV3
 from bot.config import ASR_PATH, PROCESS_PATH, SOVITS_MODEL_CONFIG, PRETRAINED_S2GV4_FILE
 from bot.utils import get_hparams_from_file, BotLogger
-from bot.engine.v4.asr import load_asr_data
+from .asr import load_asr_data
 
 class TextToSemantic:
     def __init__(
@@ -51,7 +51,18 @@ class TextToSemantic:
         hubert_dir = processed_dir / "cnhubert"
 
         # 处理文本转语义
-        for line in load_asr_data(asr_dir)["results"]:
+        asr_data = load_asr_data(asr_dir)
+        try:
+            if(not isinstance(asr_data, dict)) or asr_data['versoin']!="v4":
+                BotLogger.error(f"ASR version mismatch: {asr_dir}")
+                raise RuntimeError(f"ASR version mismatch: {str(e)}") from e
+        except Exception as e:
+            BotLogger.error(f"ASR version mismatch: {asr_dir}")
+            raise RuntimeError(f"ASR version mismatch: {str(e)}") from e       
+
+        lines = asr_data["results"]    
+
+        for line in lines:
             hubert_file = hubert_dir / f"{line['key']}.pt"
             if not hubert_file.exists():
                 BotLogger.warning(f"特征文件不存在: {hubert_file}")

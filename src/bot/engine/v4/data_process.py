@@ -13,7 +13,7 @@ import json
 from bot.config import PRETRAINED_PATH, PROCESS_PATH, ASR_PATH
 from bot.text import Normalizer, symbols
 from bot.utils import BotLogger
-from bot.engine.v4 import load_asr_data
+from .asr import load_asr_data
 
 # 特殊符号处理配置，格式：(原符号，语言，替换符号)
 special = [
@@ -24,8 +24,8 @@ special = [
 class DataProcessor:
     MODEL_MAPPING = {
         "zh": "GPT-SoVITS/chinese-roberta-wwm-ext-large",
-        "en": "roberta-large",
-        "ja": "cl-tohoku/bert-base-japanese-v3",
+        "en": "FacebookAI/roberta-large",
+        "ja": "tohoku-nlp/bert-base-japanese-v3",
         "ko": "klue/bert-base",
         "can": "GPT-SoVITS/chinese-roberta-wwm-ext-large"
     }
@@ -41,13 +41,10 @@ class DataProcessor:
         参数:
             bert_model -- 预训练模型名称 (默认: "chinese-roberta-wwm-ext-large")
             device -- 指定运行设备 (默认自动选择GPU/CPU)
-        
-        注意: 首次使用需通过以下命令下载模型：
-            modelscope download --model 'AI-ModelScope/GPT-SoVITS' --local_dir './pretrained/GPT-SoVITS'
         """
         # 加载分词器和语言模型
         if bert_model is None:
-            bert_model = self.MODEL_MAPPING.get(language, "chinese-roberta-wwm-ext-large")
+            bert_model = self.MODEL_MAPPING.get(language, "GPT-SoVITS/chinese-roberta-wwm-ext-large")
 
         bert_dir = os.path.join(PRETRAINED_PATH, bert_model)
         self.tokenizer = AutoTokenizer.from_pretrained(bert_dir, local_files_only=True)
@@ -55,7 +52,6 @@ class DataProcessor:
         self.language = language
         self.normalizer = Normalizer(language, mixed=False)
 
-        # 设备配置（优先使用GPU）
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.mlm.to(self.device)   
 
@@ -90,8 +86,16 @@ class DataProcessor:
             return None  
 
         # 加载ASR数据
-        lines = load_asr_data(asr_dir)["results"]
-        
+        asr_data = load_asr_data(asr_dir)
+        try:
+            if(not isinstance(asr_data, dict)) or asr_data['versoin']!="v4":
+                BotLogger.error(f"ASR version mismatch: {asr_dir}")
+                raise RuntimeError(f"ASR version mismatch: {str(e)}") from e
+        except Exception as e:
+            BotLogger.error(f"ASR version mismatch: {asr_dir}")
+            raise RuntimeError(f"ASR version mismatch: {str(e)}") from e       
+
+        lines = asr_data["results"]        
         # 逐条处理数据
         for line in lines:
             try:

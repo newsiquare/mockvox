@@ -12,15 +12,7 @@ from bot.config import get_config, SLICED_ROOT_PATH, DENOISED_ROOT_PATH, ASR_PAT
 from bot.engine.v2 import slice_audio, batch_denoise
 from bot.engine.v2.inference import Inferencer as v2
 from bot.engine.v4.inference import Inferencer as v4
-from bot.engine.v2 import (
-    DataProcessor,
-    FeatureExtractor,
-    TextToSemantic
-)
-from bot.engine.v4.train import (
-    SoVITsTrainer, 
-    GPTTrainer
-)
+
 from bot.config import (
     PROCESS_PATH,
     SOVITS_MODEL_CONFIG,
@@ -87,7 +79,44 @@ def handle_upload(args):
 
 def handle_train(args):
     try:
-        processor = DataProcessor()
+        if(args.version=='v2'):
+            from bot.engine.v2 import (
+                DataProcessor,
+                FeatureExtractor,
+                TextToSemantic
+            )
+            from bot.engine.v2.train import (
+                SoVITsTrainer, 
+                GPTTrainer
+            )
+            processor = DataProcessor()
+        elif(args.version=='v4'):
+            from bot.engine.v4 import (
+                DataProcessor,
+                FeatureExtractor,
+                TextToSemantic
+            )
+            from bot.engine.v4.train import (
+                SoVITsTrainer, 
+                GPTTrainer
+            )            
+            # 从ASR结果中读取language信息
+            from bot.engine.v4.asr import load_asr_data
+            from bot.config import ASR_PATH
+            asr_file = os.path.join(ASR_PATH, args.fileID, 'output.json')
+            asr_data = load_asr_data(asr_file)
+            try:
+                if(not isinstance(asr_data, dict)) or asr_data['versoin']!="v4":
+                    BotLogger.error(f"ASR version mismatch: {asr_file}")
+                    return
+            except Exception as e:
+                BotLogger.error(f"ASR version mismatch: {asr_file}")
+                return    
+            processor = DataProcessor(language=asr_data['language'])
+        else:
+            BotLogger.error(f"Not supported version: {args.version}")
+            return
+
         processor.process(args.fileID)
         extractor = FeatureExtractor()
         extractor.extract(file_path=args.fileID, denoised=args.denoise)
@@ -180,35 +209,36 @@ def main():
     subparsers = parser.add_subparsers(dest='command', help='')
 
     # upload 子命令
-    parser_upload = subparsers.add_parser('upload', help='upload specified file.')
-    parser_upload.add_argument('file', type=str, help='full file path to upload.')
+    parser_upload = subparsers.add_parser('upload', help='Upload specified file.')
+    parser_upload.add_argument('file', type=str, help='Full file path to upload.')
     parser_upload.add_argument('--no-denoise', dest='denoise', action='store_false', 
-                               help='disable denoise processing (default: enable denoise).')
+                               help='Disable denoise processing (default: enable denoise).')
     parser_upload.set_defaults(denoise=True)
-    parser_upload.add_argument('--version', type=str, default='v4', help='the default version is v4.')
-    parser_upload.add_argument('--language', type=str, default='zh', help='language code, support zh can en ja ko')
+    parser_upload.add_argument('--version', type=str, default='v4', help='Default version is v4.')
+    parser_upload.add_argument('--language', type=str, default='zh', help='Language code, support zh can en ja ko. Not supported while version is v2.')
     parser_upload.set_defaults(func=handle_upload)
 
     # inference 子命令
-    parser_inference = subparsers.add_parser('inference', help='')
-    parser_inference.add_argument('fileID', type=str, help='returned train id from train.')
-    parser_inference.add_argument('refWavFilePath', type=str, help='reference file full path.')
-    parser_inference.add_argument('promptText', type=str, help='prompt text.')
-    parser_inference.add_argument('targetText', type=str, help='target text.')
+    parser_inference = subparsers.add_parser('inference', help='Inference command line')
+    parser_inference.add_argument('fileID', type=str, help='Returned train id from train.')
+    parser_inference.add_argument('refWavFilePath', type=str, help='Reference file full path.')
+    parser_inference.add_argument('promptText', type=str, help='Prompt text.')
+    parser_inference.add_argument('targetText', type=str, help='Target text.')
     parser_inference.add_argument('--no-denoise', dest='denoise', action='store_false', 
-                               help='disable denoise processing (default: enable denoise).')
+                               help='Disable denoise processing (default: enable denoise).')
     parser_inference.set_defaults(denoise=True)
-    parser_inference.add_argument('--version', type=str, default='v4', help='the default version is v4.')
+    parser_inference.add_argument('--version', type=str, default='v4', help='Default version is v4.')
     parser_inference.set_defaults(func=handle_inference)
 
     # train 子命令
-    parser_train = subparsers.add_parser('train', help='train specified file id.')
-    parser_train.add_argument('fileID', type=str, help='returned file id from upload.')
+    parser_train = subparsers.add_parser('train', help='Train specified file id.')
+    parser_train.add_argument('fileID', type=str, help='Returned file id from upload.')
     parser_train.add_argument('--no-denoise', dest='denoise', action='store_false', 
-                               help='disable denoise processing (default: enable denoise).')
+                               help='Disable denoise processing (default: enable denoise).')
     parser_train.set_defaults(denoise=True)
-    parser_train.add_argument('--epochs_sovits', type=int, default=10, help='train epochs of SoVITS (default:10).')
-    parser_train.add_argument('--epochs_gpt', type=int, default=10, help='train epochs of GPT (default:10).')
+    parser_train.add_argument('--epochs_sovits', type=int, default=10, help='Train epochs of SoVITS (default:10).')
+    parser_train.add_argument('--epochs_gpt', type=int, default=10, help='Train epochs of GPT (default:10).')
+    parser_train.add_argument('--version', type=str, default='v4', help='Default version is v4.')
     parser_train.set_defaults(func=handle_train)
 
     args = parser.parse_args()

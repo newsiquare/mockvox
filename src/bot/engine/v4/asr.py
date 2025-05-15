@@ -292,7 +292,6 @@ if __name__ == '__main__':
 
     asr_path = os.path.join(ASR_PATH, args.file)
     Path(asr_path).mkdir(parents=True, exist_ok=True)
-    output_file = os.path.join(asr_path, "output.json")
 
     if args.denoised:
         root_dir = os.path.join(DENOISED_ROOT_PATH, args.file)
@@ -305,16 +304,4 @@ if __name__ == '__main__':
         if os.path.isfile(os.path.join(root_dir, f))  # 过滤掉目录
     ]
 
-    asr = AutoSpeechRecognition(args.language)
-    combined_results = []
-    for file in file_list:
-        results, language = asr.execute(input_path=file)
-        for result in results:
-            combined_results.extend({
-                "key": result.key,
-                "text": result.text,
-                "language": language
-            })
-        
-        with open(output_file, 'w', encoding='utf-8') as f:
-            json.dump(combined_results, f, ensure_ascii=False, indent=2)
+    batch_asr(args.language, file_list, asr_path)

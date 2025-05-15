@@ -72,7 +72,7 @@ class FeatureExtractor:
         # 处理ASR结果
         asr_data = load_asr_data(asr_dir)
         try:
-            if(not isinstance(asr_data, dict)) or asr_data['versoin']!="v4":
+            if(not isinstance(asr_data, dict)) or asr_data['version']!="v4":
                 BotLogger.error(f"ASR version mismatch: {asr_dir}")
                 raise RuntimeError(f"ASR version mismatch: {str(e)}") from e
         except Exception as e:

@@ -52,7 +52,8 @@ dependencies = [
     "pyopenjtalk",
     "ko_pron",
     "g2pk2",
-    "nemo_toolkit[asr]",
+    "datasets==2.16.0",
+    "nemo_toolkit[asr]==2.0.0",
     "split_lang"
 ]
 

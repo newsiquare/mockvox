@@ -8,16 +8,17 @@ import torch
 import os
 import gc
 import json
-
 from funasr import AutoModel
-from faster_whisper import WhisperModel
+import soundfile
+import nemo.collections.asr as Nemo_ASR 
 
 from bot.config import PRETRAINED_PATH
 from bot.utils import BotLogger
 
 class ChineseASR:
     def __init__(self,
-                 language: str = "zh",  # 为了统一输入参数
+                 language: str = "zh",  # 没有使用，是为了统一ASR类的输入参数         
+                 region: str = None,
                  asr_model_name: str = 'iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch',
                  vad_model_name: str = 'iic/speech_fsmn_vad_zh-cn-16k-common-pytorch',
                  punc_model_name: str = 'iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch',
@@ -33,7 +34,7 @@ class ChineseASR:
             disable_update=True
         )
         
-    def execute(self, input_path: str):
+    def execute(self, input_path: str) -> List:
         try:
             asr_result = self.model.generate(input=input_path)
             if not isinstance(asr_result, list) or len(asr_result) == 0:
@@ -42,11 +43,12 @@ class ChineseASR:
         except Exception as e:
             raise RuntimeError(f"语音识别&标点恢复失败: {str(e)}") from e
 
-        return asr_result, "zh"
+        return asr_result
 
 class CantoneseASR:
     def __init__(self,
                  language: str = "can",
+                 region: str = None,
                  asr_model_name: str = 'iic/speech_UniASR_asr_2pass-cantonese-CHS-16k-common-vocab1468-tensorflow1-online',
                  device: Optional[str] = None
         ): 
@@ -60,7 +62,7 @@ class CantoneseASR:
             disable_update=True
         )
         
-    def execute(self, input_path: str):
+    def execute(self, input_path: str) -> List:
         try:
             asr_result = self.model.generate(input=input_path)
             if not isinstance(asr_result, list) or len(asr_result) == 0:
@@ -69,45 +71,91 @@ class CantoneseASR:
         except Exception as e:
             raise RuntimeError(f"语音识别&标点恢复失败: {str(e)}") from e
 
-        return asr_result, "can"
+        return asr_result
 
-class FasterWhisperASR:
+class JapaneseASR:
     def __init__(self,
-        language: str = "auto",
-        asr_model_name: str = 'faster-whisper-large-v3',
+                 language: str = "can",
+                 region: str = None,
+                 asr_model_name: str = 'iic/speech_UniASR_asr_2pass-ja-16k-common-vocab93-tensorflow1-offline',
+                 device: Optional[str] = None
+        ): 
+        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        # 语音识别
+        self.model = AutoModel(
+            model=os.path.join(PRETRAINED_PATH,asr_model_name), model_revision='v2.0.4',
+            vad_model=None, vad_model_revision=None,
+            punc_model=None, punc_model_revision=None,
+            device=self.device,
+            disable_update=True
+        )
+        
+    def execute(self, input_path: str) -> List:
+        try:
+            asr_result = self.model.generate(input=input_path)
+            if not isinstance(asr_result, list) or len(asr_result) == 0:
+                return None
+
+        except Exception as e:
+            raise RuntimeError(f"语音识别&标点恢复失败: {str(e)}") from e
+
+        return asr_result
+
+class KoreanASR:
+    def __init__(self,
+                 language: str = "can",
+                 region: str = None,
+                 asr_model_name: str = 'iic/speech_UniASR_asr_2pass-ko-16k-common-vocab6400-tensorflow1-offline',
+                 device: Optional[str] = None
+        ): 
+        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        # 语音识别
+        self.model = AutoModel(
+            model=os.path.join(PRETRAINED_PATH,asr_model_name), model_revision='v2.0.4',
+            vad_model=None, vad_model_revision=None,
+            punc_model=None, punc_model_revision=None,
+            device=self.device,
+            disable_update=True
+        )
+        
+    def execute(self, input_path: str) -> List:
+        try:
+            asr_result = self.model.generate(input=input_path)
+            if not isinstance(asr_result, list) or len(asr_result) == 0:
+                return None
+
+        except Exception as e:
+            raise RuntimeError(f"语音识别&标点恢复失败: {str(e)}") from e
+
+        return asr_result
+
+class EnglishASR:
+    def __init__(self,
+        language: str = "en",
+        region: str = None,
+        asr_model_name: str = 'nvidia/parakeet-tdt-0.6b-v2/parakeet-tdt-0.6b-v2.nemo',
         device: Optional[str] = None
     ): 
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
-        self.language = language
-        if self.language == "auto":
-            self.language = None
 
-        self.model = WhisperModel(
-            os.path.join(PRETRAINED_PATH, asr_model_name), 
-            device=self.device, 
-            compute_type="default"
+        self.model = Nemo_ASR.models.ASRModel.restore_from(
+            os.path.join(PRETRAINED_PATH, asr_model_name)
         )
+        self.model.eval()
 
-    def execute(self, input_path: str):
+    def execute(self, input_path: str) -> List:
         try:
-            segments, info = self.model.transcribe(
-                audio=input_path,
-                beam_size=5,
-                vad_filter=True,
-                vad_parameters=dict(min_silence_duration_ms=700),
-                language=self.language
+            audio, _ = soundfile.read(input_path, dtype='float32')
+            outputs = self.model.transcribe(
+                [audio],
+                batch_size=1
             )
 
-            # if info.language == 'zh':
-            #     asr = ChineseASR()
-            #     asr_result = asr.execute(input_path)
-            #     return asr_result, "zh"
-
             asr_result=[]
-            for segment in segments:
+            for output in outputs:
                 asr_result.extend({
                     "key": Path(input_path).stem,
-                    "text": segment.text
+                    "text": output.text
                 })
 
             if not isinstance(asr_result, list) or len(asr_result) == 0:
@@ -116,16 +164,16 @@ class FasterWhisperASR:
         except Exception as e:
             raise RuntimeError(f"语音识别&标点恢复失败: {str(e)}") from e
 
-        return asr_result, info.language
+        return asr_result
 
 class ASRFactory:
     # 定义语言码与ASR类的映射关系
     ASR_MAP = {
         'zh': ChineseASR,
         'can': CantoneseASR,  # 粤语
-        'en': FasterWhisperASR,
-        'ja': FasterWhisperASR,
-        'ko': FasterWhisperASR
+        'en': EnglishASR,
+        'ja': JapaneseASR,
+        'ko': KoreanASR
     }
 
     @classmethod
@@ -194,16 +242,17 @@ def batch_asr(language, file_list: List[str], output_dir: str):
 
         combined_results = []
         for file in file_list:
-            results, language = asr.execute(input_path=file)
-            for result in results:
-                combined_results.extend({
-                    "key": result.key,
-                    "text": result.text,
-                    "language": language
-                }) 
+            results = asr.execute(input_path=file)
+            if results:
+                for result in results:
+                    combined_results.extend({
+                        "key": result.key,
+                        "text": result.text
+                    }) 
 
         output_data = {
             "version": "v4",
+            "language": language,
             "results": combined_results            
         }
 

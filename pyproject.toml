@@ -52,7 +52,7 @@ dependencies = [
     "pyopenjtalk",
     "ko_pron",
     "g2pk2",
-    "faster-whisper",
+    "nemo_toolkit[asr]",
     "split_lang"
 ]
 

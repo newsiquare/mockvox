@@ -67,10 +67,16 @@ def handle_upload(args):
 
         # 语音识别
         asr_path = os.path.join(ASR_PATH, stem)
-        if(args.denoise):
-            batch_asr(denoised_files, asr_path)
+        if(args.version=='v2'):
+            if(args.denoise):
+                batch_asr(denoised_files, asr_path)
+            else:
+                batch_asr(sliced_files, asr_path)
         else:
-            batch_asr(sliced_files, asr_path)
+            if(args.denoise):
+                batch_asr(args.language, denoised_files, asr_path)
+            else:
+                batch_asr(args.language, sliced_files, asr_path)
 
         BotLogger.info(f"ASR done. Results saved in: {os.path.join(asr_path, 'output.json')}")
 
@@ -180,6 +186,7 @@ def main():
                                help='disable denoise processing (default: enable denoise).')
     parser_upload.set_defaults(denoise=True)
     parser_upload.add_argument('--version', type=str, default='v4', help='the default version is v4.')
+    parser_upload.add_argument('--language', type=str, default='zh', help='language code, support zh can en ja ko')
     parser_upload.set_defaults(func=handle_upload)
 
     # inference 子命令

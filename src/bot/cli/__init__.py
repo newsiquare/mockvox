@@ -172,11 +172,11 @@ def train_v4(args):
 
 def train_v2(args):
     try:      
-        processor = DataProcessor()
+        processor = DataProcessorV2()
         processor.process(args.fileID)
-        extractor = FeatureExtractor()
+        extractor = FeatureExtractorV2()
         extractor.extract(file_path=args.fileID, denoised=args.denoise)
-        t2s = TextToSemantic()
+        t2s = TextToSemanticV2()
         t2s.process(args.fileID)
         del processor, extractor, t2s
         if torch.cuda.is_available():
@@ -189,7 +189,7 @@ def train_v2(args):
         hps_sovits = get_hparams_from_file(SOVITS_MODEL_CONFIG)
         processed_path = Path(PROCESS_PATH) / args.fileID
         hps_sovits.data.processed_dir = processed_path
-        trainer_sovits = SoVITsTrainer(hparams=hps_sovits)
+        trainer_sovits = SoVITsTrainerV2(hparams=hps_sovits)
         trainer_sovits.train(epochs=args.epochs_sovits)
 
         del trainer_sovits, hps_sovits
@@ -203,7 +203,7 @@ def train_v2(args):
         hps_gpt.data.semantic_path = processed_path / 'name2text.json'
         hps_gpt.data.phoneme_path = processed_path / 'text2semantic.json'
         hps_gpt.data.bert_path = processed_path / 'bert'
-        trainer_gpt = GPTTrainer(hparams=hps_gpt)
+        trainer_gpt = GPTTrainerV2(hparams=hps_gpt)
         trainer_gpt.train(epochs=args.epochs_gpt)
         del trainer_gpt, hps_gpt
         if torch.cuda.is_available():

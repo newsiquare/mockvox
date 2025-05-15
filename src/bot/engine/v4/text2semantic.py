@@ -21,7 +21,7 @@ class TextToSemantic:
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.vq_model = SynthesizerTrnV3(
             self.hps.data.filter_length // 2 + 1,
-            self.hps.train.segment_size // self.hps.data.hop_length,
+            self.hps.train.segment_size // self.hps.data.hop_length_v4,
             n_speakers=self.hps.data.n_speakers,
             **self.hps.model            
         ).to(self.device)

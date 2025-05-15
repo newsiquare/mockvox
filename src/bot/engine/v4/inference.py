@@ -112,7 +112,7 @@ class Inferencer:
 
         vq_model = SynthesizerTrnV3(
             hps.data.filter_length // 2 + 1,
-            hps.train.segment_size // hps.data.hop_length,
+            hps.train.segment_size // hps.data.hop_length_v4,
             n_speakers=hps.data.n_speakers,
             **hps.model
         )
@@ -432,7 +432,7 @@ class Inferencer:
         spec = spectrogram_torch(
             audio_norm,
             hps.data.filter_length,
-            hps.data.hop_length,
+            hps.data.hop_length_v4,
             hps.data.win_length,
             center=False,
         )

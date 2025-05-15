@@ -263,7 +263,7 @@ class SoVITsTrainer:
         # SoVITs Generator
         self.net_g = SynthesizerTrnV3(
             self.hparams.data.filter_length // 2 + 1,
-            self.hparams.train.segment_size // self.hparams.data.hop_length,
+            self.hparams.train.segment_size // self.hparams.data.hop_length_v4,
             n_speakers = self.hparams.data.n_speakers,
             **self.hparams.model,
         ).to(self.device)

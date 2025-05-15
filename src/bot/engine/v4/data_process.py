@@ -50,7 +50,7 @@ class DataProcessor:
         self.tokenizer = AutoTokenizer.from_pretrained(bert_dir, local_files_only=True)
         self.mlm = AutoModelForMaskedLM.from_pretrained(bert_dir, local_files_only=True)
         self.language = language
-        self.normalizer = Normalizer(language, mixed=False)
+        self.normalizer = Normalizer(language)
 
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.mlm.to(self.device)   

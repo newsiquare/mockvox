@@ -20,7 +20,6 @@ def process_file_task(
     file_name: str,
     version: Optional[str] = 'v4',
     language: Optional[str] = 'zh',
-    region: Optional[str] = None, 
     ifDenoise: Optional[bool] = True
 ):
     try:

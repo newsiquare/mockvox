@@ -22,9 +22,17 @@ special = [
 ]
 
 class DataProcessor:
+    MODEL_MAPPING = {
+        "zh": "GPT-SoVITS/chinese-roberta-wwm-ext-large",
+        "en": "FacebookAI/roberta-large",
+        "ja": "tohoku-nlp/bert-base-japanese-v3",
+        "ko": "klue/bert-base",
+        "can": "GPT-SoVITS/chinese-roberta-wwm-ext-large"
+    }
+
     def __init__(self, 
                 language='zh',
-                bert_model="chinese-roberta-wwm-ext-large",
+                bert_model: Optional[str]=None,
                 device: Optional[str] = None
         ):
         """
@@ -33,13 +41,12 @@ class DataProcessor:
         参数:
             bert_model -- 预训练模型名称 (默认: "chinese-roberta-wwm-ext-large")
             device -- 指定运行设备 (默认自动选择GPU/CPU)
-        
-        注意: 首次使用需通过以下命令下载模型：
-            modelscope download --model 'AI-ModelScope/GPT-SoVITS' --local_dir './pretrained/GPT-SoVITS'
         """
         # 加载分词器和语言模型
-        model_dir = os.path.join(PRETRAINED_PATH, "GPT-SoVITS")
-        bert_dir = os.path.join(model_dir, bert_model)
+        if bert_model is None:
+            bert_model = self.MODEL_MAPPING.get(language, "GPT-SoVITS/chinese-roberta-wwm-ext-large")
+
+        bert_dir = os.path.join(PRETRAINED_PATH, bert_model)
         self.tokenizer = AutoTokenizer.from_pretrained(bert_dir, local_files_only=True)
         self.mlm = AutoModelForMaskedLM.from_pretrained(bert_dir, local_files_only=True)
         self.language = language

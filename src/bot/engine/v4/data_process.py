@@ -89,11 +89,11 @@ class DataProcessor:
         asr_data = load_asr_data(asr_dir)
         try:
             if(not isinstance(asr_data, dict)) or asr_data['version']!="v4":
-                BotLogger.error(f"ASR version mismatch: {asr_dir}")
-                raise RuntimeError(f"ASR version mismatch: {str(e)}") from e
+                BotLogger.error(f"Version mismatch: {asr_dir}")
+                raise RuntimeError(f"Version mismatch: {str(e)}") from e
         except Exception as e:
-            BotLogger.error(f"ASR version mismatch: {asr_dir}")
-            raise RuntimeError(f"ASR version mismatch: {str(e)}") from e       
+            BotLogger.error(f"Version mismatch: {asr_dir}")
+            raise RuntimeError(f"Version mismatch: {str(e)}") from e       
 
         lines = asr_data["results"]        
         # 逐条处理数据

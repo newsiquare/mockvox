@@ -265,7 +265,7 @@ def batch_asr(language, file_list: List[str], output_dir: str):
             torch.cuda.synchronize()
             torch.cuda.ipc_collect()
             gc.collect()
-        return results
+        return combined_results
 
     except Exception as e:
         BotLogger.error(

@@ -56,7 +56,18 @@ class TextToSemantic:
         hubert_dir = processed_dir / "cnhubert"
 
         # 处理文本转语义
-        for line in load_asr_data(asr_dir):
+        asr_data = load_asr_data(asr_dir)
+        try:
+            if(not isinstance(asr_data, dict)) or asr_data['version']!="v2":
+                BotLogger.error(f"Version mismatch: {asr_dir}")
+                raise RuntimeError(f"Version mismatch: {str(e)}") from e
+        except Exception as e:
+            BotLogger.error(f"Version mismatch: {asr_dir}")
+            raise RuntimeError(f"Version mismatch: {str(e)}") from e       
+
+        lines = asr_data["results"]    
+
+        for line in lines:
             hubert_file = hubert_dir / f"{line['key']}.pt"
             if not hubert_file.exists():
                 BotLogger.warning(f"特征文件不存在: {hubert_file}")

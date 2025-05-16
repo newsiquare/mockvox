@@ -80,7 +80,16 @@ class DataProcessor:
             return None  
 
         # 加载ASR数据
-        lines = load_asr_data(asr_dir)
+        asr_data = load_asr_data(asr_dir)
+        try:
+            if(not isinstance(asr_data, dict)) or asr_data['version']!="v2":
+                BotLogger.error(f"Version mismatch: {asr_dir}")
+                raise RuntimeError(f"Version mismatch: {str(e)}") from e
+        except Exception as e:
+            BotLogger.error(f"Version mismatch: {asr_dir}")
+            raise RuntimeError(f"Version mismatch: {str(e)}") from e       
+
+        lines = asr_data["results"]     
         
         # 逐条处理数据
         for line in lines:

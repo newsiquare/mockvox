@@ -2,10 +2,12 @@
 import os, traceback
 import time
 from pathlib import Path
+from typing import Optional
 from collections import OrderedDict
 
 from bot.config import get_config, UPLOAD_PATH, SLICED_ROOT_PATH, DENOISED_ROOT_PATH, ASR_PATH
-from bot.engine.v2 import slice_audio, batch_denoise, batch_asr
+from bot.engine.v2 import slice_audio, batch_denoise, batch_asr as batch_asr_v2
+from bot.engine.v4 import batch_asr as batch_asr_v4
 from .worker import celeryApp
 from bot.utils import BotLogger
 
@@ -13,7 +15,14 @@ cfg = get_config()
 os.makedirs(SLICED_ROOT_PATH, exist_ok=True)
 
 @celeryApp.task(name="train_stage1", bind=True)
-def process_file_task(self, file_name: str, ifDenoise: bool):
+def process_file_task(
+    self, 
+    file_name: str,
+    version: Optional[str] = 'v4',
+    language: Optional[str] = 'zh',
+    region: Optional[str] = None, 
+    ifDenoise: Optional[bool] = True
+):
     try:
         stem, _ = os.path.splitext(file_name)
         file_path = os.path.join(UPLOAD_PATH, file_name)
@@ -47,12 +56,22 @@ def process_file_task(self, file_name: str, ifDenoise: bool):
 
         # 语音识别
         asr_path = os.path.join(ASR_PATH, stem)
-        if(ifDenoise):
-            asr_results = batch_asr(denoised_files, asr_path)
-            path_result = denoised_path
+        if(version=='v4'):
+            if(ifDenoise):
+                asr_results = batch_asr_v4(language, denoised_files, asr_path)
+                path_result = denoised_path
+            else:
+                asr_results = batch_asr_v4(language, sliced_files, asr_path)
+                path_result = sliced_path
+        elif(version=='v2'):
+            if(ifDenoise):
+                asr_results = batch_asr_v2(language, denoised_files, asr_path)
+                path_result = denoised_path
+            else:
+                asr_results = batch_asr_v2(language, sliced_files, asr_path)
+                path_result = sliced_path
         else:
-            asr_results = batch_asr(sliced_files, asr_path)
-            path_result = sliced_path
+            BotLogger.error(f"不支持的版本 | 文件: {file_name} | 错误跟踪:\n{traceback.format_exc()}")
 
         BotLogger.info(
             "语音已识别",

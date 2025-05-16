@@ -80,9 +80,9 @@ def handle_upload(args):
         asr_path = os.path.join(ASR_PATH, stem)
         if(args.version=='v2'):
             if(args.denoise):
-                batch_asr_v2(denoised_files, asr_path)
+                batch_asr_v2(args.language, denoised_files, asr_path)
             else:
-                batch_asr_v2(sliced_files, asr_path)
+                batch_asr_v2(args.language, sliced_files, asr_path)
         else:
             if(args.denoise):
                 batch_asr_v4(args.language, denoised_files, asr_path)
@@ -111,10 +111,10 @@ def train_v4(args):
     asr_data = load_asr_data(asr_file)
     try:
         if(not isinstance(asr_data, dict)) or asr_data['version']!="v4":
-            BotLogger.error(f"ASR version mismatch: {asr_file}")
+            BotLogger.error(f"Version mismatch: {asr_file}")
             return
     except Exception as e:
-        BotLogger.error(f"ASR version mismatch: {asr_file}")
+        BotLogger.error(f"Version mismatch: {asr_file}")
         return    
     
     try:      
@@ -271,7 +271,7 @@ def main():
                                help='Disable denoise processing (default: enable denoise).')
     parser_upload.set_defaults(denoise=True)
     parser_upload.add_argument('--version', type=str, default='v4', help='Default version is v4.')
-    parser_upload.add_argument('--language', type=str, default='zh', help='Language code, support zh can en ja ko. Not supported while version is v2.')
+    parser_upload.add_argument('--language', type=str, default='zh', help='Language code, support zh can en ja ko.')
     parser_upload.set_defaults(func=handle_upload)
 
     # inference 子命令

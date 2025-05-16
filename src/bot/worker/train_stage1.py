@@ -72,6 +72,7 @@ def process_file_task(
                 path_result = sliced_path
         else:
             BotLogger.error(f"不支持的版本 | 文件: {file_name} | 错误跟踪:\n{traceback.format_exc()}")
+            return
 
         BotLogger.info(
             "语音已识别",

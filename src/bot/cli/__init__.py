@@ -254,7 +254,7 @@ def handle_inference(args):
         result_list = list(synthesis_result)
         if result_list:
             last_sampling_rate, last_audio_data = result_list[-1]
-            sf.write(reasoning_result_path / REASONING_RESULT_FILE, last_audio_data, last_sampling_rate)
+            sf.write(reasoning_result_path / REASONING_RESULT_FILE, last_audio_data, int(last_sampling_rate))
             BotLogger.info(f"Audio saved to {reasoning_result_path / REASONING_RESULT_FILE}")
     except Exception as e:
         BotLogger.error(

@@ -57,6 +57,9 @@ async def asr_revision(
     wav_root = Path(wav_root) / filename
     asr_path = Path(ASR_PATH) / filename / 'output.json'
 
+    with open(asr_path, "r", encoding="utf-8") as f:
+        output_data = json.load(f)
+
     try:
         if not isinstance(results_list, list):
             raise HTTPException(
@@ -84,8 +87,9 @@ async def asr_revision(
                     detail=f"Audio file not found: {item['key']}.wav"
                 )
 
+        output_data["results"] = results_list
         with open(asr_path, "w", encoding="utf-8") as f:
-            json.dump(results_list, f, ensure_ascii=False, indent=2)
+            json.dump(output_data, f, ensure_ascii=False, indent=2)
             
         return {"success": True, "message": "ASR revision saved successfully"}
         
@@ -105,6 +109,8 @@ async def start_train(
     filename: str = Form(..., description="训练文件名（调用 /upload 上传后返回的文件名, 无后缀名"),
     epochs_sovits: int = Form(10, description="SoVITs训练轮次"),
     epochs_gpt: int = Form(10, description="GPT训练轮次"),
+    version: str = Form('v4', description="版本"),
+    language: str = Form('zh', description="语言"),
     denoised: bool = Form(True, description="是否已降噪"),
     config: str = Form("{}", description="JSON 格式的配置参数")
 ):
@@ -114,6 +120,8 @@ async def start_train(
             file_name=filename,
             sovits_epochs=epochs_sovits,
             gpt_epochs=epochs_gpt, 
+            version=version,
+            language=language,
             ifDenoise=denoised
         )
         # 确保任务对象有效
@@ -229,7 +237,11 @@ async def start_inference(
     response_description="返回存储的文件信息和任务ID",
     tags=["语音处理"]
 )
-async def upload_audio(file: UploadFile = File(..., description="音频文件，仅支持 WAV 格式")):
+async def upload_audio(
+    file: UploadFile = File(..., description="音频文件，仅支持 WAV 格式"),
+    version: str = Form('v4', description="版本"),
+    language: str = Form('zh', description="语言")
+):
     try:
         # 验证文件类型
         if not allowed_file(file.filename):
@@ -261,7 +273,7 @@ async def upload_audio(file: UploadFile = File(..., description="音频文件，
         )
 
         # 发送异步任务
-        task = process_file_task.delay(file_name=filename, ifDenoise=True)
+        task = process_file_task.delay(file_name=filename, version=version, language=language, ifDenoise=True)
         # 确保任务对象有效
         if not isinstance(task, AsyncResult):
             BotLogger.error(f"Celery文件任务提交异常 | {filename}")

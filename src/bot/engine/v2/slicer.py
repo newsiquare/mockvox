@@ -224,6 +224,10 @@ def slice_audio(input_path: str, output_dir: str) -> List[str]:
             if(tmp_max>1):chunk/=tmp_max
             chunk = (chunk / tmp_max * (cfg.MAX_NORMALIZED * cfg.ALPHA_MIX)) + (1 - cfg.ALPHA_MIX) * chunk
 
+            if chunk.size == 0:
+                BotLogger.warning("跳过空音频段")
+                continue
+
             sliced_file = os.path.join(
                 output_dir,
                 f"{start:010d}_{end:010d}.wav"  

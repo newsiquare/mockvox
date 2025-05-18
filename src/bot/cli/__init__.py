@@ -7,7 +7,7 @@ import torch
 import torch.multiprocessing as mp
 import traceback
 
-from bot.utils import BotLogger, allowed_file, generate_unique_filename
+from bot.utils import BotLogger, allowed_file, generate_unique_filename, i18n
 from bot.config import get_config, SLICED_ROOT_PATH, DENOISED_ROOT_PATH, ASR_PATH
 from bot.engine.v2 import slice_audio, batch_denoise
 from bot.engine.v2.inference import Inferencer as InferencerV2
@@ -57,9 +57,9 @@ cfg = get_config()
 
 def handle_upload(args):
     if not allowed_file(args.file):
-        BotLogger.error("Unsupported file format")
+        BotLogger.error(i18n("不支持的文件格式"))
     if os.path.getsize(args.file) > cfg.MAX_UPLOAD_SIZE:
-        BotLogger.error("File size exceeds the limit")
+        BotLogger.error(i18n("文件大小超过限制"))
 
     fileID = generate_unique_filename(Path(args.file).name)
     stem = Path(fileID).stem
@@ -89,11 +89,11 @@ def handle_upload(args):
             else:
                 batch_asr_v4(args.language, sliced_files, asr_path)
 
-        BotLogger.info(f"ASR done. Results saved in: {os.path.join(asr_path, 'output.json')}")
+        BotLogger.info(f"{i18n("ASR完成. 结果已保存在")}: {os.path.join(asr_path, 'output.json')}")
 
     except Exception as e:
         BotLogger.error(
-            f"Failed | File: {args.file} | Traceback:\n{traceback.format_exc()}"
+            f"{i18n("文件处理错误")}: {args.file} | Traceback:\n{traceback.format_exc()}"
         )
 
 def handle_train(args):
@@ -102,7 +102,7 @@ def handle_train(args):
     elif(args.version=='v4'):
         train_v4(args)
     else:
-        BotLogger.error(f"Not supported version: {args.version}")
+        BotLogger.error(f"{i18n("不支持的版本")}: {args.version}")
         return       
 
 def train_v4(args):
@@ -111,10 +111,10 @@ def train_v4(args):
     asr_data = load_asr_data(asr_file)
     try:
         if(not isinstance(asr_data, dict)) or asr_data['version']!="v4":
-            BotLogger.error(f"Version mismatch: {asr_file}")
+            BotLogger.error(f"{i18n("版本不匹配")}: {asr_file}")
             return
     except Exception as e:
-        BotLogger.error(f"Version mismatch: {asr_file}")
+        BotLogger.error(f"{i18n("版本不匹配")}: {asr_file}")
         return    
     
     try:      
@@ -161,13 +161,13 @@ def train_v4(args):
         sovits_half_weights_path = Path(WEIGHTS_PATH) / args.fileID / SOVITS_HALF_WEIGHTS_FILE
         gpt_half_weights_path = Path(WEIGHTS_PATH) / args.fileID / GPT_HALF_WEIGHTS_FILE
 
-        BotLogger.info(f"Train done. \n \
-                        Sovits checkpoint saved in: {sovits_half_weights_path} \n \
+        BotLogger.info(f"{i18n("训练完成")}. \n \
+                        SoVITS checkpoint saved in: {sovits_half_weights_path} \n \
                         GPT checkpoint saved in: {gpt_half_weights_path}")
 
     except Exception as e:
         BotLogger.error(
-            f"Train failed | File: {args.fileID} | Traceback :\n{traceback.format_exc()}"
+            f"{i18n("训练过程错误")}: {args.fileID} | Traceback :\n{traceback.format_exc()}"
         )
 
 def train_v2(args):
@@ -215,13 +215,13 @@ def train_v2(args):
         sovits_half_weights_path = Path(WEIGHTS_PATH) / args.fileID / SOVITS_HALF_WEIGHTS_FILE
         gpt_half_weights_path = Path(WEIGHTS_PATH) / args.fileID / GPT_HALF_WEIGHTS_FILE
 
-        BotLogger.info(f"Train done. \n \
-                        Sovits checkpoint saved in: {sovits_half_weights_path} \n \
+        BotLogger.info(f"{i18n("训练完成")}. \n \
+                        SoVITS checkpoint saved in: {sovits_half_weights_path} \n \
                         GPT checkpoint saved in: {gpt_half_weights_path}")
 
     except Exception as e:
         BotLogger.error(
-            f"Train failed | File: {args.fileID} | Traceback :\n{traceback.format_exc()}"
+            f"{i18n("训练过程错误")}: {args.fileID} | Traceback :\n{traceback.format_exc()}"
         )
 
 def handle_inference(args):
@@ -230,9 +230,9 @@ def handle_inference(args):
         sovits_path = Path(WEIGHTS_PATH) / args.fileID / SOVITS_HALF_WEIGHTS_FILE
         reasoning_result_path = Path(REASONING_RESULT_PATH) / args.fileID
         if not os.path.exists(gpt_path):
-            BotLogger.error("路径错误! 找不到GPT模型")
+            BotLogger.error(i18n("路径错误! 找不到GPT模型"))
         if not os.path.exists(sovits_path):
-            BotLogger.error("路径错误！ 找不到SOVITS模型")
+            BotLogger.error(i18n("路径错误! 找不到SOVITS模型"))
         if not os.path.exists(reasoning_result_path):
             os.makedirs(reasoning_result_path, exist_ok=True)
         if args.version == 'v2':
@@ -255,10 +255,10 @@ def handle_inference(args):
         if result_list:
             last_sampling_rate, last_audio_data = result_list[-1]
             sf.write(reasoning_result_path / REASONING_RESULT_FILE, last_audio_data, int(last_sampling_rate))
-            BotLogger.info(f"Audio saved to {reasoning_result_path / REASONING_RESULT_FILE}")
+            BotLogger.info(f"Audio saved in {reasoning_result_path / REASONING_RESULT_FILE}")
     except Exception as e:
         BotLogger.error(
-            f"inference failed | File: {args.fileID} | Traceback :\n{traceback.format_exc()}"
+            f"{i18n("推理过程错误")}: {args.fileID} | Traceback :\n{traceback.format_exc()}"
         )
 def main():
     parser = argparse.ArgumentParser(prog='mockvoi', description=CLI_HELP_MSG)

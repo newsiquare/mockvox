@@ -12,7 +12,7 @@ from bot.config import UPLOAD_PATH
 
 # 文件存储配置
 os.makedirs(UPLOAD_PATH, exist_ok=True)
-ALLOWED_EXTENSIONS = {'wav'}
+ALLOWED_EXTENSIONS = {'wav', "mp3", "flac"}
 
 def allowed_file(filename: str) -> bool:
     return '.' in filename and \

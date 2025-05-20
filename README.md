@@ -1,6 +1,6 @@
 # bot
 
-本项目旨在打造一个可以社区化运作的语言合成&语音克隆平台。 
+本项目旨在打造一个可以社区化运作的语言合成&语音克隆平台。  
 本项目改造自 [GPT_SoVITS](https://github.com/RVC-Boss/GPT-SoVITS)，提供和GPT_SoVITS相同流程的语音合成&语音克隆功能。
 
 主要的改造点有:
@@ -8,7 +8,7 @@
 1. 去掉Web端，改用命令行方式.
 2. 改为用 celery 管理后台异步任务。为此，去掉所有的 torch 分布式训练逻辑，改为由 celery 调度后台的训练、推理进程.
 3. 不用 Pytorch Lightning 训练GPT模型，改为 torch 原生训练方式.
-4. 英语ASR模型不用Faster-Whisper(存在cuda+nvidia driver版本兼容问题),改用 [Nvidia Parakeet TDT 0.6B V2](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2).
+4. 英语ASR模型不用Faster-Whisper(存在cuda + nvidia driver版本兼容问题), 改用 [Nvidia Parakeet TDT 0.6B V2](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2).
 5. 日、韩ASR模型改用 [iic/speech_UniASR_asr_2pass-ja-16k-common-vocab93-tensorflow1-offline](https://www.modelscope.cn/models/iic/speech_UniASR_asr_2pass-ja-16k-common-vocab93-tensorflow1-offline), [iic/speech_UniASR_asr_2pass-ko-16k-common-vocab6400-tensorflow1-offline](https://www.modelscope.cn/models/iic/speech_UniASR_asr_2pass-ko-16k-common-vocab6400-tensorflow1-offline).
 6. 不同语言采用不同的BERT特征提取模型.
 7. 代码优化.
@@ -24,7 +24,7 @@ cd bot
 
 ```bash
 # 创建虚拟环境
-conda create -n bot python=3.11 -y
+conda create -n bot python=3.10 -y
 # 激活虚拟环境
 conda activate bot
 # 安装依赖项(生产环境)
@@ -64,6 +64,11 @@ modelscope download --model 'iic/punc_ct-transformer_zh-cn-common-vocab272727-py
 # 词转音素
 git clone https://huggingface.co/alextomcat/G2PWModel.git ./pretrained/G2PWModel
 
+# ------------------------------------------------ GPT-SoVITS 模型 --------------------------------------------------------
+# GPT-SoVITS:  
+git clone https://huggingface.co/lj1995/GPT-SoVITS.git ./pretrained/GPT-SoVITS
+
+# ---------------------------------------------------- [可选] -------------------------------------------------------------
 # [可选] 粤语ASR模型
 modelscope download --model 'iic/speech_UniASR_asr_2pass-cantonese-CHS-16k-common-vocab1468-tensorflow1-online' --local_dir './pretrained/iic/speech_UniASR_asr_2pass-cantonese-CHS-16k-common-vocab1468-tensorflow1-online'
 # [可选] 英语ASR模型
@@ -78,10 +83,6 @@ git clone https://huggingface.co/FacebookAI/roberta-large.git ./pretrained/Faceb
 git clone https://huggingface.co/tohoku-nlp/bert-base-japanese-v3.git ./pretrained/tohoku-nlp/bert-base-japanese-v3
 # [可选] 韩语BERT模型
 git clone https://huggingface.co/klue/bert-base.git ./pretrained/klue/bert-base
-
-# ------------------------------------------------ GPT-SoVITS 模型 --------------------------------------------------------
-# GPT-SoVITS:  
-git clone https://huggingface.co/lj1995/GPT-SoVITS.git ./pretrained/GPT-SoVITS
 ```
 
 本项目需要在docker环境中运行redis, 请确保您的运行环境中已经安装了docker。

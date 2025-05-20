@@ -9,7 +9,7 @@ from typing import Optional
 import gc
 from .worker import celeryApp
 
-from bot.utils import BotLogger
+from bot.utils import BotLogger, i18n
 from bot.engine.v2 import (
     DataProcessor as DataProcessorV2,
     FeatureExtractor as FeatureExtractorV2,
@@ -59,7 +59,7 @@ def train_task(
             return     
     except Exception as e:
         BotLogger.error(
-            f"训练失败 | 文件: {file_name} | 错误跟踪:\n{traceback.format_exc()}"
+            f"{i18n("训练过程错误")}: {file_name}\nTraceback:\n{traceback.format_exc()}"
         )
         raise self.retry(exc=e, countdown=60, max_retries=3)
     
@@ -157,9 +157,14 @@ def train_v2(file_name, sovits_epochs, gpt_epochs, language, ifDenoise):
         torch.cuda.ipc_collect()
         gc.collect()
 
-    sovits_half_weights_path = Path(WEIGHTS_PATH) / args.fileID / SOVITS_HALF_WEIGHTS_FILE
-    gpt_half_weights_path = Path(WEIGHTS_PATH) / args.fileID / GPT_HALF_WEIGHTS_FILE
+    sovits_half_weights_path = Path(WEIGHTS_PATH) / file_name / SOVITS_HALF_WEIGHTS_FILE
+    gpt_half_weights_path = Path(WEIGHTS_PATH) / file_name / GPT_HALF_WEIGHTS_FILE
 
-    BotLogger.info(f"Train done. \n \
-                    Sovits checkpoint saved in: {sovits_half_weights_path} \n \
-                    GPT checkpoint saved in: {gpt_half_weights_path}")
+    results = OrderedDict()
+    results["SoVITs Weight"] = Path(sovits_half_weights_path).name
+    results["GPT Weight"] = Path(gpt_half_weights_path).name
+    return {
+        "status": "success",
+        "results": results,
+        "time":time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+    }

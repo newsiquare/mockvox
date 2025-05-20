@@ -221,7 +221,7 @@ def train_v2(args):
 
     except Exception as e:
         BotLogger.error(
-            f"{i18n("训练过程错误")}: {args.fileID} | Traceback :\n{traceback.format_exc()}"
+            f"{i18n("训练过程错误")}: {args.fileID}\nTraceback:{traceback.format_exc()}"
         )
 
 def handle_inference(args):

@@ -355,6 +355,8 @@ class Inferencer:
         else:BotLogger.error(i18n('请上传参考音频'))
         if text:pass
         else:BotLogger.error(i18n('请填入推理文本'))
+        if prompt_language!="中文":
+            BotLogger.error(i18n('请上传参考音频'))
         t = []
         t0 = ttime()
         prompt_language = self.dict_language[prompt_language]

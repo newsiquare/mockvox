@@ -1,0 +1,12 @@
+https://huggingface.co/tohoku-nlp/bert-base-japanese-v3/resolve/main/config.json
+  out=pretrained/tohoku-nlp/bert-base-japanese-v3/config.json
+https://huggingface.co/tohoku-nlp/bert-base-japanese-v3/resolve/main/flax_model.msgpack
+  out=pretrained/tohoku-nlp/bert-base-japanese-v3/flax_model.msgpack
+https://huggingface.co/tohoku-nlp/bert-base-japanese-v3/resolve/main/pytorch_model.bin
+  out=pretrained/tohoku-nlp/bert-base-japanese-v3/pytorch_model.bin
+https://huggingface.co/tohoku-nlp/bert-base-japanese-v3/resolve/main/tf_model.h5
+  out=pretrained/tohoku-nlp/bert-base-japanese-v3/tf_model.h5
+https://huggingface.co/tohoku-nlp/bert-base-japanese-v3/resolve/main/tokenizer_config.json
+  out=pretrained/tohoku-nlp/bert-base-japanese-v3/tokenizer_config.json
+https://huggingface.co/tohoku-nlp/bert-base-japanese-v3/resolve/main/vocab.txt
+  out=pretrained/tohoku-nlp/bert-base-japanese-v3/vocab.txt

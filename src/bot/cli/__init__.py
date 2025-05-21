@@ -258,7 +258,7 @@ def handle_inference(args):
             BotLogger.info(f"Audio saved in {reasoning_result_path / REASONING_RESULT_FILE}")
     except Exception as e:
         BotLogger.error(
-            f"{i18n("推理过程错误")}: {args.fileID} | Traceback :\n{traceback.format_exc()}"
+            f"{i18n('推理过程错误')}: {args.fileID} | Traceback :\n{traceback.format_exc()}"
         )
 def main():
     parser = argparse.ArgumentParser(prog='mockvoi', description=CLI_HELP_MSG)

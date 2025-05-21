@@ -71,7 +71,7 @@ async def asr_revision(
             if not isinstance(item, dict):
                 raise HTTPException(
                     status_code=422,
-                    detail=f"{i18n("无效项格式: 应为字典(dict)，实际为")} {type(item)}"
+                    detail=f"{i18n('无效项格式: 应为字典(dict)，实际为')} {type(item)}"
                 )
                 
             if "key" not in item or "text" not in item:
@@ -84,7 +84,7 @@ async def asr_revision(
             if not wav_path.exists():
                 raise HTTPException(
                     status_code=404,
-                    detail=f"{i18n("音频文件未找到:")} {item['key']}.wav"
+                    detail=f"{i18n('音频文件未找到:')} {item['key']}.wav"
                 )
 
         output_data["results"] = results_list
@@ -126,7 +126,7 @@ async def start_train(
         )
         # 确保任务对象有效
         if not isinstance(task, AsyncResult):
-            BotLogger.error(f"{i18n("Celery训练任务提交失败")} | {filename}")
+            BotLogger.error(f"{i18n('Celery训练任务提交失败')} | {filename}")
             raise HTTPException(500, i18n("Celery训练任务提交失败"))
 
         # 记录任务提交日志
@@ -153,7 +153,7 @@ async def start_train(
         raise HTTPException(503, i18n("系统暂时不可用"))
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"{i18n("训练过程错误")}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"{i18n('训练过程错误')}: {str(e)}")
 
 @app.post(
     "/inference",
@@ -228,7 +228,7 @@ async def start_inference(
         raise HTTPException(503, i18n("系统暂时不可用"))
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"{i18n("推理过程错误")}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"{i18n('推理过程错误')}: {str(e)}")
 
 @app.post(
     "/upload",
@@ -275,7 +275,7 @@ async def upload_audio(
         task = process_file_task.delay(file_name=filename, version=version, language=language, ifDenoise=True)
         # 确保任务对象有效
         if not isinstance(task, AsyncResult):
-            BotLogger.error(f"{i18n("Celery文件处理任务提交失败")} | {filename}")
+            BotLogger.error(f"{i18n('Celery文件处理任务提交失败')} | {filename}")
             raise HTTPException(500, i18n("Celery文件处理任务提交失败"))
 
         # 记录任务提交日志
@@ -302,7 +302,7 @@ async def upload_audio(
         raise HTTPException(503, i18n("系统暂时不可用"))
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"{i18n("文件处理错误")}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"{i18n('文件处理错误')}: {str(e)}")
 
 # 任务状态查询接口
 @app.get("/tasks/{task_id}",

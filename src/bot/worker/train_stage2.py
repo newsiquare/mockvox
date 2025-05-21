@@ -59,7 +59,7 @@ def train_task(
             return     
     except Exception as e:
         BotLogger.error(
-            f"{i18n("训练过程错误")}: {file_name}\nTraceback:\n{traceback.format_exc()}"
+            f"{i18n('训练过程错误')}: {file_name}\nTraceback:\n{traceback.format_exc()}"
         )
         raise self.retry(exc=e, countdown=60, max_retries=3)
     

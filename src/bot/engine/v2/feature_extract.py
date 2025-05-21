@@ -58,7 +58,7 @@ class FeatureExtractor:
         # 已处理
         if hubert_dir.exists(): 
             BotLogger.info(
-                "特征提取已处理",
+                "Feature extract has been done",
                 extra={
                     "action": "feature_extracted",
                     "file_name": file_path
@@ -83,7 +83,7 @@ class FeatureExtractor:
         for line in lines:
             wav_file = wav_dir / f"{line['key']}.wav"
             if not wav_file.exists():
-                BotLogger.warning(f"音频文件不存在: {wav_file}")
+                BotLogger.warning(f"Audio file not found: {wav_file}")
                 continue
                 
             # 执行特征提取
@@ -94,7 +94,7 @@ class FeatureExtractor:
             )
 
         BotLogger.info(
-            "特征提取处理完成",
+            "Feature extract done",
             extra={
                 "action": "feature_extracted",
                 "file_name": file_path
@@ -111,13 +111,14 @@ class FeatureExtractor:
         try:
             tmp_audio = load_audio(wav_file_path, 32000)  
             if tmp_audio is None:
-                BotLogger.error(f"音频加载失败: {wav_file_path}")
+                BotLogger.error(f"Audio load failed: {wav_file_path}")
                 return
 
             # 音频幅值校验
             tmp_max = np.abs(tmp_audio).max()
             if tmp_max > 2.2:
-                BotLogger.info(f"幅值过滤: {wav_file_path} (峰值: {tmp_max:.2f})")
+                BotLogger.info(f"Audio amplitude verification: {wav_file_path} \n\
+                               (Peak Value: {tmp_max:.2f})")
                 return
 
             # 音频增益混合处理
@@ -137,7 +138,7 @@ class FeatureExtractor:
 
             # 特征校验
             if torch.isnan(ssl).any():
-                BotLogger.info(f"NaN特征过滤: {wav_file_path}")
+                BotLogger.info(f"NaN feature filtering: {wav_file_path}")
                 return
 
             # 保存32kHz格式音频
@@ -151,10 +152,13 @@ class FeatureExtractor:
             # 保存特征文件
             feature_path = Path(cnhubert_dir) / f"{Path(wav_file_path).stem}.pt"
             torch.save(ssl, str(feature_path))
-            BotLogger.debug(f"处理完成: {wav_file_path} -> {feature_path}")
+            BotLogger.info(f"Feature extract done: \n\
+                           Wav32: {wav_file_path} \n\
+                           Feature: {feature_path}")
             
         except Exception as e:
-            BotLogger.error(f"处理异常 {wav_file_path}: {str(e)}")
+            BotLogger.error(f"Feature extract failed: {wav_file_path} \n\
+                            Exception: {str(e)}")
 
 if __name__ == '__main__':
     # 示例用法

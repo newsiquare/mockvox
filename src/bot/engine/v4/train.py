@@ -94,18 +94,18 @@ class GPTTrainer:
         epoch_done = self._resume()
         if not epoch_done:
             epoch_done = 0
-            if not self._load_pretrained():
-                raise RuntimeError("预训练模型加载失败")
+            self._load_pretrained()
+
         elif epochs<=epoch_done:
-            BotLogger.info(f"GPT已训练轮次 {epoch_done} >= {epochs}, 训练终止.")
+            BotLogger.info(f"Trained GPT epochs {epoch_done} >= {epochs}, Terminated.")
             return
 
         saved = False
-        BotLogger.info(f"启动GPT训练 |  路径: {self.file_name} | 时间: {datetime.now().isoformat()}")
+        BotLogger.info(f"Startup GPT training: {self.file_name} \nTime: {datetime.now().isoformat()}")
 
         for epoch in range(epoch_done+1, epochs+1):
             saved=False
-            BotLogger.info(f"GPT训练轮次: {epoch}")
+            BotLogger.info(f"Launch GPT epoch: {epoch}")
             self._do_train(epoch)
             # self.scheduler.step()
 
@@ -132,10 +132,10 @@ class GPTTrainer:
         save_checkpoint_half_latest(self.model, self.hparams, epochs, self.gpt_half_weights_path)        
 
         BotLogger.info(
-            f"GPT模型训练完成. \n \
-            GPT参数: {self.gpt_weights_path} \n \
-            半精度GPT推理参数: {self.gpt_half_weights_path} \n \
-            时间: {datetime.now().isoformat()}"
+            f"GPT training done. \n\
+                GPT checkpoint saved in: {self.gpt_weights_path} \n\
+                Half GPT checkpoint saved in: {self.gpt_half_weights_path} \n\
+                Time: {datetime.now().isoformat()}"
         )
 
     def _do_train(self, epoch):
@@ -173,9 +173,10 @@ class GPTTrainer:
             )
         except Exception as e:
             BotLogger.error(
-                f"预训练模型加载异常 | 错误: {str(e)}"
+                f"Pretrained GPT load failed: {self.file_name} \n\
+                Exception: {str(e)}"
             )
-            raise RuntimeError("预训练模型加载失败")
+            raise RuntimeError("Pretrained GPT load failed")
 
         return True
 
@@ -192,7 +193,8 @@ class GPTTrainer:
                     self.scheduler.step()
             except Exception as e:
                 BotLogger.error(
-                    f"模型参数加载异常 | 文件: {self.file_name} | 错误: {str(e)}"
+                    f"GPT checkpoint load failed: {self.file_name} \n\
+                    Exception: {str(e)}"
                 )
                 return None
         return epoch
@@ -291,11 +293,10 @@ class SoVITsTrainer:
         epoch_done = self._resume()
         if not epoch_done:
             epoch_done=0
-            if not self._load_pretrained():
-                raise RuntimeError("预训练模型加载失败")
+            self._load_pretrained()
 
         if epochs<=epoch_done:
-            BotLogger.info(f"SoVITS已训练轮次 {epoch_done} >= {epochs}, 训练终止.")
+            BotLogger.info(f"Trained SoVITS epoch {epoch_done} >= {epochs}. Terminated.")
             return
         
         self.scheduler_g = torch.optim.lr_scheduler.ExponentialLR(
@@ -307,10 +308,10 @@ class SoVITsTrainer:
             self.scheduler_g.step()
 
         saved = False
-        BotLogger.info(f"启动SoVITS训练 |  路径: {self.file_name} | 时间: {datetime.now().isoformat()}")
+        BotLogger.info(f"Startup SoVITS training: {self.file_name} \nTime: {datetime.now().isoformat()}")
         for epoch in range(epoch_done+1, epochs+1):
             saved = False
-            BotLogger.info(f"SoVITS训练轮次: {epoch}")
+            BotLogger.info(f"Launch SoVITS epoch: {epoch}")
             self._do_train(epoch)
             self.scheduler_g.step()
 
@@ -339,10 +340,10 @@ class SoVITsTrainer:
         save_checkpoint_half_latest(self.net_g, self.hparams, epochs, self.sovits_weights_path)        
 
         BotLogger.info(
-            f"模型训练完成 \n \
-            生成器参数: {self.generator_weights_path} \n \
-            半精度SoVITs推理参数: {self.sovits_weights_path} \n \
-            时间: {datetime.now().isoformat()}"
+            f"SoVITS training done. \n \
+                Generator checkpoint saved in: {self.generator_weights_path} \n \
+                Half SoVITS checkpoint saved in: {self.sovits_weights_path} \n \
+                Time: {datetime.now().isoformat()}"
         )
 
     def _do_train(self, epoch):
@@ -407,7 +408,8 @@ class SoVITsTrainer:
         
             except Exception as e:
                 BotLogger.error(
-                    f"模型参数加载异常 | 文件: {self.file_name} | 错误: {str(e)}"
+                    f"SoVITS checkpoint load failed:  {self.file_name} \n\
+                        Exception: {str(e)}"
                 )
                 return None
         return None
@@ -431,9 +433,10 @@ class SoVITsTrainer:
 
         except Exception as e:
             BotLogger.error(
-                f"预训练模型加载异常 | 错误: {str(e)}"
+                f"Pretrained SoVITS load failed:  {self.file_name} \n\
+                    Exception: {str(e)}"
             )
-            raise RuntimeError("预训练模型加载失败")
+            raise RuntimeError("Pretrained SoVITS load failed")
 
         return True
 

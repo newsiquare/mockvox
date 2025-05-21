@@ -41,14 +41,14 @@ class Text2SemanticDataset(torch.utils.data.Dataset):
             with open(self.hparams.phoneme_path, 'r', encoding='utf8') as f:
                 self.semantic_data = json.load(f)
         except FileNotFoundError:
-            BotLogger.error(f"语义文件不存在: {Path(self.hparams.semantic_path).name} or \
-                音素文件不存在: {Path(self.hparams.phoneme_path).name}")
+            BotLogger.error(f"name2text.json not found: {Path(self.hparams.semantic_path).name} or \
+                text2semantic.json not found: {Path(self.hparams.phoneme_path).name}")
 
         hps = get_hparams_from_file(SOVITS_MODEL_CONFIG)
         self.hz = int(hps.model.semantic_frame_rate[:-2])        
 
         if self.hparams.max_sample is not None:
-            self.semantic_data = self.semantic_data[:max_sample]
+            self.semantic_data = self.semantic_data[:self.hparams.max_sample]
         
         self._init_batch()
 
@@ -371,7 +371,7 @@ class TextAudioSpeakerDataset(torch.utils.data.Dataset):
                 size = wav_path.stat().st_size
                 duration = size / (self.sampling_rate * 2)  # 16-bit mono假设
             except FileNotFoundError:
-                BotLogger.warn(f"Audio file missing: {wav_path}")
+                BotLogger.warn(f"Audio file not found: {wav_path}")
                 skipped_dur += 1
                 continue
 

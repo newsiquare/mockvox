@@ -55,7 +55,7 @@ def train_task(
         elif(version=='v4'):
             train_v4(file_name, sovits_epochs, gpt_epochs, language, ifDenoise)
         else:
-            BotLogger.error(f"Not supported version: {version}")
+            BotLogger.error(f"Unsupported version: {version}")
             return     
     except Exception as e:
         BotLogger.error(

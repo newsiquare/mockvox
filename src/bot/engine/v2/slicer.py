@@ -225,7 +225,7 @@ def slice_audio(input_path: str, output_dir: str) -> List[str]:
             chunk = (chunk / tmp_max * (cfg.MAX_NORMALIZED * cfg.ALPHA_MIX)) + (1 - cfg.ALPHA_MIX) * chunk
 
             if chunk.size == 0:
-                BotLogger.warning("跳过空音频段")
+                BotLogger.warning("Skip empty slice")
                 continue
 
             sliced_file = os.path.join(
@@ -245,7 +245,7 @@ def slice_audio(input_path: str, output_dir: str) -> List[str]:
 
     except Exception as e:
         BotLogger.error(
-            f"切割异常 | 文件: {input_path} | 错误: {str(e)}",
+            f"Slice failed: {input_path} \nException: {str(e)}",
             extra={"action": "slice_error"}
         )
-        raise RuntimeError(f"音频切割失败: {str(e)}") from e
+        raise RuntimeError(f"Slice failed: {str(e)}") from e

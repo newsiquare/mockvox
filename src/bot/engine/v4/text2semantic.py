@@ -33,7 +33,7 @@ class TextToSemantic:
                 torch.load(PRETRAINED_S2GV4_FILE, map_location="cpu")["weight"], strict=False
             )
         except FileNotFoundError:
-            BotLogger.error(f"预训练模型文件不存在: {PRETRAINED_S2GV4_FILE}")
+            BotLogger.error(f"Pretrained model not found: {PRETRAINED_S2GV4_FILE}")
     
     def process(self, file_path: str) -> List:
         results = []
@@ -44,7 +44,12 @@ class TextToSemantic:
         # 已处理
         if semantic_file.exists():
             BotLogger.info(
-                f"语义转换已处理 {semantic_file}"
+                "Text to semantic has been done",
+                extra={
+                    "action": "text_to_semantic",
+                    "file_name": file_path,
+                    "json_file": semantic_file
+                }
             )
             return None
 
@@ -65,7 +70,7 @@ class TextToSemantic:
         for line in lines:
             hubert_file = hubert_dir / f"{line['key']}.pt"
             if not hubert_file.exists():
-                BotLogger.warning(f"特征文件不存在: {hubert_file}")
+                BotLogger.warning(f"Feature file not found: {hubert_file}")
                 continue
 
             ssl_content = torch.load(hubert_file, map_location="cpu").to(self.device)
@@ -81,7 +86,7 @@ class TextToSemantic:
             json.dump(results, f, ensure_ascii=False, indent=2)
 
         BotLogger.info(
-            "语义转换处理完成",
+            "Text to semantic done",
             extra={
                 "action": "text_to_semantic",
                 "file_name": file_path,

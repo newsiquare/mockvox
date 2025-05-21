@@ -31,7 +31,7 @@ def process_file_task(
         sliced_files = slice_audio(file_path, sliced_path)
 
         BotLogger.info(
-            "文件已切割",
+            "Audio sliced",
             extra={
                 "action": "file_sliced",
                 "task_id": self.request.id,
@@ -45,7 +45,7 @@ def process_file_task(
             denoised_files = batch_denoise(sliced_files, denoised_path)
         
             BotLogger.info(
-                "已降噪",
+                "Audio files denoised",
                 extra={
                     "action": "file_denoised",
                     "task_id": self.request.id,
@@ -70,11 +70,12 @@ def process_file_task(
                 asr_results = batch_asr_v2(language, sliced_files, asr_path)
                 path_result = sliced_path
         else:
-            BotLogger.error(f"不支持的版本 | 文件: {file_name} | 错误跟踪:\n{traceback.format_exc()}")
+            BotLogger.error(f"Unsupported version: {file_name} \n\
+                            Traceback:\n{traceback.format_exc()}")
             return
 
         BotLogger.info(
-            "语音已识别",
+            "ASR done",
             extra={
                 "action": "asr",
                 "task_id": self.request.id,
@@ -94,6 +95,7 @@ def process_file_task(
     
     except Exception as e:
         BotLogger.error(
-            f"任务失败 | 文件: {file_name} | 错误跟踪:\n{traceback.format_exc()}"
+            f"Task failed: {file_name} \n\
+                Traceback:\n{traceback.format_exc()}"
         )
         raise self.retry(exc=e, countdown=60, max_retries=3)

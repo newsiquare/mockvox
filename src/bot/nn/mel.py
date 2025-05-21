@@ -67,7 +67,7 @@ def spectrogram_torch(y, n_fft, hop_size, win_size, center: Optional[bool] = Fal
     """
     # 输入范围检查
     if (y.abs().max() > 1.0 + 1e-3):  # 改为 1.0 * (1 + 1e-3)
-        BotLogger.warn(f"Input amplitude异常: max={y.abs().max():.3f}")
+        BotLogger.warn(f"Input amplitude abnormal: max={y.abs().max():.3f}")
 
     # 获取设备相关缓存键
     global hann_window
@@ -141,7 +141,7 @@ def mel_spectrogram_torch(
     ):
     # 输入检查
     if (y.abs().max() > 1.0 + 1e-3):
-        BotLogger.warn(f"Input amplitude异常: max={y.abs().max():.3f}")
+        BotLogger.warn(f"Input amplitude abnormal: max={y.abs().max():.3f}")
 
     spec = spectrogram_torch(y, n_fft, hop_size, win_size, center)
     spec = spec_to_mel_torch(spec, n_fft, num_mels, sampling_rate, fmin, fmax)

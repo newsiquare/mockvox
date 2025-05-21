@@ -76,7 +76,7 @@ def batch_denoise(file_list: List[str], output_dir: str) -> List[str]:
     
     except Exception as e:
         BotLogger.error(
-            f"降噪异常 | 路径: {output_dir} | 错误: {str(e)}",
+            f"Denoise failed: {output_dir} \nException: {str(e)}",
             extra={"action": "denoise_error"}
         )
-        raise RuntimeError(f"降噪失败: {str(e)}") from e
+        raise RuntimeError(f"Denoise failed: {str(e)}") from e

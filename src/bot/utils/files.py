@@ -103,7 +103,7 @@ def load_checkpoint(checkpoint_path, model, optimizer=None, skip_optimizer=False
     else:
         model.load_state_dict(new_state_dict)
     
-    BotLogger.info(f"加载模型参数: '{checkpoint_path}' (轮次: {iteration})")
+    BotLogger.info(f"Load checkpoint: '{checkpoint_path}' (epoch: {iteration})")
     return model, optimizer, learning_rate, iteration
 
 class HParams:

@@ -76,7 +76,7 @@ class DataProcessor:
          # 已处理
         if os.path.exists(json_file):
             BotLogger.info(
-                "文本标准化已处理",
+                "Data process has been done",
                 extra={
                     "action": "data_processed",
                     "file_name": file_name,
@@ -122,16 +122,16 @@ class DataProcessor:
 
             except Exception as e:
                 BotLogger.error(
-                    f"数据处理异常 | 文件: {file_name} | 错误: {str(e)}",
+                    f"Data process failed: {file_name} \nException: {str(e)}",
                     extra={"action": "data_process_error"}
                 )
-                raise RuntimeError(f"数据处理失败: {str(e)}") from e
+                raise RuntimeError(f"Data process failed: {str(e)}") from e
         
         with open(json_file, "w", encoding="utf8") as f:
             json.dump(results, f, ensure_ascii=False, indent=2)
 
         BotLogger.info(
-            "文本标准化处理完成",
+            "Data process done",
             extra={
                 "action": "data_processed",
                 "file_name": file_name,

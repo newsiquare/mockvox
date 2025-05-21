@@ -210,9 +210,9 @@ def load_asr_data(asr_dir: Union[str,Path]) -> Dict:
         with open(asr_file, 'r', encoding='utf-8') as f:
             result = json.load(f)
     except (SyntaxError, ValueError) as e:
-        BotLogger.error(f"ASR文件格式错误: {str(e)}")
+        BotLogger.error(f"Invalid ASR file format: {str(e)}")
     except FileNotFoundError:
-        BotLogger.error(f"ASR文件不存在: {asr_file}")
+        BotLogger.error(f"ASR result not found: {asr_file}")
     return result
 
 def batch_asr(language, file_list: List[str], output_dir: str):
@@ -234,7 +234,7 @@ def batch_asr(language, file_list: List[str], output_dir: str):
         output_file = Path(output_dir) / "output.json"
         if output_file.exists(): 
             BotLogger.info(
-                f"语音识别已处理: {output_file}"
+                f"ASR has been done: {output_file}"
             )
             return
 
@@ -269,10 +269,10 @@ def batch_asr(language, file_list: List[str], output_dir: str):
 
     except Exception as e:
         BotLogger.error(
-            f"语音识别异常 | 路径: {output_dir} | 错误: {str(e)}",
+            f"ASR failed: {output_dir} \nException: {str(e)}",
             extra={"action": "asr_error"}
         )
-        raise RuntimeError(f"语音识别失败: {str(e)}") from e
+        raise RuntimeError(f"ASR failed: {str(e)}") from e
 
 if __name__ == '__main__':
     # 示例用法

@@ -1,4 +1,5 @@
 import subprocess
+import os
 def clone_repository(target_dir, repo_url):
     if not os.path.exists(target_dir):
         # 创建父目录（如果不存在）
@@ -24,7 +25,6 @@ def clone_repository(target_dir, repo_url):
 # 检查有没有初始模型
 clone_repository("./pretrained/G2PWModel", "https://huggingface.co/alextomcat/G2PWModel.git")
 clone_repository("./pretrained/GPT-SoVITS", "https://huggingface.co/lj1995/GPT-SoVITS.git")
-import os
 from fastapi import FastAPI, File, UploadFile, HTTPException, Form
 from fastapi.responses import JSONResponse
 from fastapi.requests import Request

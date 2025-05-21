@@ -89,11 +89,11 @@ def handle_upload(args):
             else:
                 batch_asr_v4(args.language, sliced_files, asr_path)
 
-        BotLogger.info(f"{i18n("ASR完成. 结果已保存在")}: {os.path.join(asr_path, 'output.json')}")
+        BotLogger.info(f"{i18n('ASR完成. 结果已保存在')}: {os.path.join(asr_path, 'output.json')}")
 
     except Exception as e:
         BotLogger.error(
-            f"{i18n("文件处理错误")}: {args.file} | Traceback:\n{traceback.format_exc()}"
+            f"{i18n('文件处理错误')}: {args.file} | Traceback:\n{traceback.format_exc()}"
         )
 
 def handle_train(args):
@@ -102,7 +102,7 @@ def handle_train(args):
     elif(args.version=='v4'):
         train_v4(args)
     else:
-        BotLogger.error(f"{i18n("不支持的版本")}: {args.version}")
+        BotLogger.error(f"{i18n('不支持的版本')}: {args.version}")
         return       
 
 def train_v4(args):
@@ -111,10 +111,10 @@ def train_v4(args):
     asr_data = load_asr_data(asr_file)
     try:
         if(not isinstance(asr_data, dict)) or asr_data['version']!="v4":
-            BotLogger.error(f"{i18n("版本不匹配")}: {asr_file}")
+            BotLogger.error(f"{i18n('版本不匹配')}: {asr_file}")
             return
     except Exception as e:
-        BotLogger.error(f"{i18n("版本不匹配")}: {asr_file}")
+        BotLogger.error(f"{i18n('版本不匹配')}: {asr_file}")
         return    
     
     try:      
@@ -161,13 +161,13 @@ def train_v4(args):
         sovits_half_weights_path = Path(WEIGHTS_PATH) / args.fileID / SOVITS_HALF_WEIGHTS_FILE
         gpt_half_weights_path = Path(WEIGHTS_PATH) / args.fileID / GPT_HALF_WEIGHTS_FILE
 
-        BotLogger.info(f"{i18n("训练完成")}. \n \
+        BotLogger.info(f"{i18n('训练完成')}. \n \
                         SoVITS checkpoint saved in: {sovits_half_weights_path} \n \
                         GPT checkpoint saved in: {gpt_half_weights_path}")
 
     except Exception as e:
         BotLogger.error(
-            f"{i18n("训练过程错误")}: {args.fileID} | Traceback :\n{traceback.format_exc()}"
+            f"{i18n('训练过程错误')}: {args.fileID} | Traceback :\n{traceback.format_exc()}"
         )
 
 def train_v2(args):
@@ -215,13 +215,13 @@ def train_v2(args):
         sovits_half_weights_path = Path(WEIGHTS_PATH) / args.fileID / SOVITS_HALF_WEIGHTS_FILE
         gpt_half_weights_path = Path(WEIGHTS_PATH) / args.fileID / GPT_HALF_WEIGHTS_FILE
 
-        BotLogger.info(f"{i18n("训练完成")}. \n \
+        BotLogger.info(f"{i18n('训练完成')}. \n \
                         SoVITS checkpoint saved in: {sovits_half_weights_path} \n \
                         GPT checkpoint saved in: {gpt_half_weights_path}")
 
     except Exception as e:
         BotLogger.error(
-            f"{i18n("训练过程错误")}: {args.fileID}\nTraceback:{traceback.format_exc()}"
+            f"{i18n('训练过程错误')}: {args.fileID}\nTraceback:{traceback.format_exc()}"
         )
 
 def handle_inference(args):

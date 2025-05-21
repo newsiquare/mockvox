@@ -6,7 +6,7 @@
 主要的改造点有:
 
 1. 去掉Web端，改用命令行方式.
-2. 用 celery 管理后台异步任务。为此，去掉所有的 torch 分布式训练逻辑，改为由 celery 调度后台的训练、推理进程.
+2. 社区化运作，后台需要支持多进程同时训练和推理，用 celery 管理多个异步分布式任务。因此去掉所有的 torch 分布式训练逻辑，改为由 celery 调度后台的训练、推理进程.
 3. 不用 Pytorch Lightning 训练GPT模型，改为 torch 原生训练方式.
 4. 英语ASR模型不用Faster-Whisper(存在cuda + nvidia driver版本兼容问题), 改用 [Nvidia Parakeet TDT 0.6B V2](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2).
 5. 日、韩ASR模型改用 [iic/speech_UniASR_asr_2pass-ja-16k-common-vocab93-tensorflow1-offline](https://www.modelscope.cn/models/iic/speech_UniASR_asr_2pass-ja-16k-common-vocab93-tensorflow1-offline), [iic/speech_UniASR_asr_2pass-ko-16k-common-vocab6400-tensorflow1-offline](https://www.modelscope.cn/models/iic/speech_UniASR_asr_2pass-ko-16k-common-vocab6400-tensorflow1-offline).

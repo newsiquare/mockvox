@@ -1,0 +1,22 @@
+https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2/resolve/main/parakeet-tdt-0.6b-v2.nemo
+  out=pretrained/nvidia/parakeet-tdt-0.6b-v2/parakeet-tdt-0.6b-v2.nemo
+https://huggingface.co/FacebookAI/roberta-large/resolve/main/config.json
+  out=pretrained/FacebookAI/roberta-large/config.json
+https://huggingface.co/FacebookAI/roberta-large/resolve/main/flax_model.msgpack
+  out=pretrained/FacebookAI/roberta-large/flax_model.msgpack
+https://huggingface.co/FacebookAI/roberta-large/resolve/main/merges.txt
+  out=pretrained/FacebookAI/roberta-large/merges.txt
+https://huggingface.co/FacebookAI/roberta-large/resolve/main/model.onnx
+  out=pretrained/FacebookAI/roberta-large/model.onnx
+https://huggingface.co/FacebookAI/roberta-large/resolve/main/model.safetensors
+  out=pretrained/FacebookAI/roberta-large/model.safetensors
+https://huggingface.co/FacebookAI/roberta-large/resolve/main/pytorch_model.bin
+  out=pretrained/FacebookAI/roberta-large/pytorch_model.bin
+https://huggingface.co/FacebookAI/roberta-large/resolve/main/tf_model.h5
+  out=pretrained/FacebookAI/roberta-large/tf_model.h5
+https://huggingface.co/FacebookAI/roberta-large/resolve/main/tokenizer.json
+  out=pretrained/FacebookAI/roberta-large/tokenizer.json
+https://huggingface.co/FacebookAI/roberta-large/resolve/main/tokenizer_config.json
+  out=pretrained/FacebookAI/roberta-large/tokenizer_config.json
+https://huggingface.co/FacebookAI/roberta-large/resolve/main/vocab.json
+  out=pretrained/FacebookAI/roberta-large/vocab.json

@@ -1,0 +1,40 @@
+https://huggingface.co/lj1995/GPT-SoVITS/gsv-v2final-pretrained/resolve/main/s1bert25hz-5kh-longer-epoch%3D12-step%3D369668.ckpt
+  out=pretrained/GPT-SoVITS/gsv-v2final-pretrained/s1bert25hz-5kh-longer-epoch=12-step=369668.ckpt
+https://huggingface.co/lj1995/GPT-SoVITS/resolve/main/s1v3.ckpt
+  out=pretrained/GPT-SoVITS/s1v3.ckpt
+https://huggingface.co/lj1995/GPT-SoVITS/gsv-v2final-pretrained/resolve/main/s2D2333k.pth
+  out=pretrained/GPT-SoVITS/gsv-v2final-pretrained/s2D2333k.pth
+https://huggingface.co/lj1995/GPT-SoVITS/gsv-v2final-pretrained/resolve/main/s2G2333k.pth
+  out=pretrained/GPT-SoVITS/gsv-v2final-pretrained/s2G2333k.pth
+https://huggingface.co/lj1995/GPT-SoVITS/resolve/main/chinese-hubert-base/config.json
+  out=pretrained/GPT-SoVITS/chinese-hubert-base/config.json
+https://huggingface.co/lj1995/GPT-SoVITS/resolve/main/chinese-hubert-base/preprocessor_config.json
+  out=pretrained/GPT-SoVITS/chinese-hubert-base/preprocessor_config.json
+https://huggingface.co/lj1995/GPT-SoVITS/resolve/main/chinese-hubert-base/pytorch_model.bin
+  out=pretrained/GPT-SoVITS/chinese-hubert-base/pytorch_model.bin
+https://huggingface.co/lj1995/GPT-SoVITS/resolve/main/chinese-roberta-wwm-ext-large/config.json
+  out=pretrained/GPT-SoVITS/chinese-roberta-wwm-ext-large/config.json
+https://huggingface.co/lj1995/GPT-SoVITS/resolve/main/chinese-roberta-wwm-ext-large/pytorch_model.bin
+  out=pretrained/GPT-SoVITS/chinese-roberta-wwm-ext-large/pytorch_model.bin
+https://huggingface.co/lj1995/GPT-SoVITS/resolve/main/chinese-roberta-wwm-ext-large/tokenizer.json
+  out=pretrained/GPT-SoVITS/chinese-roberta-wwm-ext-large/tokenizer.json
+https://huggingface.co/lj1995/GPT-SoVITS/resolve/main/gsv-v4-pretrained/s2Gv4.pth
+  out=pretrained/GPT-SoVITS/gsv-v4-pretrained/s2Gv4.pth
+https://huggingface.co/lj1995/GPT-SoVITS/resolve/main/gsv-v4-pretrained/vocoder.pth
+  out=pretrained/GPT-SoVITS/gsv-v4-pretrained/vocoder.pth
+https://huggingface.co/alextomcat/G2PWModel/resolve/main/version
+  out=pretrained/G2PWModel/version
+https://huggingface.co/alextomcat/G2PWModel/resolve/main/record.log
+  out=pretrained/G2PWModel/record.log
+https://huggingface.co/alextomcat/G2PWModel/resolve/main/g2pW.onnx
+  out=pretrained/G2PWModel/g2pW.onnx
+https://huggingface.co/alextomcat/G2PWModel/resolve/main/config.py
+  out=pretrained/G2PWModel/config.py
+https://huggingface.co/alextomcat/G2PWModel/resolve/main/char_bopomofo_dict.json
+  out=pretrained/G2PWModel/char_bopomofo_dict.json
+https://huggingface.co/alextomcat/G2PWModel/resolve/main/bopomofo_to_pinyin_wo_tune_dict.json
+  out=pretrained/G2PWModel/bopomofo_to_pinyin_wo_tune_dict.json
+https://huggingface.co/alextomcat/G2PWModel/resolve/main/POLYPHONIC_CHARS.txt
+  out=pretrained/G2PWModel/POLYPHONIC_CHARS.txt
+https://huggingface.co/alextomcat/G2PWModel/resolve/main/MONOPHONIC_CHARS.txt
+  out=pretrained/G2PWModel/MONOPHONIC_CHARS.txt

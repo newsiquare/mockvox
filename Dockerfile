@@ -1,18 +1,17 @@
-FROM cnstark/pytorch:2.1.0-py3.10.15-cuda12.1.0-ubuntu22.04
+FROM cnstark/pytorch:2.2.1-py3.10.15-cuda12.1.0-ubuntu22.04
 
 LABEL maintainer="18702837579@163.com"
 LABEL version="mockvox-20250513"
 LABEL description="Docker image for MockVox"
 
-ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ=Etc/UTC
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends ffmpeg aria2
+    apt-get install -y --no-install-recommends ffmpeg aria2 git && \
+    rm -rf /var/lib/apt/lists/* 
+     
 
 WORKDIR /mockvox
-COPY . /mockvox
-RUN pip install .
-
+COPY . /mockvox   
+RUN pip install -e .[dev] 
 # ARG IMAGE_TYPE=chinese
 
 # RUN if [ "$IMAGE_TYPE" == "chinese" ]; then \

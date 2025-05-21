@@ -46,24 +46,12 @@ class Inferencer:
             i18n("多语种混合(粤语)"): "auto_can",#多语种启动切分识别语种
         }
         self.splits = {"，", "。", "？", "！", ",", ".", "?", "!", "~", ":", "：", "—", "…", }
-        self.mel_fn_v4 = lambda x: mel_spectrogram_torch(
-            x,
-            **{
-                "n_fft": 1280,
-                "win_size": 1280,
-                "hop_size": 320,
-                "num_mels": 100,
-                "sampling_rate": 32000,
-                "fmin": 0,
-                "fmax": None,
-                "center": False,
-            },
-        )               
+                       
         self.punctuation = set(['!', '?', '…', ',', '.', '-'," "])
         self.hz = 50
         self.t2s_model,self.config,self.max_sec = self._change_gpt_weights(gpt_path)
         self.resample_transform_dict={}
-        self.vq_model, self.hps = self._change_sovits_weights(sovits_path)
+        self.vq_model, self.hps,self.mel_fn_v4 = self._change_sovits_weights(sovits_path)
         self.hifigan_model = self._init_hifigan()
 
     def _init_hifigan(self):
@@ -132,7 +120,20 @@ class Inferencer:
             vq_model.load_state_dict(dict_s2["weight"], strict=False)
             vq_model.cfm = vq_model.cfm.merge_and_unload()
             vq_model.eval()
-        return vq_model, hps
+        mel_fn_v4 = lambda x: mel_spectrogram_torch(
+            x,
+            **{
+                "n_fft": hps["data"]["filter_length"],
+                "win_size": hps["data"]["win_length"],
+                "hop_size": hps["data"]["hop_length_v4"],
+                "num_mels": hps["data"]["n_mel_channels_v4"],
+                "sampling_rate": hps["data"]["sampling_rate"],
+                "fmin": hps["data"]["mel_fmin"],
+                "fmax": hps["data"]["mel_fmax"],
+                "center": False,
+            },
+        )
+        return vq_model, hps,mel_fn_v4
     
     def _load_sovits_new(self, path_sovits):
         f = open(path_sovits, "rb")

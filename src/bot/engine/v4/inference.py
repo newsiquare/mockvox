@@ -7,11 +7,7 @@ from time import time as ttime
 import numpy as np
 import librosa
 from bot.models import CNHubert
-from bot.text import chinese
-from bot.text import japanese
-from bot.text import english
-from bot.text import korean
-from bot.text import cantonese
+from bot.text import normalizer as nl
 from bot.text import Normalizer
 from bot.text import symbols 
 from bot.config import (
@@ -40,14 +36,14 @@ class Inferencer:
             i18n("中文"): "all_zh",#全部按中文识别
             i18n("英文"): "en",#全部按英文识别#######不变
             i18n("日文"): "all_ja",#全部按日文识别
-            i18n("粤语"): "all_yue",#全部按中文识别
+            i18n("粤语"): "all_can",#全部按中文识别
             i18n("韩文"): "all_ko",#全部按韩文识别
             i18n("中英混合"): "zh",#按中英混合识别####不变
             i18n("日英混合"): "ja",#按日英混合识别####不变
-            i18n("粤英混合"): "yue",#按粤英混合识别####不变
+            i18n("粤英混合"): "can",#按粤英混合识别####不变
             i18n("韩英混合"): "ko",#按韩英混合识别####不变
             i18n("多语种混合"): "auto",#多语种启动切分识别语种
-            i18n("多语种混合(粤语)"): "auto_yue",#多语种启动切分识别语种
+            i18n("多语种混合(粤语)"): "auto_can",#多语种启动切分识别语种
         }
         self.splits = {"，", "。", "？", "！", ",", ".", "?", "!", "~", ":", "：", "—", "…", }
         self.mel_fn_v4 = lambda x: mel_spectrogram_torch(
@@ -262,22 +258,13 @@ class Inferencer:
         ("￥", "zh", "SP2"),
         ("^", "zh", "SP3"),
         ]
-        if language == "zh":
-            normalizer = chinese.ChineseNormalizer()
-        elif language == "ja":
-            normalizer = japanese.JapaneseNormalizer()
-        elif language == "en":
-            normalizer = english.EnglishNormalizer()
-        elif language == "ko":
-            normalizer = korean.KoreanNormalizer()
-        elif language == "yue":
-            normalizer = cantonese.CantoneseNormalizer()
+        normalizer = nl.Normalizer(language)
         for special_s, special_l, target_symbol in special:
             if special_s in text and language == special_l:
                 return self.clean_special(text, special_s, target_symbol,normalizer)
         
         norm_text = normalizer.do_normalize(text)
-        if language == "zh" or language=="yue":##########
+        if language == "zh" or language=="can":##########
             phones, word2ph = normalizer.g2p(norm_text)
             assert len(phones) == sum(word2ph)
             assert len(norm_text) == len(word2ph)
@@ -330,11 +317,11 @@ class Inferencer:
         return phone_level_feature.T
 
     def get_phones_and_bert(self, text,language,final=False):        
-        if language in {"en", "all_zh", "all_ja", "all_ko", "all_yue"}:
+        if language in {"en", "all_zh", "all_ja", "all_ko", "all_can"}:
             formattext = text
             while "  " in formattext:
                 formattext = formattext.replace("  ", " ")
-            normalizer = chinese.ChineseNormalizer()
+            normalizer = nl.Normalizer(language.replace("all_", ""))
             if language == "all_zh":
                 if re.search(r"[A-Za-z]", formattext):
                     formattext = re.sub(r"[a-z]", lambda x: x.group(0).upper(), formattext)
@@ -343,27 +330,27 @@ class Inferencer:
                 else:
                     phones, word2ph, norm_text = self.clean_text_inf(formattext, language)
                     bert = self.get_bert_feature(norm_text, word2ph).to(self.device)
-            elif language == "all_yue" and re.search(r"[A-Za-z]", formattext):
+            elif language == "all_can" and re.search(r"[A-Za-z]", formattext):
                 formattext = re.sub(r"[a-z]", lambda x: x.group(0).upper(), formattext)
                 formattext = normalizer.do_normalize(formattext)
-                return self.get_phones_and_bert(formattext, "yue")
+                return self.get_phones_and_bert(formattext, "can")
             else:
                 phones, word2ph, norm_text = self.clean_text_inf(formattext, language)
                 bert = torch.zeros(
                     (1024, len(phones)),
                     dtype=torch.float16,
                 ).to(self.device)
-        elif language in {"zh", "ja", "ko", "yue", "auto", "auto_yue"}:
+        elif language in {"zh", "ja", "ko", "can", "auto", "auto_can"}:
             textlist = []
             langlist = []
             if language == "auto":
                 for tmp in LangSegmenter.getTexts(text):
                     langlist.append(tmp["lang"])
                     textlist.append(tmp["text"])
-            elif language == "auto_yue":
+            elif language == "auto_can":
                 for tmp in LangSegmenter.getTexts(text):
                     if tmp["lang"] == "zh":
-                        tmp["lang"] = "yue"
+                        tmp["lang"] = "can"
                     langlist.append(tmp["lang"])
                     textlist.append(tmp["text"])
             else:

@@ -104,6 +104,7 @@ class DataProcessor:
                 
                 # 文本标准化处理
                 phones, word2ph, norm_text = self._normalize(text)
+                if len(phones)==0: continue
                 
                 # 保存BERT特征
                 bert_file = "%s/%s.pt" % (bert_dir, line['key'])

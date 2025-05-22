@@ -25,5 +25,5 @@ services:
     working_dir: /mockvox
     ports:
       - "5000:5000"
-    command: /bin/bash -c "chmod +x Docker/mockvox/download_up.sh && ./Docker/mockvox/download_up.sh"
+    command: /bin/bash -c "chmod +x Docker/mockvox/startup.sh && ./Docker/mockvox/startup.sh"
   

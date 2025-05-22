@@ -1,9 +1,9 @@
 #!/bin/bash
 
 
-chmod +x /mockvox/Docker/nomalDownload.sh
-/mockvox/Docker/nomalDownload.sh
-python /mockvox/Docker/nomalDownload.py
+chmod +x /mockvox/Docker/generalDownload.sh
+/mockvox/Docker/generalDownload.sh
+python /mockvox/Docker/generalDownload.py
 # 安装中文模型文件
 if [ "$MODEL_TYPE" == "full" ]; then
 	chmod +x /mockvox/Docker/englishDownload.sh

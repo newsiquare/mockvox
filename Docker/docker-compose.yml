@@ -1,4 +1,15 @@
 services:
+  redis:
+    image: redis:7.0-alpine
+    container_name: bot_redis
+    # 通过环境变量设置密码（密码由脚本随机生成）
+    environment:
+      - REDIS_PASSWORD=123456
+    # 暴露端口
+    ports:
+      - "6379:6379"   # 如果端口冲突修改映射到本地的端口 - "${REDIS_PORT}:6379"
+    # 启动时使用密码
+    command: redis-server --requirepass ${REDIS_PASSWORD} --bind 0.0.0.0 --protected-mode no
   gpt-sovits:
     image: mockvox:latest   
     container_name: mockvox
@@ -15,14 +26,4 @@ services:
     ports:
       - "5000:5000"
     command: /bin/bash -c "chmod +x Docker/mockvox/download_up.sh && ./Docker/mockvox/download_up.sh"
-  redis:
-    image: redis:7.0-alpine
-    container_name: bot_redis
-    # 通过环境变量设置密码（密码由脚本随机生成）
-    environment:
-      - REDIS_PASSWORD=123456
-    # 暴露端口
-    ports:
-      - "6379:6379"   # 如果端口冲突修改映射到本地的端口 - "${REDIS_PORT}:6379"
-    # 启动时使用密码
-    command: redis-server --requirepass ${REDIS_PASSWORD} --bind 0.0.0.0 --protected-mode no
+  

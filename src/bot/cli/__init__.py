@@ -226,13 +226,15 @@ def train_v2(args):
 
 def handle_inference(args):
     try:
-        gpt_path = Path(WEIGHTS_PATH) / args.fileID / GPT_HALF_WEIGHTS_FILE
-        sovits_path = Path(WEIGHTS_PATH) / args.fileID / SOVITS_HALF_WEIGHTS_FILE
-        reasoning_result_path = Path(REASONING_RESULT_PATH) / args.fileID
+        gpt_path = Path(WEIGHTS_PATH) / args.modelID / GPT_HALF_WEIGHTS_FILE
+        sovits_path = Path(WEIGHTS_PATH) / args.modelID / SOVITS_HALF_WEIGHTS_FILE
+        reasoning_result_path = Path(REASONING_RESULT_PATH) / args.modelID
         if not os.path.exists(gpt_path):
             BotLogger.error(i18n("路径错误! 找不到GPT模型"))
+            return
         if not os.path.exists(sovits_path):
             BotLogger.error(i18n("路径错误! 找不到SOVITS模型"))
+            return
         if not os.path.exists(reasoning_result_path):
             os.makedirs(reasoning_result_path, exist_ok=True)
         if args.version == 'v2':
@@ -243,14 +245,10 @@ def handle_inference(args):
         # Synthesize audio
         synthesis_result = inference.inference(ref_wav_path=args.refWavFilePath,# 参考音频 
                                     prompt_text=args.promptText, # 参考文本
-                                    prompt_language="中文", 
+                                    prompt_language=args.promptLanguage, 
                                     text=args.targetText, # 目标文本
-                                    text_language="中文", top_p=1, temperature=1, top_k=15, speed=1)
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-            torch.cuda.synchronize()
-            torch.cuda.ipc_collect()
-            gc.collect()
+                                    text_language=args.targetLanguage, top_p=1, temperature=1, top_k=15, speed=1)
+        
         result_list = list(synthesis_result)
         if result_list:
             last_sampling_rate, last_audio_data = result_list[-1]
@@ -258,8 +256,14 @@ def handle_inference(args):
             BotLogger.info(f"Audio saved in {reasoning_result_path / REASONING_RESULT_FILE}")
     except Exception as e:
         BotLogger.error(
-            f"{i18n('推理过程错误')}: {args.fileID} | Traceback :\n{traceback.format_exc()}"
+            f"{i18n('推理过程错误')}: {args.modelID} | Traceback :\n{traceback.format_exc()}"
         )
+    finally:
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            torch.cuda.ipc_collect()
+            gc.collect()
 def main():
     parser = argparse.ArgumentParser(prog='mockvoi', description=CLI_HELP_MSG)
     subparsers = parser.add_subparsers(dest='command', help='')
@@ -276,7 +280,7 @@ def main():
 
     # inference 子命令
     parser_inference = subparsers.add_parser('inference', help='Inference command line')
-    parser_inference.add_argument('fileID', type=str, help='Returned train id from train.')
+    parser_inference.add_argument('modelID', type=str, help='Returned train id from train.')
     parser_inference.add_argument('refWavFilePath', type=str, help='Reference file full path.')
     parser_inference.add_argument('promptText', type=str, help='Prompt text.')
     parser_inference.add_argument('targetText', type=str, help='Target text.')
@@ -284,6 +288,8 @@ def main():
                                help='Disable denoise processing (default: enable denoise).')
     parser_inference.set_defaults(denoise=True)
     parser_inference.add_argument('--version', type=str, default='v4', help='Default version is v4.')
+    parser_inference.add_argument('--promptLanguage',default='中文', type=str, help='Prompt language.')
+    parser_inference.add_argument('--targetText', default='中文',type=str, help='Target Language.')
     parser_inference.set_defaults(func=handle_inference)
 
     # train 子命令

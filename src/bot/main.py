@@ -35,7 +35,7 @@ from celery.result import AsyncResult
 import json
 from pathlib import Path
 
-from bot.config import get_config, UPLOAD_PATH, DENOISED_ROOT_PATH, SLICED_ROOT_PATH, ASR_PATH
+from bot.config import get_config, UPLOAD_PATH, DENOISED_ROOT_PATH, SLICED_ROOT_PATH, ASR_PATH, WEIGHTS_PATH, REASONING_RESULT_PATH, REASONING_RESULT_FILE, GPT_HALF_WEIGHTS_FILE, SOVITS_HALF_WEIGHTS_FILE
 from bot.worker import celeryApp, process_file_task, train_task, inference_task
 from bot.utils import BotLogger, generate_unique_filename, allowed_file, i18n
 
@@ -188,39 +188,59 @@ async def start_train(
     tags=[i18n("模型推理")]
 )
 async def start_inference(
-    gpt_model_path:str = Form(..., description=i18n("GPT模型路径")), 
-    soVITS_model_path:str = Form(..., description="sovits模型路径"), 
-    ref_audio_path:str = Form(..., description="参考音频路径"), 
+    model_id:str = Form(..., description=i18n("模型id")), 
+    ref_audio_file:str = File(..., description=i18n("音频文件支持 .WAV .MP3 .FLAC 格式")),
     ref_text:str = Form(..., description=i18n("参考音频的文字")), 
     ref_language:str = Form(..., description=i18n("参考音频的语言")), 
     target_text:str = Form(..., description=i18n("生成音频的文字")), 
-    target_language:str = Form(..., description=i18n("生成音频的语言")), 
-    output_path:str = Form(..., description="结果保存路径"), 
-    top_p:float = Form(..., description=i18n("top_p")), 
-    top_k:int = Form(..., description=i18n("GPT采样参数(无参考文本时不要太低。不懂就用默认)")), 
-    temperature:float = Form(..., description=i18n("temperature")), 
-    speed:float = Form(..., description=i18n("语速")),
+    target_language:str = Form(..., description=i18n("生成音频的语言：中文、英文、日文、粤语、韩文")), 
+    top_p:float = Form(1, description=i18n("top_p")), 
+    top_k:int = Form(15, description=i18n("GPT采样参数(无参考文本时不要太低。不懂就用默认)")), 
+    temperature:float = Form(1, description=i18n("temperature")), 
+    speed:float = Form(1, description=i18n("语速")),
     version:str = Form('v4', description=i18n("版本"))
 ):
     try:
-        if not os.path.exists(gpt_model_path):
+        gpt_path = Path(WEIGHTS_PATH) / model_id / GPT_HALF_WEIGHTS_FILE
+        if not os.path.exists(gpt_path):
             BotLogger.error(i18n("路径错误! 找不到GPT模型"))
-        if not os.path.exists(soVITS_model_path):
+            return
+        sovits_path = Path(WEIGHTS_PATH) / model_id / SOVITS_HALF_WEIGHTS_FILE
+        if not os.path.exists(sovits_path):
             BotLogger.error(i18n("路径错误! 找不到SOVITS模型"))
-        if ".wav" in output_path.lower():
-            output_path = output_path.rsplit('/',1)[0]
-        if not os.path.exists(output_path):
-            os.makedirs(output_path, exist_ok=True)
+            return
+        # 验证文件类型
+        if not allowed_file(ref_audio_file.filename):
+            raise HTTPException(status_code=400, detail=i18n("不支持的文件格式"))
+
+        # 实际文件大小验证
+        if ref_audio_file.size > cfg.MAX_UPLOAD_SIZE:
+            raise HTTPException(413, i18n("文件大小超过限制"))
+
+        # 生成唯一文件名
+        filename = generate_unique_filename(ref_audio_file.filename)
+        filePath = filename.split(".")[0]
+        reasoning_result_path = Path(REASONING_RESULT_PATH) / model_id /filePath
+        if not os.path.exists(reasoning_result_path):
+            os.makedirs(reasoning_result_path, exist_ok=True)
+        save_path = os.path.join(reasoning_result_path, filename)
+
+        # 保存文件
+        with open(save_path, 'wb') as f:
+            while chunk := await ref_audio_file.read(1024 * 1024):    # 1Mb chunks
+                f.write(chunk)
+        
+        
         # 发送异步任务
         task = inference_task.delay(
-            gpt_model_path,                   
-            soVITS_model_path , 
-            ref_audio_path , 
+            gpt_path,                   
+            sovits_path , 
+            save_path , 
             ref_text , 
             ref_language, 
             target_text , 
             target_language , 
-            output_path , 
+            reasoning_result_path , 
             top_p , 
             top_k , 
             temperature , 

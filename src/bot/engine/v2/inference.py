@@ -352,11 +352,16 @@ class Inferencer:
 
     def inference(self,ref_wav_path, prompt_text, prompt_language, text, text_language, how_to_cut=i18n("凑四句一切"), top_k=15, top_p=1, temperature=1, ref_free = False,speed=1,inp_refs=None):
         if ref_wav_path:pass
-        else:BotLogger.error(i18n('请上传参考音频'))
-        if text:pass
-        else:BotLogger.error(i18n('请填入推理文本'))
-        if prompt_language!="中文":
+        else:
             BotLogger.error(i18n('请上传参考音频'))
+            return
+        if text:pass
+        else:
+            BotLogger.error(i18n('请填入推理文本'))
+            return
+        if prompt_language!="中文" or text_language!="中文":
+            BotLogger.error(i18n('v2只支持中文'))
+            return
         t = []
         t0 = ttime()
         prompt_language = self.dict_language[prompt_language]

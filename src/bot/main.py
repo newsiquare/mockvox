@@ -2,25 +2,22 @@ import subprocess
 import os
 def clone_repository(target_dir, repo_url):
     if not os.path.exists(target_dir):
-        # 创建父目录（如果不存在）
+
         parent_dir = os.path.dirname(target_dir)
         if parent_dir and not os.path.exists(parent_dir):
             os.makedirs(parent_dir, exist_ok=True)
         
         try:
-            print(f"正在克隆仓库到 {target_dir}...")
             subprocess.run(
                 ['git', 'clone', repo_url, target_dir],
                 check=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT
             )
-            print("克隆成功！")
         except subprocess.CalledProcessError as e:
-            print(f"克隆失败，错误信息：{e.output.decode().strip()}")
             raise
     else:
-        print(f"目录已存在：{target_dir}")
+        pass
 
 # 检查有没有初始模型
 clone_repository("./pretrained/G2PWModel", "https://huggingface.co/alextomcat/G2PWModel.git")

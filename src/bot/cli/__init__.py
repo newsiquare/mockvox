@@ -289,7 +289,7 @@ def main():
     parser_inference.set_defaults(denoise=True)
     parser_inference.add_argument('--version', type=str, default='v4', help='Default version is v4.')
     parser_inference.add_argument('--promptLanguage',default='中文', type=str, help='Prompt language.')
-    parser_inference.add_argument('--targetText', default='中文',type=str, help='Target Language.')
+    parser_inference.add_argument('--targetLanguage', default='中文',type=str, help='Target Language.')
     parser_inference.set_defaults(func=handle_inference)
 
     # train 子命令

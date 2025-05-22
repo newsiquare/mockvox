@@ -81,6 +81,7 @@ git clone https://huggingface.co/alextomcat/G2PWModel.git ./pretrained/G2PWModel
 
 
 🌐 多语言扩展包（可选）
+# 如果仅使用中文素材训练，则无需安装
 modelscope download --model 'iic/speech_UniASR_asr_2pass-cantonese-CHS-16k-common-vocab1468-tensorflow1-online' --local_dir './pretrained/iic/speech_UniASR_asr_2pass-cantonese-CHS-16k-common-vocab1468-tensorflow1-online' #粤语ASR
 git clone https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2.git ./pretrained/nvidia/parakeet-tdt-0.6b-v2 #英语ASR
 modelscope download --model 'iic/speech_UniASR_asr_2pass-ja-16k-common-vocab93-tensorflow1-offline'  --local_dir './pretrained/iic/speech_UniASR_asr_2pass-ja-16k-common-vocab93-tensorflow1-offline' #日语ASR
@@ -91,6 +92,8 @@ git clone https://huggingface.co/klue/bert-base.git ./pretrained/klue/bert-base 
 ```
 
 #### 4. 启动服务
+
+至此，命令行方式已经可以直接使用，无需启动以下服务。
 
 ```bash
 🐳 Redis 容器

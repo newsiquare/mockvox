@@ -58,18 +58,8 @@ dependencies = [
     "addict"
 ]
 
-# Optional dependencies ------------------------------------------------------------------------------------------------
-[project.optional-dependencies]
-dev = [
-    "pytest",
-    "httpx",
-    "pytest-mock"
-]
-docs = [
-]
-
 [project.scripts]
-mockvoi = "bot.cli:main"
+mockvox = "bot.cli:main"
 
 # Tools settings -------------------------------------------------------------------------------------------------------
 [[tool.poetry.source]]

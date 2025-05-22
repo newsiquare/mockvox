@@ -55,8 +55,7 @@ conda create -n bot python=3.10 -y
 conda activate bot
 
 📦 安装依赖
-pip install .          # 生产环境
-pip install -e .[dev]  # 开发环境
+pip install -e . 
 ```
 
 #### 2. 安装 FFmpeg

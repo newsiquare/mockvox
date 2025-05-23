@@ -53,6 +53,7 @@ dependencies = [
     "ko_pron",
     "g2pk2",
     "datasets==2.16.0",
+    "cuda-python",
     "nemo_toolkit[asr]==2.0.0",
     "split_lang",
     "addict"

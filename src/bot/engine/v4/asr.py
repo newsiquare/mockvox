@@ -152,10 +152,11 @@ class EnglishASR:
             )
 
             asr_result=[]
-            for output in outputs:
+            # Parakeet-TDT 模型是一个 ​​TDT(Text-based Dialogue Transcription)模型, 有两个解码器
+            for output in outputs[0]:
                 asr_result.append({
                     "key": Path(input_path).stem,
-                    "text": output.text
+                    "text": output
                 })
 
             if not isinstance(asr_result, list) or len(asr_result) == 0:

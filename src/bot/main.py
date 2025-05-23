@@ -190,9 +190,9 @@ async def start_inference(
     model_id:str = Form(..., description=i18n("模型id")), 
     ref_audio_file_id:str = Form(..., description=i18n("参考音频id")),
     ref_text:str = Form(..., description=i18n("参考音频的文字")), 
-    ref_language:str = Form(..., description=i18n("参考音频的语言")), 
+    ref_language:str = Form('zh', description=i18n("参考音频的语言")), 
     target_text:str = Form(..., description=i18n("生成音频的文字")), 
-    target_language:str = Form(..., description=i18n("生成音频的语言")), 
+    target_language:str = Form('zh', description=i18n("生成音频的语言")), 
     top_p:float = Form(1, description=i18n("top_p")), 
     top_k:int = Form(15, description=i18n("GPT采样参数(无参考文本时不要太低。不懂就用默认)")), 
     temperature:float = Form(1, description=i18n("temperature")), 
@@ -248,7 +248,7 @@ async def start_inference(
 
         return {
             "message": i18n("推理任务已进入Celery处理队列"),
-            "task_id": timestamp
+            "task_id": task.id
         }
 
     except HTTPException as he:
@@ -288,7 +288,7 @@ async def upload_audio(
     with open(save_path, 'wb') as f:
         while chunk := await file.read(1024 * 1024):    # 1Mb chunks
             f.write(chunk)
-    return {"task_id": filename}
+    return {"file_id": Path(filename).stem}
 
 @app.post(
     "/upload",
@@ -325,7 +325,7 @@ async def upload_audio(
             i18n("保存成功"),
             extra={
                 "action": "file_saved",
-                "file_name": filename,          
+                "file_id": Path(filename).stem,          
                 "file_size": file.size,         
                 "content_type": file.content_type  
             }
@@ -344,13 +344,13 @@ async def upload_audio(
             extra={
                 "action": "stage1_task_submitted",
                 "task_id": task.id,
-                "file_name": filename
+                "file_id": Path(filename).stem
             }
         )
         
         return {
             "message": i18n("文件上传成功, 已进入Celery处理队列"),
-            "file_name": filename,
+            "file_id": Path(filename).stem,
             "task_id": task.id
         }
 

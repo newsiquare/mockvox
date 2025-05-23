@@ -276,9 +276,9 @@ async def download_outputs(task_id:str):
 
 @app.post(
     "/uploadRef",
-    summary=i18n("上传参考音频文件"),
-    response_description=i18n("返回任务ID"),
-    tags=[i18n("上传参考音频文件")]
+    summary=i18n("请上传参考音频"),
+    response_description=i18n("返回文件ID"),
+    tags=[i18n("请上传参考音频")]
 )
 async def upload_ref_audio(
     file: UploadFile = File(..., description=i18n("请上传3~10秒内参考音频，超过会报错！")+i18n("音频文件支持 .WAV .MP3 .FLAC 格式"))

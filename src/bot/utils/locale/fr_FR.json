@@ -225,6 +225,7 @@
     "results参数中的JSON格式无效": "Format JSON invalide dans le paramètre results",
     "启动训练": "Lancement de l'entraînement",
     "返回任务ID": "Retourner l'ID de tâche",
+    "返回文件ID": "ID de fichier retourné",
     "模型训练": "Entraînement du modèle",
     "SoVITs训练轮次": "Époques d'entraînement SoVITs",
     "GPT训练轮次": "Époques d'entraînement GPT",

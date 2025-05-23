@@ -63,7 +63,7 @@ def save_checkpoint_half_latest(model, hps, iteration, checkpoint_path):
             "config": hps.as_dict(),
             "epoch": iteration,
             "date": datetime.now().isoformat(),
-            "author": "联宇创新(Lianyu Co,L.T.D)"
+            "author": "MockVox Team"
         },
         checkpoint_path
     )

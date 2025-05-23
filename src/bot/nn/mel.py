@@ -123,6 +123,7 @@ def spec_to_mel_torch(spec, n_fft, num_mels, sampling_rate, fmin, fmax):
     
     if cache_key not in mel_basis:
         # 生成Mel滤波器矩阵
+        fmax = min(fmax, sampling_rate//2)
         mel = librosa_mel_fn(
             sr=sampling_rate, n_fft=n_fft, n_mels=num_mels, fmin=fmin, fmax=fmax
         )

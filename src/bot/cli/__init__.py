@@ -171,8 +171,18 @@ def train_v4(args):
         )
 
 def train_v2(args):
+    # 从ASR结果中读取language信息
+    asr_file = os.path.join(ASR_PATH, args.fileID)
+    asr_data = load_asr_data(asr_file)
+    try:
+        if(not isinstance(asr_data, dict)) or asr_data['version']!="v2":
+            BotLogger.error(f"{i18n('版本不匹配')}: {asr_file}")
+            return
+    except Exception as e:
+        BotLogger.error(f"{i18n('版本不匹配')}: {asr_file}")
+        return   
     try:      
-        processor = DataProcessorV2()
+        processor = DataProcessorV2(language=asr_data['language'])
         processor.process(args.fileID)
         extractor = FeatureExtractorV2()
         extractor.extract(file_path=args.fileID, denoised=args.denoise)

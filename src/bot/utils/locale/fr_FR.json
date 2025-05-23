@@ -200,7 +200,7 @@
     "韩文": "Coreano",
     "韩英混合": "Mezcla Coreano-Inglés",
     "音频加载失败": "Échec du Chargement de l'Audio",
-    "音频文件不存在，跳过：": "Fichier audio introuvable, passage : ",
+    "音频文件不存在": "Fichier audio introuvable",
     "音频标注WebUI": "Interface Web d'annotation audio",
     "音频自动切分输入路径，可文件可文件夹": "Chemin d'entrée automatique de découpage audio, peut être un fichier ou un dossier",
     "音频超分中": "Upscaling audio en cours",
@@ -263,5 +263,7 @@
     "不支持的版本": "Version non prise en charge",
     "版本不匹配": "Incompatibilité de version",
     "训练完成": "Entraînement terminé",
-    "语言不存在": "La langue n’existe pas"
+    "语言不存在": "La langue n’existe pas",
+    "下载推理结果文件": "Télécharger le fichier des résultats d'inférence",
+    "参考音频文件ID (调用 /uploadRef 上传后返回的参考音频文件ID)": "ID du fichier audio de référence (ID retourné après l'appel à /uploadRef pour téléversement)"
 }

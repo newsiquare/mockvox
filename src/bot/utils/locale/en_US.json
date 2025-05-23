@@ -200,7 +200,7 @@
     "韩文": "Korean",
     "韩英混合": "Korean-English Mixed",
     "音频加载失败": "Failed to Load Audio",
-    "音频文件不存在，跳过：": "Audio File Not Found, Skipping: ",
+    "音频文件不存在": "Audio File Not Found",
     "音频标注WebUI": "Audio Labeling WebUI",
     "音频自动切分输入路径，可文件可文件夹": "Audio slicer input (file or folder)",
     "音频超分中": "Running Audio Super-Resolution",
@@ -263,5 +263,7 @@
     "不支持的版本": "Unsupported version",
     "版本不匹配": "Version mismatch",
     "训练完成": "Train done",
-    "语言不存在": "Language does not exist"
+    "语言不存在": "Language does not exist",
+    "下载推理结果文件": "Download inference result file",
+    "参考音频文件ID (调用 /uploadRef 上传后返回的参考音频文件ID)": "Reference audio file ID (ID returned after calling /uploadRef to upload)"
 }

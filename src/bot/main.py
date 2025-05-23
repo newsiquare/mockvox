@@ -188,7 +188,7 @@ async def start_train(
 )
 async def start_inference(
     model_id:str = Form(..., description=i18n("模型id")), 
-    ref_audio_file_id:str = Form(..., description=i18n("参考音频id")),
+    ref_audio_file_id:str = Form(..., description=i18n("参考音频文件ID (调用 /uploadRef 上传后返回的参考音频文件ID)")),
     ref_text:str = Form(..., description=i18n("参考音频的文字")), 
     ref_language:str = Form('zh', description=i18n("参考音频的语言")), 
     target_text:str = Form(..., description=i18n("生成音频的文字")), 
@@ -263,13 +263,13 @@ async def start_inference(
 @app.get(
     "/output/{task_id}",
     summary=i18n("下载推理结果文件"),
-    response_description=i18n("结果文件"),
+    response_description=i18n("下载推理结果文件"),
     tags=[i18n("下载推理结果文件")]
 )
 async def download_outputs(task_id:str):
     filename = task_id + ".WAV"
     if not os.path.exists(os.path.join(OUT_PUT_PATH,filename)):
-        BotLogger.error(i18n("找不到结果文件"))
+        BotLogger.error(i18n("音频文件不存在"))
         return
 
     return FileResponse(OUT_PUT_PATH,filename=filename)

@@ -39,9 +39,8 @@ def inference_task(self,gpt_model_path:str ,
     result_list = list(synthesis_result)
     if result_list:
         last_sampling_rate, last_audio_data = result_list[-1]
-        # output_path = os.path.join("/home/easyman/zjh/bot/", "output.wav")
-        sf.write(f"{output_path}/output.wav", last_audio_data, last_sampling_rate)
-        return f"Audio saved to {output_path}/output.wav"
+        sf.write(output_path, last_audio_data, last_sampling_rate)
+        return f"Audio saved to {output_path}"
     pass
 
 if __name__ == "__main__":

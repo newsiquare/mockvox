@@ -31,8 +31,10 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from celery.result import AsyncResult
 import json
 from pathlib import Path
+import glob
+import time
 
-from bot.config import get_config, UPLOAD_PATH, DENOISED_ROOT_PATH, SLICED_ROOT_PATH, ASR_PATH, WEIGHTS_PATH, OUT_PUT_PATH, GPT_HALF_WEIGHTS_FILE, SOVITS_HALF_WEIGHTS_FILE
+from bot.config import get_config, UPLOAD_PATH, DENOISED_ROOT_PATH, SLICED_ROOT_PATH, ASR_PATH, WEIGHTS_PATH, OUT_PUT_PATH, GPT_HALF_WEIGHTS_FILE, SOVITS_HALF_WEIGHTS_FILE, REF_AUDIO_PATH, OUT_PUT_FILE
 from bot.worker import celeryApp, process_file_task, train_task, inference_task
 from bot.utils import BotLogger, generate_unique_filename, allowed_file, i18n
 
@@ -186,11 +188,11 @@ async def start_train(
 )
 async def start_inference(
     model_id:str = Form(..., description=i18n("模型id")), 
-    ref_audio_file:str = File(..., description=i18n("音频文件支持 .WAV .MP3 .FLAC 格式")),
+    ref_audio_file_id:str = Form(..., description=i18n("参考音频id")),
     ref_text:str = Form(..., description=i18n("参考音频的文字")), 
     ref_language:str = Form(..., description=i18n("参考音频的语言")), 
     target_text:str = Form(..., description=i18n("生成音频的文字")), 
-    target_language:str = Form(..., description=i18n("生成音频的语言：中文、英文、日文、粤语、韩文")), 
+    target_language:str = Form(..., description=i18n("生成音频的语言")), 
     top_p:float = Form(1, description=i18n("top_p")), 
     top_k:int = Form(15, description=i18n("GPT采样参数(无参考文本时不要太低。不懂就用默认)")), 
     temperature:float = Form(1, description=i18n("temperature")), 
@@ -198,6 +200,7 @@ async def start_inference(
     version:str = Form('v4', description=i18n("版本"))
 ):
     try:
+
         gpt_path = Path(WEIGHTS_PATH) / model_id / GPT_HALF_WEIGHTS_FILE
         if not os.path.exists(gpt_path):
             BotLogger.error(i18n("路径错误! 找不到GPT模型"))
@@ -206,38 +209,23 @@ async def start_inference(
         if not os.path.exists(sovits_path):
             BotLogger.error(i18n("路径错误! 找不到SOVITS模型"))
             return
-        # 验证文件类型
-        if not allowed_file(ref_audio_file.filename):
-            raise HTTPException(status_code=400, detail=i18n("不支持的文件格式"))
-
-        # 实际文件大小验证
-        if ref_audio_file.size > cfg.MAX_UPLOAD_SIZE:
-            raise HTTPException(413, i18n("文件大小超过限制"))
-
-        # 生成唯一文件名
-        filename = generate_unique_filename(ref_audio_file.filename)
-        filePath = filename.split(".")[0]
-        reasoning_result_path = Path(OUT_PUT_PATH) / model_id /filePath
-        if not os.path.exists(reasoning_result_path):
-            os.makedirs(reasoning_result_path, exist_ok=True)
-        save_path = os.path.join(reasoning_result_path, filename)
-
-        # 保存文件
-        with open(save_path, 'wb') as f:
-            while chunk := await ref_audio_file.read(1024 * 1024):    # 1Mb chunks
-                f.write(chunk)
-        
-        
+        filename = ''
+        for file in glob.glob(os.path.join(Path(REF_AUDIO_PATH),ref_audio_file_id+".*")):
+            filename = file
+        if filename == '':
+            BotLogger.error(i18n("请上传参考音频"))
+            return
+        timestamp = str(int(time.time()))
         # 发送异步任务
         task = inference_task.delay(
             gpt_path,                   
             sovits_path , 
-            save_path , 
+            os.path.join(Path(REF_AUDIO_PATH),filename) , 
             ref_text , 
             ref_language, 
             target_text , 
             target_language , 
-            reasoning_result_path , 
+            os.path.join(Path(OUT_PUT_PATH), OUT_PUT_FILE+"_"+timestamp+".WAV") , 
             top_p , 
             top_k , 
             temperature , 
@@ -260,7 +248,7 @@ async def start_inference(
 
         return {
             "message": i18n("推理任务已进入Celery处理队列"),
-            "task_id": task.id
+            "task_id": timestamp
         }
 
     except HTTPException as he:
@@ -272,6 +260,35 @@ async def start_inference(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"{i18n('推理过程错误')}: {str(e)}")
+
+@app.post(
+    "/upload_ref_audio",
+    summary=i18n("上传语音文件"),
+    response_description=i18n("返回任务ID"),
+    tags=[i18n("上传语音文件")]
+)
+async def upload_audio(
+    file: UploadFile = File(..., description=i18n("音频文件支持 .WAV .MP3 .FLAC 格式"))
+):
+    # 验证文件类型
+    if not allowed_file(file.filename):
+        raise HTTPException(status_code=400, detail=i18n("不支持的文件格式"))
+
+    # 实际文件大小验证
+    if file.size > cfg.MAX_UPLOAD_SIZE:
+        raise HTTPException(413, i18n("文件大小超过限制"))
+
+    # 生成唯一文件名
+    filename = generate_unique_filename(file.filename)
+    if not os.path.exists(REF_AUDIO_PATH):
+        os.makedirs(REF_AUDIO_PATH, exist_ok=True)
+    save_path = os.path.join(REF_AUDIO_PATH, filename)
+
+    # 保存文件
+    with open(save_path, 'wb') as f:
+        while chunk := await file.read(1024 * 1024):    # 1Mb chunks
+            f.write(chunk)
+    return {"task_id": filename}
 
 @app.post(
     "/upload",

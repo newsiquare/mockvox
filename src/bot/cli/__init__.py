@@ -6,6 +6,7 @@ import gc
 import torch
 import torch.multiprocessing as mp
 import traceback
+import time
 
 from bot.utils import BotLogger, allowed_file, generate_unique_filename, i18n
 from bot.config import get_config, SLICED_ROOT_PATH, DENOISED_ROOT_PATH, ASR_PATH
@@ -238,7 +239,7 @@ def handle_inference(args):
     try:
         gpt_path = Path(WEIGHTS_PATH) / args.modelID / GPT_HALF_WEIGHTS_FILE
         sovits_path = Path(WEIGHTS_PATH) / args.modelID / SOVITS_HALF_WEIGHTS_FILE
-        reasoning_result_path = Path(OUT_PUT_PATH) / args.modelID
+        reasoning_result_path = Path(OUT_PUT_PATH)
         if not os.path.exists(gpt_path):
             BotLogger.error(i18n("路径错误! 找不到GPT模型"))
             return
@@ -258,12 +259,16 @@ def handle_inference(args):
                                     prompt_language=args.promptLanguage, 
                                     text=args.targetText, # 目标文本
                                     text_language=args.targetLanguage, top_p=1, temperature=1, top_k=15, speed=1)
-        
-        result_list = list(synthesis_result)
-        if result_list:
-            last_sampling_rate, last_audio_data = result_list[-1]
-            sf.write(reasoning_result_path / OUT_PUT_FILE, last_audio_data, int(last_sampling_rate))
-            BotLogger.info(f"Audio saved in {reasoning_result_path / OUT_PUT_FILE}")
+        timestamp = str(int(time.time()))
+        outputname = reasoning_result_path / OUT_PUT_FILE+"_"+timestamp+".WAV"
+        if synthesis_result is None:
+            return
+        else:
+            result_list = list(synthesis_result)
+            if result_list:
+                last_sampling_rate, last_audio_data = result_list[-1]
+                sf.write(outputname, last_audio_data, int(last_sampling_rate))
+                BotLogger.info(f"Audio saved in {outputname},task_id={timestamp}")
     except Exception as e:
         BotLogger.error(
             f"{i18n('推理过程错误')}: {args.modelID} | Traceback :\n{traceback.format_exc()}"
@@ -298,8 +303,8 @@ def main():
                                help='Disable denoise processing (default: enable denoise).')
     parser_inference.set_defaults(denoise=True)
     parser_inference.add_argument('--version', type=str, default='v4', help='Default version is v4.')
-    parser_inference.add_argument('--promptLanguage',default='中文', type=str, help='Prompt language.')
-    parser_inference.add_argument('--targetLanguage', default='中文',type=str, help='Target Language.')
+    parser_inference.add_argument('--promptLanguage',default='zh', type=str, help='Prompt language.')
+    parser_inference.add_argument('--targetLanguage', default='zh',type=str, help='Target Language.')
     parser_inference.set_defaults(func=handle_inference)
 
     # train 子命令

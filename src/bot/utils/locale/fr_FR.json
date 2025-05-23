@@ -241,7 +241,7 @@
     "参考音频的文字": "Texte de l'audio de référence",
     "参考音频的语言": "Langue de l'audio de référence",
     "生成音频的文字": "Texte de l'audio généré",
-    "生成音频的语言：中文、英文、日文、粤语、韩文": "Langue de l'audio généré：Chinois、Anglais、Japonais、Cantonais、Coreano",
+    "生成音频的语言": "Langue de l'audio généré",
     "GPT采样参数(无参考文本时不要太低。不懂就用默认)": "Paramètres d'échantillonnage GPT (Ne pas définir trop bas en l'absence de texte de référence. Utiliser les valeurs par défaut en cas de doute)",
     "路径错误! 找不到GPT模型": "Erreur de chemin! Modèle GPT introuvable",
     "路径错误! 找不到SOVITS模型": "Erreur de chemin! Modèle SOVITS introuvable",
@@ -261,5 +261,6 @@
     "ASR完成. 结果已保存在": "ASR terminé. Résultats sauvegardés dans",
     "不支持的版本": "Version non prise en charge",
     "版本不匹配": "Incompatibilité de version",
-    "训练完成": "Entraînement terminé"
+    "训练完成": "Entraînement terminé",
+    "语言不存在": "La langue n’existe pas"
 }

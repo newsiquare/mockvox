@@ -24,19 +24,6 @@ class Inferencer:
         sovits_path: Optional[str] = None
     ):
         self.device = "cuda:0"
-        self.dict_language = {
-            i18n("中文"): "all_zh",#全部按中文识别
-            i18n("英文"): "en",#全部按英文识别#######不变
-            i18n("日文"): "all_ja",#全部按日文识别
-            i18n("粤语"): "all_yue",#全部按中文识别
-            i18n("韩文"): "all_ko",#全部按韩文识别
-            i18n("中英混合"): "zh",#按中英混合识别####不变
-            i18n("日英混合"): "ja",#按日英混合识别####不变
-            i18n("粤英混合"): "yue",#按粤英混合识别####不变
-            i18n("韩英混合"): "ko",#按韩英混合识别####不变
-            i18n("多语种混合"): "auto",#多语种启动切分识别语种
-            i18n("多语种混合(粤语)"): "auto_yue",#多语种启动切分识别语种
-        }
         self.splits = {"，", "。", "？", "！", ",", ".", "?", "!", "~", ":", "：", "—", "…", }
 
 
@@ -359,13 +346,12 @@ class Inferencer:
         else:
             BotLogger.error(i18n('请填入推理文本'))
             return
-        if prompt_language!="中文" or text_language!="中文":
-            BotLogger.error(i18n('v2只支持中文'))
+        if "zh" not in prompt_language or "zh" not in text_language:
+            BotLogger.error(i18n('语言不存在'))
             return
         t = []
         t0 = ttime()
-        prompt_language = self.dict_language[prompt_language]
-        text_language = self.dict_language[text_language]
+        
         if not ref_free:
             prompt_text = prompt_text.strip("\n")
             if prompt_text[-1] not in self.splits:

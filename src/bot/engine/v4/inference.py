@@ -32,19 +32,7 @@ class Inferencer:
         sovits_path: Optional[str] = None
     ):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.dict_language = {
-            i18n("中文"): "all_zh",#全部按中文识别
-            i18n("英文"): "en",#全部按英文识别#######不变
-            i18n("日文"): "all_ja",#全部按日文识别
-            i18n("粤语"): "all_can",#全部按中文识别
-            i18n("韩文"): "all_ko",#全部按韩文识别
-            i18n("中英混合"): "zh",#按中英混合识别####不变
-            i18n("日英混合"): "ja",#按日英混合识别####不变
-            i18n("粤英混合"): "can",#按粤英混合识别####不变
-            i18n("韩英混合"): "ko",#按韩英混合识别####不变
-            i18n("多语种混合"): "auto",#多语种启动切分识别语种
-            i18n("多语种混合(粤语)"): "auto_can",#多语种启动切分识别语种
-        }
+        
         self.splits = {"，", "。", "？", "！", ",", ".", "?", "!", "~", ":", "：", "—", "…", }
                        
         self.punctuation = set(['!', '?', '…', ',', '.', '-'," "])
@@ -427,17 +415,39 @@ class Inferencer:
         return spec
 
     def inference(self,ref_wav_path, prompt_text, prompt_language, text, text_language, how_to_cut=i18n("凑四句一切"), top_k=15, top_p=1, temperature=1, ref_free = False,speed=1,if_freeze=False):
-        if ref_wav_path:pass
-        else:BotLogger.error(i18n('请上传参考音频'))
-        if text:pass
-        else:BotLogger.error(i18n('请填入推理文本'))
+        if ref_wav_path:
+            pass
+        else:
+            BotLogger.error(i18n('请上传参考音频'))
+            return
+        if text:
+            pass
+        else:
+            BotLogger.error(i18n('请填入推理文本'))
+            return
         t = []
         if prompt_text is None or len(prompt_text) == 0:
             ref_free = True
             
         t0 = ttime()
-        prompt_language = self.dict_language[prompt_language]
-        text_language = self.dict_language[text_language]
+
+        dict_language = [
+            "all_zh",#全部按中文识别
+            "en",#全部按英文识别#######不变
+            "all_ja",#全部按日文识别
+            "all_can",#全部按中文识别
+            "all_ko",#全部按韩文识别
+            "zh",#按中英混合识别####不变
+            "ja",#按日英混合识别####不变
+            "can",#按粤英混合识别####不变
+            "ko",#按韩英混合识别####不变
+            "auto",#多语种启动切分识别语种
+             "auto_can",#多语种启动切分识别语种
+        ]
+        if prompt_language not in dict_language or text_language not in dict_language:
+            BotLogger.error(i18n('语言不存在'))
+            return
+        
         if not ref_free:
             prompt_text = prompt_text.strip("\n")
             if prompt_text[-1] not in self.splits:

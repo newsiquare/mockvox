@@ -14,6 +14,7 @@ ASR_PATH = os.path.join(DATA_PATH, "asr")
 PROCESS_PATH = os.path.join(DATA_PATH, "process")
 WEIGHTS_PATH = os.path.join(DATA_PATH, "weights")
 OUT_PUT_PATH = os.path.join(DATA_PATH, "output")
+REF_AUDIO_PATH = os.path.join(DATA_PATH, "refAudio")
 
 SOVITS_MODEL_CONFIG = os.path.join(BASE_PATH, "src/bot/config/s2.json")
 GPT_MODEL_CONFIG = os.path.join(BASE_PATH, "src/bot/config/s1.json")
@@ -30,7 +31,7 @@ SOVITS_D_WEIGHTS_FILE = 'disc.pth'
 SOVITS_HALF_WEIGHTS_FILE = 'sovits.pth'
 GPT_WEIGHTS_FILE = 'decoder.pth'
 GPT_HALF_WEIGHTS_FILE = 'gpt.pth'
-OUT_PUT_FILE = 'output.wav'
+OUT_PUT_FILE = 'output'
 
 load_dotenv(BASE_PATH / ".env", override=True)  # 加载.env文件
 

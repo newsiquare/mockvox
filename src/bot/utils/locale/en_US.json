@@ -241,7 +241,7 @@
     "参考音频的文字": "Reference audio text",
     "参考音频的语言": "Reference audio language",
     "生成音频的文字": "Generated audio text",
-    "生成音频的语言：中文、英文、日文、粤语、韩文": "Generated audio language：Chinese、English、Japanese、Yue、Korean",
+    "生成音频的语言": "Generated audio language",
     "GPT采样参数(无参考文本时不要太低。不懂就用默认)": "GPT sampling parameters (Do not set too low when no reference text exists. Use default if unsure)",
     "路径错误! 找不到GPT模型": "Path error! GPT model not found",
     "路径错误! 找不到SOVITS模型": "Path error! SOVITS model not found",
@@ -261,5 +261,6 @@
     "ASR完成. 结果已保存在": "ASR done. Results saved in",
     "不支持的版本": "Unsupported version",
     "版本不匹配": "Version mismatch",
-    "训练完成": "Train done"
+    "训练完成": "Train done",
+    "语言不存在": "Language does not exist"
 }

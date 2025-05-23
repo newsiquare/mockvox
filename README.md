@@ -130,4 +130,3 @@ docker-compose up # 🚢 Launch full-stack services
 <div align="center">
   <sub>Built with ❤️ by MockVox Team | 📧 Contact: dev@mockvox.cn</sub>
 </div>
-```

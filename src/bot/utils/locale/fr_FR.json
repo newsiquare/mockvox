@@ -214,7 +214,7 @@
     "ASR校对": "Révision ASR",
     "保存成功": "Enregistrement réussi",
     "ASR结果校对": "Révision des résultats ASR",
-    "文件ID（调用 /upload 上传后返回的文件ID": "Nom du fichier (nom du fichier retourné après l'appel à /upload, sans extension)",
+    "文件ID (调用 /upload 上传后返回的文件ID)": "Nom du fichier (nom du fichier retourné après l'appel à /upload, sans extension)",
     "JSON格式的校对结果": "Résultats de vérification au format JSON",
     "是否已降噪": "Débruitage effectué ?",
     "无效格式: 结果应为JSON数组": "Format invalide : les résultats doivent être un tableau JSON",

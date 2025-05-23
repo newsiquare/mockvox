@@ -73,7 +73,7 @@ app.add_middleware(
     tags=[i18n("ASR结果校对")]
 )
 async def asr_revision(
-    file_id: str = Form(..., description=i18n("文件ID（调用 /upload 上传后返回的文件ID")),
+    file_id: str = Form(..., description=i18n("文件ID (调用 /upload 上传后返回的文件ID)")),
     results: str = Form("{}", description=i18n("JSON格式的校对结果")),
     denoised: bool = Form(True, description=i18n("是否已降噪"))
 ):
@@ -131,7 +131,7 @@ async def asr_revision(
     tags=[i18n("模型训练")]
 )
 async def start_train(
-    file_id: str = Form(..., description=i18n("文件ID（调用 /upload 上传后返回的文件ID")),
+    file_id: str = Form(..., description=i18n("文件ID (调用 /upload 上传后返回的文件ID)")),
     epochs_sovits: int = Form(10, description=i18n("SoVITs訓練輪次")),
     epochs_gpt: int = Form(10, description=i18n("GPT训练轮次")),
     version: str = Form('v4', description=i18n("版本")),

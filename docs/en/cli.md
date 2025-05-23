@@ -109,6 +109,8 @@ mockvox inference [OPTIONS] MODEL_ID REF_AUDIO PROMPT_TEXT TARGET_TEXT
 mockvox inference "20250522095117519601.e6abd9db.896806622ccb47a9ac1ee1669daf1938" /ref/reference.wav "Happy birthday" "Let's celebrate!"
 ```
 
+The inference results are saved in the ./data/output directory.
+
 ---
 
 ## Key Features

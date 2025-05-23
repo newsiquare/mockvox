@@ -109,6 +109,8 @@ mockvox inference [选项] 模型ID 参考音频 提示文本 目标文本
 mockvox inference "20250522095117519601.e6abd9db.896806622ccb47a9ac1ee1669daf1938" /ref/参考音频.wav "生日快乐" "让我们庆祝吧！"
 ```
 
+推理结果保存在 ./data/output 目录。
+
 ---
 
 ## 核心特性

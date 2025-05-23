@@ -214,7 +214,7 @@
     "ASR校对": "ASR Correcting",
     "保存成功": "Save successful",
     "ASR结果校对": "ASR Results Correcting",
-    "文件名（调用 /upload 上传后返回的文件名, 无后缀名": "File name (the file name returned after calling /upload, without extension)",
+    "文件ID（调用 /upload 上传后返回的文件ID": "File ID (the file id returned after calling /upload)",
     "JSON格式的校对结果": "Correcting results in JSON format",
     "是否已降噪": "Denoise completed?",
     "无效格式: 结果应为JSON数组": "Invalid format: results should be a JSON array",

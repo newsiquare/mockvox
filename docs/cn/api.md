@@ -14,14 +14,20 @@
 ## 快速开始
 
 ```bash
-上传语音文件
-curl -X POST -F "file=@sample.wav" http://127.0.0.1:5000/upload
+# 上传语音文件
+ curl -X POST -F "file=@sample.wav" \
+    -F "language=en" \
+    http://127.0.0.1:5000/upload
 
-启动训练任务
-curl -X POST -d "filename=20250522095117519601.e6abd9db.896806622ccb47a9ac1ee1669daf1938" http://127.0.0.1:5000/train
+# 启动训练任务
+curl -X POST \
+    -F "file_id=20250522095117519601.e6abd9db.896806622ccb47a9ac1ee1669daf1938" \
+    -F "language=en" \
+    http://127.0.0.1:5000/train
 
-执行语音推理
-curl -X POST -F "ref_audio=@reference.mp3" -d "target_text=你好世界" http://127.0.0.1:5000/inference
+# 上传参考语音
+
+curl -X POST -F "ref_audio=@reference.mp3" -F "target_text=你好世界" http://127.0.0.1:5000/inference
 ```
 
 ## 使用流程
@@ -50,7 +56,7 @@ graph TD
 ```json
 {
     "file_id": "20250522095117519601.e6abd9db.896806622ccb47a9ac1ee1669daf1938",
-    "task_id": "550e8400-e29b-41d4"
+    "task_id": "40425f97-11ab-4d68-b645-bd8dda294c4c"
 }
 ```
 
@@ -62,10 +68,10 @@ graph TD
 
 ```json
 {
-    "filename": "1678932456",
+    "file_id": "20250522095117519601.e6abd9db.896806622ccb47a9ac1ee1669daf1938",
     "results": [
-        {"key": "slice_001", "text": "Hello world"},
-        {"key": "slice_002", "text": "Good morning"}
+        {"key": "0000000000_0000193600", "text": "Hello world"},
+        {"key": "0000193600_0000361920", "text": "Good morning"}
     ]
 }
 ```

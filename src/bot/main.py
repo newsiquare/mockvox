@@ -73,14 +73,14 @@ app.add_middleware(
     tags=[i18n("ASR结果校对")]
 )
 async def asr_revision(
-    filename: str = Form(..., description=i18n("文件名（调用 /upload 上传后返回的文件名, 无后缀名")),
+    file_id: str = Form(..., description=i18n("文件ID（调用 /upload 上传后返回的文件ID")),
     results: str = Form("{}", description=i18n("JSON格式的校对结果")),
     denoised: bool = Form(True, description=i18n("是否已降噪"))
 ):
     results_list = json.loads(results)
     wav_root = DENOISED_ROOT_PATH if denoised else SLICED_ROOT_PATH
-    wav_root = Path(wav_root) / filename
-    asr_path = Path(ASR_PATH) / filename / 'output.json'
+    wav_root = Path(wav_root) / file_id
+    asr_path = Path(ASR_PATH) / file_id / 'output.json'
 
     with open(asr_path, "r", encoding="utf-8") as f:
         output_data = json.load(f)
@@ -131,7 +131,7 @@ async def asr_revision(
     tags=[i18n("模型训练")]
 )
 async def start_train(
-    filename: str = Form(..., description=i18n("文件名（调用 /upload 上传后返回的文件名, 无后缀名")),
+    file_id: str = Form(..., description=i18n("文件ID（调用 /upload 上传后返回的文件ID")),
     epochs_sovits: int = Form(10, description=i18n("SoVITs訓練輪次")),
     epochs_gpt: int = Form(10, description=i18n("GPT训练轮次")),
     version: str = Form('v4', description=i18n("版本")),
@@ -142,7 +142,7 @@ async def start_train(
     try:
         # 发送异步任务
         task = train_task.delay(
-            file_name=filename,
+            file_name=file_id,
             sovits_epochs=epochs_sovits,
             gpt_epochs=epochs_gpt, 
             version=version,
@@ -151,7 +151,7 @@ async def start_train(
         )
         # 确保任务对象有效
         if not isinstance(task, AsyncResult):
-            BotLogger.error(f"{i18n('Celery训练任务提交失败')} | {filename}")
+            BotLogger.error(f"{i18n('Celery训练任务提交失败')} | {file_id}")
             raise HTTPException(500, i18n("Celery训练任务提交失败"))
 
         # 记录任务提交日志
@@ -160,13 +160,13 @@ async def start_train(
             extra={
                 "action": "stage2_task_submitted",
                 "task_id": task.id,
-                "file_name": filename
+                "file_id": file_id
             }
         )
 
         return {
             "message": i18n("训练任务已进入Celery处理队列"),
-            "file_name": filename,
+            "file_id": file_id,
             "task_id": task.id
         }
 
@@ -261,15 +261,13 @@ async def start_inference(
         raise HTTPException(status_code=500, detail=f"{i18n('推理过程错误')}: {str(e)}")
 
 @app.get(
-    "/downloadOutPuts",
+    "/output/{task_id}",
     summary=i18n("下载推理结果文件"),
     response_description=i18n("结果文件"),
     tags=[i18n("下载推理结果文件")]
 )
-async def download_out_puts(
-    task_id:str = Form(..., description=i18n("任务id"))
-):
-    filename = OUT_PUT_FILE+"_"+task_id+".WAV"
+async def download_outputs(task_id:str):
+    filename = task_id + ".WAV"
     if not os.path.exists(os.path.join(OUT_PUT_PATH,filename)):
         BotLogger.error(i18n("找不到结果文件"))
         return
@@ -277,7 +275,7 @@ async def download_out_puts(
     return FileResponse(OUT_PUT_PATH,filename=filename)
 
 @app.post(
-    "/uploadRefAudio",
+    "/uploadRef",
     summary=i18n("上传参考音频文件"),
     response_description=i18n("返回任务ID"),
     tags=[i18n("上传参考音频文件")]

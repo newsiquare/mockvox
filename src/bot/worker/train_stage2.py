@@ -52,16 +52,18 @@ def train_task(
     try:
         if(version=='v2'):
             train_v2(file_name, sovits_epochs, gpt_epochs, language, ifDenoise)
-        elif(version=='v4'):
-            train_v4(file_name, sovits_epochs, gpt_epochs, language, ifDenoise)
         else:
-            BotLogger.error(f"Unsupported version: {version}")
-            return     
+            train_v4(file_name, sovits_epochs, gpt_epochs, language, ifDenoise)
+          
     except Exception as e:
         BotLogger.error(
             f"{i18n('训练过程错误')}: {file_name}\nTraceback:\n{traceback.format_exc()}"
         )
-        raise self.retry(exc=e, countdown=60, max_retries=3)
+        return {
+            "status": "fail",
+            "results": {},
+            "time":time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+        }
     
 def train_v4(file_name, sovits_epochs, gpt_epochs, language, ifDenoise):
     processor = DataProcessor(language)

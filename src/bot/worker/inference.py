@@ -41,32 +41,18 @@ def inference_task(self,gpt_model_path:str ,
             torch.cuda.ipc_collect()
             gc.collect()  
     result_list = list(synthesis_result)
-    outputname = os.path.join(Path(OUT_PUT_PATH), OUT_PUT_FILE+"_"+self.request.id+".WAV")
+    outputname = os.path.join(Path(OUT_PUT_PATH), self.request.id+".WAV")
     if result_list:
         last_sampling_rate, last_audio_data = result_list[-1]
         sf.write( outputname,  last_audio_data, last_sampling_rate)
-        results = OrderedDict()
-        results["task_id"] = self.request.id
-        results["path"] = Path(outputname).name
         return {
             "status": "success", 
-            "results": results, 
+            "results": {}, 
             "time":time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
         }
-    
-
-if __name__ == "__main__":
-    inference = v4("/home/easyman/zjh/bot/test/gpt.pth","/home/easyman/zjh/bot/test/sovits.pth")
-    # Synthesize audio
-    synthesis_result = inference.inference(ref_wav_path="/home/easyman/zjh/bot/test/0018652800_0018799360.wav",# 参考音频 
-                                prompt_text="我还是走吧，拜身如柳絮，随风摆。", # 参考文本
-                                prompt_language=i18n("中文"), 
-                                text="咱当兵的，怕过啥？小鬼子的枪炮再厉害，那也得给老子让道！", # 目标文本
-                                text_language=i18n("中文"), top_p=0.6, temperature=0.6, top_k=20, speed=1)
-    
-    result_list = list(synthesis_result)
-    if result_list:
-        last_sampling_rate, last_audio_data = result_list[-1]
-        # output_path = os.path.join("/home/easyman/zjh/bot/", "output.wav")
-        sf.write("/home/easyman/zjh/bot/output.wav", last_audio_data, last_sampling_rate)
-        print(f"Audio saved to /home/easyman/zjh/bot/output.wav")
+        
+    return {
+        "status": "fail", 
+        "results": {}, 
+        "time":time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+    }

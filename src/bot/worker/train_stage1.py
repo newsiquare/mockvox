@@ -55,14 +55,7 @@ def process_file_task(
 
         # 语音识别
         asr_path = os.path.join(ASR_PATH, stem)
-        if(version=='v4'):
-            if(ifDenoise):
-                asr_results = batch_asr_v4(language, denoised_files, asr_path)
-                path_result = denoised_path
-            else:
-                asr_results = batch_asr_v4(language, sliced_files, asr_path)
-                path_result = sliced_path
-        elif(version=='v2'):
+        if(version=='v2'):
             if(ifDenoise):
                 asr_results = batch_asr_v2(language, denoised_files, asr_path)
                 path_result = denoised_path
@@ -70,9 +63,12 @@ def process_file_task(
                 asr_results = batch_asr_v2(language, sliced_files, asr_path)
                 path_result = sliced_path
         else:
-            BotLogger.error(f"Unsupported version: {file_name} \n\
-                            Traceback:\n{traceback.format_exc()}")
-            return
+            if(ifDenoise):
+                asr_results = batch_asr_v4(language, denoised_files, asr_path)
+                path_result = denoised_path
+            else:
+                asr_results = batch_asr_v4(language, sliced_files, asr_path)
+                path_result = sliced_path
 
         BotLogger.info(
             "ASR done",
@@ -98,4 +94,8 @@ def process_file_task(
             f"Task failed: {file_name} \n\
                 Traceback:\n{traceback.format_exc()}"
         )
-        raise self.retry(exc=e, countdown=60, max_retries=3)
+        return {
+            "status": "fail", 
+            "results": {}, 
+            "time":time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+        }

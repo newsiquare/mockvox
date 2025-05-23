@@ -83,7 +83,7 @@ mockvox inference [选项] 模型ID 参考音频 提示文本 目标文本
 | `参考音频`          | 语音风格参考文件的绝对路径            | -      | 是   |
 | `提示文本`          | 参考音频的文本                        | -      | 是   |
 | `目标文本`          | 待合成的目标文本                      | -      | 是   |
-| `--version 版本号`  | 模型版本                          | v4     | 否   |
+| `--version 版本号`  | 模型版本 (v2/v4)                          | v4     | 否   |
 | `--promptLanguage`      | 参考音频的语言编码(支持 zh/can/en/ja/ko)     | zh   | 否   |
 | `--targetLanguage`      | 目标文本的语言编码                        | all_zh   | 否   |
 

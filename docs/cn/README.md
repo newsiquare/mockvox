@@ -84,16 +84,18 @@ git clone https://huggingface.co/alextomcat/G2PWModel.git ./pretrained/G2PWModel
 # 如果仅使用中文素材训练，则无需安装
 modelscope download --model 'iic/speech_UniASR_asr_2pass-cantonese-CHS-16k-common-vocab1468-tensorflow1-online' --local_dir './pretrained/iic/speech_UniASR_asr_2pass-cantonese-CHS-16k-common-vocab1468-tensorflow1-online' #粤语ASR
 git clone https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2.git ./pretrained/nvidia/parakeet-tdt-0.6b-v2 #英语ASR
-modelscope download --model 'iic/speech_UniASR_asr_2pass-ja-16k-common-vocab93-tensorflow1-offline'  --local_dir './pretrained/iic/speech_UniASR_asr_2pass-ja-16k-common-vocab93-tensorflow1-offline' #日语ASR
-modelscope download --model 'iic/speech_UniASR_asr_2pass-ko-16k-common-vocab6400-tensorflow1-offline' --local_dir './pretrained/iic/speech_UniASR_asr_2pass-ko-16k-common-vocab6400-tensorflow1-offline' #韩语ASR
 git clone https://huggingface.co/FacebookAI/roberta-large.git ./pretrained/FacebookAI/roberta-large #英语BERT
+modelscope download --model 'iic/speech_UniASR_asr_2pass-ja-16k-common-vocab93-tensorflow1-offline'  --local_dir './pretrained/iic/speech_UniASR_asr_2pass-ja-16k-common-vocab93-tensorflow1-offline' #日语ASR
 git clone https://huggingface.co/tohoku-nlp/bert-base-japanese-v3.git ./pretrained/tohoku-nlp/bert-base-japanese-v3 #日语BERT
+modelscope download --model 'iic/speech_UniASR_asr_2pass-ko-16k-common-vocab6400-tensorflow1-offline' --local_dir './pretrained/iic/speech_UniASR_asr_2pass-ko-16k-common-vocab6400-tensorflow1-offline' #韩语ASR
 git clone https://huggingface.co/klue/bert-base.git ./pretrained/klue/bert-base #韩语BERT
 ```
 
+至此，命令行方式已经可以使用。
+
 #### 4. 启动服务
 
-至此，命令行方式已经可以直接使用，无需启动以下服务。
+如果要以后台API方式运行，则需启动以下服务：
 
 ```bash
 🐳 Redis 容器

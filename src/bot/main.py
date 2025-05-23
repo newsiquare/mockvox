@@ -23,7 +23,7 @@ def clone_repository(target_dir, repo_url):
 clone_repository("./pretrained/G2PWModel", "https://huggingface.co/alextomcat/G2PWModel.git")
 clone_repository("./pretrained/GPT-SoVITS", "https://huggingface.co/lj1995/GPT-SoVITS.git")
 from fastapi import FastAPI, File, UploadFile, HTTPException, Form
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse,FileResponse
 from fastapi.requests import Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware import Middleware
@@ -224,8 +224,7 @@ async def start_inference(
             ref_text , 
             ref_language, 
             target_text , 
-            target_language , 
-            os.path.join(Path(OUT_PUT_PATH), OUT_PUT_FILE+"_"+timestamp+".WAV") , 
+            target_language ,
             top_p , 
             top_k , 
             temperature , 
@@ -261,14 +260,30 @@ async def start_inference(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"{i18n('推理过程错误')}: {str(e)}")
 
-@app.post(
-    "/upload_ref_audio",
-    summary=i18n("上传语音文件"),
-    response_description=i18n("返回任务ID"),
-    tags=[i18n("上传语音文件")]
+@app.get(
+    "/downloadOutPuts",
+    summary=i18n("下载推理结果文件"),
+    response_description=i18n("结果文件"),
+    tags=[i18n("下载推理结果文件")]
 )
-async def upload_audio(
-    file: UploadFile = File(..., description=i18n("音频文件支持 .WAV .MP3 .FLAC 格式"))
+async def download_out_puts(
+    task_id:str = Form(..., description=i18n("任务id"))
+):
+    filename = OUT_PUT_FILE+"_"+task_id+".WAV"
+    if not os.path.exists(os.path.join(OUT_PUT_PATH,filename)):
+        BotLogger.error(i18n("找不到结果文件"))
+        return
+
+    return FileResponse(OUT_PUT_PATH,filename=filename)
+
+@app.post(
+    "/uploadRefAudio",
+    summary=i18n("上传参考音频文件"),
+    response_description=i18n("返回任务ID"),
+    tags=[i18n("上传参考音频文件")]
+)
+async def upload_ref_audio(
+    file: UploadFile = File(..., description=i18n("请上传3~10秒内参考音频，超过会报错！")+i18n("音频文件支持 .WAV .MP3 .FLAC 格式"))
 ):
     # 验证文件类型
     if not allowed_file(file.filename):

@@ -5,7 +5,12 @@ from bot.utils import i18n
 import soundfile as sf
 import torch
 import gc
+import os
+import time
+from pathlib import Path
+from bot.config import OUT_PUT_PATH,OUT_PUT_FILE
 from .worker import celeryApp
+from collections import OrderedDict
 
 @celeryApp.task(name="inference", bind=True)
 def inference_task(self,gpt_model_path:str , 
@@ -14,8 +19,7 @@ def inference_task(self,gpt_model_path:str ,
                    ref_text:str , 
                    ref_language:str, 
                    target_text:str , 
-                   target_language:str, 
-                   output_path:str, 
+                   target_language:str,  
                    top_p:float, 
                    top_k:int, 
                    temperature:float, 
@@ -37,11 +41,19 @@ def inference_task(self,gpt_model_path:str ,
             torch.cuda.ipc_collect()
             gc.collect()  
     result_list = list(synthesis_result)
+    outputname = os.path.join(Path(OUT_PUT_PATH), OUT_PUT_FILE+"_"+self.request.id+".WAV")
     if result_list:
         last_sampling_rate, last_audio_data = result_list[-1]
-        sf.write(output_path, last_audio_data, last_sampling_rate)
-        return f"Audio saved to {output_path}"
-    pass
+        sf.write( outputname,  last_audio_data, last_sampling_rate)
+        results = OrderedDict()
+        results["task_id"] = self.request.id
+        results["path"] = Path(outputname).name
+        return {
+            "status": "success", 
+            "results": results, 
+            "time":time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+        }
+    
 
 if __name__ == "__main__":
     inference = v4("/home/easyman/zjh/bot/test/gpt.pth","/home/easyman/zjh/bot/test/sovits.pth")

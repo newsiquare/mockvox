@@ -43,8 +43,8 @@ from bot.config import (
     WEIGHTS_PATH,
     SOVITS_HALF_WEIGHTS_FILE,
     GPT_HALF_WEIGHTS_FILE,
-    REASONING_RESULT_PATH,
-    REASONING_RESULT_FILE,
+    OUT_PUT_PATH,
+    OUT_PUT_FILE,
     ASR_PATH
 )
 import soundfile as sf
@@ -238,7 +238,7 @@ def handle_inference(args):
     try:
         gpt_path = Path(WEIGHTS_PATH) / args.modelID / GPT_HALF_WEIGHTS_FILE
         sovits_path = Path(WEIGHTS_PATH) / args.modelID / SOVITS_HALF_WEIGHTS_FILE
-        reasoning_result_path = Path(REASONING_RESULT_PATH) / args.modelID
+        reasoning_result_path = Path(OUT_PUT_PATH) / args.modelID
         if not os.path.exists(gpt_path):
             BotLogger.error(i18n("路径错误! 找不到GPT模型"))
             return
@@ -262,8 +262,8 @@ def handle_inference(args):
         result_list = list(synthesis_result)
         if result_list:
             last_sampling_rate, last_audio_data = result_list[-1]
-            sf.write(reasoning_result_path / REASONING_RESULT_FILE, last_audio_data, int(last_sampling_rate))
-            BotLogger.info(f"Audio saved in {reasoning_result_path / REASONING_RESULT_FILE}")
+            sf.write(reasoning_result_path / OUT_PUT_FILE, last_audio_data, int(last_sampling_rate))
+            BotLogger.info(f"Audio saved in {reasoning_result_path / OUT_PUT_FILE}")
     except Exception as e:
         BotLogger.error(
             f"{i18n('推理过程错误')}: {args.modelID} | Traceback :\n{traceback.format_exc()}"

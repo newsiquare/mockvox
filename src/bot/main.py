@@ -32,7 +32,7 @@ from celery.result import AsyncResult
 import json
 from pathlib import Path
 
-from bot.config import get_config, UPLOAD_PATH, DENOISED_ROOT_PATH, SLICED_ROOT_PATH, ASR_PATH, WEIGHTS_PATH, REASONING_RESULT_PATH, REASONING_RESULT_FILE, GPT_HALF_WEIGHTS_FILE, SOVITS_HALF_WEIGHTS_FILE
+from bot.config import get_config, UPLOAD_PATH, DENOISED_ROOT_PATH, SLICED_ROOT_PATH, ASR_PATH, WEIGHTS_PATH, OUT_PUT_PATH, GPT_HALF_WEIGHTS_FILE, SOVITS_HALF_WEIGHTS_FILE
 from bot.worker import celeryApp, process_file_task, train_task, inference_task
 from bot.utils import BotLogger, generate_unique_filename, allowed_file, i18n
 
@@ -217,7 +217,7 @@ async def start_inference(
         # 生成唯一文件名
         filename = generate_unique_filename(ref_audio_file.filename)
         filePath = filename.split(".")[0]
-        reasoning_result_path = Path(REASONING_RESULT_PATH) / model_id /filePath
+        reasoning_result_path = Path(OUT_PUT_PATH) / model_id /filePath
         if not os.path.exists(reasoning_result_path):
             os.makedirs(reasoning_result_path, exist_ok=True)
         save_path = os.path.join(reasoning_result_path, filename)

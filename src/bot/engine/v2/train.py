@@ -349,7 +349,7 @@ class SoVITsTrainer:
                 self.scheduler_d.step()
         else:
             epoch_done=0
-            self._load_pretrained
+            self._load_pretrained()
 
         if epochs<=epoch_done:
             BotLogger.info(f"Trained SoVITS epoch {epoch_done} >= {epochs}. Terminated.")

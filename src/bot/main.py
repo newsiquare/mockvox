@@ -32,10 +32,23 @@ from celery.result import AsyncResult
 import json
 from pathlib import Path
 import glob
-import time
+import torch
 
-from bot.config import get_config, UPLOAD_PATH, DENOISED_ROOT_PATH, SLICED_ROOT_PATH, ASR_PATH, WEIGHTS_PATH, OUT_PUT_PATH, GPT_HALF_WEIGHTS_FILE, SOVITS_HALF_WEIGHTS_FILE, REF_AUDIO_PATH, OUT_PUT_FILE
-from bot.worker import celeryApp, process_file_task, train_task, inference_task
+from bot.config import (
+    get_config,
+    SLICED_ROOT_PATH,
+    DENOISED_ROOT_PATH,
+    ASR_PATH,
+    GPT_HALF_WEIGHTS_FILE,
+    SOVITS_HALF_WEIGHTS_FILE,
+    REF_AUDIO_PATH,
+    OUT_PUT_PATH,
+    UPLOAD_PATH,
+    WEIGHTS_PATH,
+    GPT_WEIGHTS_FILE,
+    SOVITS_G_WEIGHTS_FILE 
+)
+from bot.worker import celeryApp, process_file_task, train_task, inference_task, resume_task
 from bot.utils import BotLogger, generate_unique_filename, allowed_file, i18n
 
 cfg = get_config()
@@ -135,7 +148,6 @@ async def start_train(
     epochs_sovits: int = Form(10, description=i18n("SoVITs訓練輪次")),
     epochs_gpt: int = Form(10, description=i18n("GPT训练轮次")),
     version: str = Form('v4', description=i18n("版本")),
-    language: str = Form('zh', description=i18n("语言")),
     denoised: bool = Form(True, description=i18n("是否已降噪")),
     config: str = Form("{}", description=i18n("JSON 格式的配置参数"))
 ):
@@ -146,7 +158,6 @@ async def start_train(
             sovits_epochs=epochs_sovits,
             gpt_epochs=epochs_gpt, 
             version=version,
-            language=language,
             ifDenoise=denoised
         )
         # 确保任务对象有效
@@ -181,6 +192,52 @@ async def start_train(
         raise HTTPException(status_code=500, detail=f"{i18n('训练过程错误')}: {str(e)}")
 
 @app.post(
+    "/resume",
+    summary=i18n("继续训练"),
+    response_description=i18n("返回任务ID"),
+    tags=[i18n("模型训练")]
+)
+async def start_train(
+    model_id: str = Form(..., description=i18n("模型ID (调用 /train 返回的模型ID)")),
+    epochs_sovits: int = Form(10, description=i18n("SoVITs訓練輪次")),
+    epochs_gpt: int = Form(10, description=i18n("GPT训练轮次")),
+    config: str = Form("{}", description=i18n("JSON 格式的配置参数"))
+):
+    try:
+        # 发送异步任务
+        task = resume_task.delay(
+            model_id=model_id,
+            sovits_epochs=epochs_sovits,
+            gpt_epochs=epochs_gpt
+        )
+        # 确保任务对象有效
+        if not isinstance(task, AsyncResult):
+            BotLogger.error(f"{i18n('Celery训练任务提交失败')} | {model_id}")
+            raise HTTPException(500, i18n("Celery训练任务提交失败"))
+
+        # 记录任务提交日志
+        BotLogger.info(
+            f"{i18n("训练任务已进入Celery处理队列")} \n"
+            f"task id: {task.id} \n"
+            f"model id: {model_id}"
+        )
+
+        return {
+            "message": i18n("训练任务已进入Celery处理队列"),
+            "task_id": task.id
+        }
+
+    except HTTPException as he:
+        raise he
+    
+    except ConnectionError as ce:
+        BotLogger.critical(i18n("消息队列连接失败"), exc_info=True)
+        raise HTTPException(503, i18n("系统暂时不可用"))
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"{i18n('训练过程错误')}: {str(e)}")
+
+@app.post(
     "/inference",
     summary=i18n("启动推理"),
     response_description=i18n("返回任务ID"),
@@ -197,16 +254,18 @@ async def start_inference(
     top_k:int = Form(15, description=i18n("GPT采样参数(无参考文本时不要太低。不懂就用默认)")), 
     temperature:float = Form(1, description=i18n("temperature")), 
     speed:float = Form(1, description=i18n("语速")),
-    version:str = Form('v4', description=i18n("版本"))
 ):
     try:
-
         gpt_path = Path(WEIGHTS_PATH) / model_id / GPT_HALF_WEIGHTS_FILE
-        if not os.path.exists(gpt_path):
+        if not gpt_path.exists():
             BotLogger.error(i18n("路径错误! 找不到GPT模型"))
             return
+        gpt_ckpt = torch.load(gpt_path, map_location="cpu")
+        version = gpt_ckpt["config"]["model"]["version"]
+        BotLogger.info(f"Model Version: {version}")
+
         sovits_path = Path(WEIGHTS_PATH) / model_id / SOVITS_HALF_WEIGHTS_FILE
-        if not os.path.exists(sovits_path):
+        if not sovits_path.exists():
             BotLogger.error(i18n("路径错误! 找不到SOVITS模型"))
             return
         filename = ''
@@ -215,7 +274,6 @@ async def start_inference(
         if filename == '':
             BotLogger.error(i18n("请上传参考音频"))
             return
-        timestamp = str(int(time.time()))
         # 发送异步任务
         task = inference_task.delay(
             gpt_path,                   
@@ -311,7 +369,6 @@ async def upload_ref_audio(
 )
 async def upload_audio(
     file: UploadFile = File(..., description=i18n("音频文件支持 .WAV .MP3 .FLAC 格式")),
-    version: str = Form('v4', description=i18n("版本")),
     language: str = Form('zh', description=i18n("语言"))
 ):
     try:
@@ -345,7 +402,7 @@ async def upload_audio(
         )
 
         # 发送异步任务
-        task = process_file_task.delay(file_name=filename, version=version, language=language, ifDenoise=True)
+        task = process_file_task.delay(file_name=filename, language=language, ifDenoise=True)
         # 确保任务对象有效
         if not isinstance(task, AsyncResult):
             BotLogger.error(f"{i18n('Celery文件处理任务提交失败')} | {filename}")
@@ -389,6 +446,33 @@ def get_task_status(task_id: str):
         "status": task.result.get("status") if task.ready() else "UNKNOWN",
         "results": task.result.get("results") if task.ready() else None,
         "time": task.result.get("time") if task.ready() else None
+    }
+
+# 模型信息查询接口
+@app.get("/model/{model_id}",
+         summary=i18n("获取模型信息"),
+         response_description=i18n("返回模型版本及训练轮次"),
+         tags=[""])
+def get_model_info(model_id: str):
+    gpt_weights = Path(WEIGHTS_PATH) / model_id / GPT_WEIGHTS_FILE
+    sovits_weights = Path(WEIGHTS_PATH) / model_id / SOVITS_G_WEIGHTS_FILE
+    if not gpt_weights.exists():
+        return i18n("路径错误! 找不到GPT模型")
+    if not sovits_weights.exists():
+        return i18n("路径错误! 找不到SOVITS模型")
+
+    gpt_ckpt = torch.load(gpt_weights, map_location="cpu")
+    version = gpt_ckpt["config"]["model"]["version"]
+    
+    sovits_ckpt = torch.load(sovits_weights, map_location="cpu")
+    
+    gpt_epoch = gpt_ckpt["iteration"]
+    sovits_epoch = sovits_ckpt["iteration"]
+
+    return {
+        "Model Version": version,
+        "SoVITS trained epoch": sovits_epoch,
+        "GPT trained epoch": gpt_epoch
     }
 
 if __name__ == "__main__":

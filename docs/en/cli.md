@@ -9,7 +9,7 @@ MockVox is a voice synthesis & cloning toolkit supporting three core operations:
 ## System Requirements
 
 - MeCab library installed (for linguistic feature processing)
-- Python 3.10+ runtime
+- Python 3.11+ runtime
 - Valid API credentials (for cloud services)
 
 ---
@@ -28,13 +28,12 @@ mockvox upload [OPTIONS] FILE_PATH
 |----------------------|--------------------------------------|---------|----------|
 | `FILE_PATH`          | Absolute path to audio file          | -       | Yes      |
 | `--no-denoise`       | Disable automatic denoising          | Enabled | No       |
-| `--version VERSION`  | Version specification (v2/v4)        | v4      | No       |
 | `--language LANG`    | Language code (zh/can/en/ja/ko)       | zh      | No       |
 
 **Example**:
 
 ```bash
-mockvox upload /data/sample.wav --language zh --version v4
+mockvox upload /data/sample.wav --language zh 
 ```
 
 Returns a file ID {fileID}.  
@@ -58,7 +57,6 @@ mockvox train [OPTIONS] FILE_ID # File ID from upload response
 | `FILE_ID`              | Identifier from upload operation     | -       | Yes      |
 | `--epochs_sovits EPOCH`| Training epochs for SoVITS model     | 10      | No       |
 | `--epochs_gpt EPOCH`   | Training epochs for GPT model        | 10      | No       |
-| `--version VERSION`    | Model architecture version (v2/v4)   | v4      | No       |
 | `--no-denoise`         | Use non-denoised audio               | Denoised| No       |
 
 **Example**:
@@ -83,9 +81,8 @@ mockvox inference [OPTIONS] MODEL_ID REF_AUDIO PROMPT_TEXT TARGET_TEXT
 | `REF_AUDIO`           | Absolute path to reference audio     | -       | Yes      |
 | `PROMPT_TEXT`         | Text corresponding to reference audio| -       | Yes      |
 | `TARGET_TEXT`         | Text to synthesize                   | -       | Yes      |
-| `--version VERSION`   | Model version (v2/v4)                       | v4      | No       |
 | `--promptLanguage LANG`| Language of reference audio (zh/can/en/ja/ko) | zh | No |
-| `--targetLanguage LANG`| Target text language code            | all_zh  | No       |
+| `--targetLanguage LANG`| Target text language code            | zh  | No       |
 
 **Target Language Codes**:
 
@@ -113,12 +110,50 @@ The inference results are saved in the ./data/output directory.
 
 ---
 
+### 4. ⏯ Resume Model Training
+
+```bash
+mockvox resume [options] ModelID
+```
+
+**Function**​​: Resume model training from existing checkpoints
+
+| Parameter             | Description                          | Default | Required |
+|-----------------------|--------------------------------------|---------|----------|
+| `MODEL_ID`            | Model ID from training               | -       | Yes      |
+| `--epochs_sovits EPOCH`| Training epochs for SoVITS model     | 10      | No       |
+| `--epochs_gpt EPOCH`   | Training epochs for GPT model        | 10      | No       |
+
+**​​Example**​​:
+
+```bash
+mockvox resume 20250524182510033061.370358d9.af07654e5ffe46c788448c05a0dedca3 --epochs_sovits 3 --epochs_gpt 5
+```
+
+**Implementation Details**​​:
+
+1. Automatically loads the latest checkpoint from ./data/weights/{ModelID} directory
+2. New training results will be incrementally merged into existing model files
+
+### 5. ℹ️ View Model Information
+
+```bash
+mockvox info ModelID
+```
+
+**Function**​​: Display model training metadata
+
+| Parameter             | Description                          | Default | Required |
+|-----------------------|--------------------------------------|---------|----------|
+| `MODEL_ID`            | Model ID from training               | -       | Yes      |
+
+
 ## Key Features
 
 - **Version Control**: Maintain compatibility via `--version` parameter
 - **Smart Denoising**: Enabled by default (disable with `--no-denoise`)
 - **Multilingual Support**: Chinese/Cantonese/English/Japanese/Korean
-- **Workflow Enforcement**: Strict operation sequence (Upload → Train → Synthesize)
+- **Workflow Enforcement**: Strict operation sequence (Upload → Revision[Optional] → Train → Synthesize)
 
 ---
 

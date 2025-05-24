@@ -24,7 +24,8 @@ def inference_task(self,gpt_model_path:str ,
                    top_k:int, 
                    temperature:float, 
                    speed:float,
-                   version:str):
+                   version: str
+):
     if version == "v2":
         inference = v2(gpt_model_path,soVITS_model_path)
     else:

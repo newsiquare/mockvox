@@ -37,7 +37,7 @@ def save_checkpoint(model, hps, optimizer, learning_rate, iteration, checkpoint_
             "optimizer": optimizer.state_dict(),
             "learning_rate": learning_rate,
             "date": datetime.now().isoformat(),
-            "author": "联宇创新(Lianyu Co,L.T.D)"
+            "author": "MockVox Team"
         },
         checkpoint_path
     )

@@ -6,19 +6,17 @@ from typing import Optional
 from collections import OrderedDict
 
 from bot.config import get_config, UPLOAD_PATH, SLICED_ROOT_PATH, DENOISED_ROOT_PATH, ASR_PATH
-from bot.engine.v2 import slice_audio, batch_denoise, batch_asr as batch_asr_v2
-from bot.engine.v4 import batch_asr as batch_asr_v4
+from bot.engine.v2 import slice_audio, batch_denoise, batch_asr
 from .worker import celeryApp
 from bot.utils import BotLogger
 
 cfg = get_config()
 os.makedirs(SLICED_ROOT_PATH, exist_ok=True)
 
-@celeryApp.task(name="train_stage1", bind=True)
+@celeryApp.task(name="preprocess", bind=True)
 def process_file_task(
     self, 
     file_name: str,
-    version: Optional[str] = 'v4',
     language: Optional[str] = 'zh',
     ifDenoise: Optional[bool] = True
 ):
@@ -55,20 +53,12 @@ def process_file_task(
 
         # 语音识别
         asr_path = os.path.join(ASR_PATH, stem)
-        if(version=='v2'):
-            if(ifDenoise):
-                asr_results = batch_asr_v2(language, denoised_files, asr_path)
-                path_result = denoised_path
-            else:
-                asr_results = batch_asr_v2(language, sliced_files, asr_path)
-                path_result = sliced_path
+        if(ifDenoise):
+            asr_results = batch_asr(language, denoised_files, asr_path)
+            path_result = denoised_path
         else:
-            if(ifDenoise):
-                asr_results = batch_asr_v4(language, denoised_files, asr_path)
-                path_result = denoised_path
-            else:
-                asr_results = batch_asr_v4(language, sliced_files, asr_path)
-                path_result = sliced_path
+            asr_results = batch_asr(language, sliced_files, asr_path)
+            path_result = sliced_path
 
         BotLogger.info(
             "ASR done",

@@ -58,6 +58,7 @@ class GPTTrainer:
         device: Optional[str] = None
     ):
         self.hparams = hparams
+        self.hparams.model.version = 'v4'
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
         dataset = Text2SemanticDataset(self.hparams.data)
@@ -81,11 +82,11 @@ class GPTTrainer:
         self.scaler = GradScaler(enabled=(self.hparams.train.precision=='16-mixed'))
         self.optimizer, self.scheduler = self._configure_optimizers()
 
-        self.file_name = Path(self.hparams.data.semantic_path).parent.name
-        (Path(WEIGHTS_PATH) / self.file_name).mkdir(parents=True, exist_ok=True)
-        self.gpt_weights_path = Path(WEIGHTS_PATH) / self.file_name / GPT_WEIGHTS_FILE
+        self.modelID = Path(self.hparams.data.semantic_path).parent.name
+        (Path(WEIGHTS_PATH) / self.modelID).mkdir(parents=True, exist_ok=True)
+        self.gpt_weights_path = Path(WEIGHTS_PATH) / self.modelID / GPT_WEIGHTS_FILE
         # 类似 ./data/weights/20250409145258452558.1ed301dd.788fc313bf38482aa63fe2ea09781878/gpt.pth
-        self.gpt_half_weights_path = Path(WEIGHTS_PATH) / self.file_name / GPT_HALF_WEIGHTS_FILE
+        self.gpt_half_weights_path = Path(WEIGHTS_PATH) / self.modelID / GPT_HALF_WEIGHTS_FILE
 
     def train(self, epochs: Optional[int]=100):
         """ 执行训练 """
@@ -101,7 +102,7 @@ class GPTTrainer:
             return
 
         saved = False
-        BotLogger.info(f"Startup GPT training: {self.file_name} \nTime: {datetime.now().isoformat()}")
+        BotLogger.info(f"Startup GPT training: {self.modelID} \nTime: {datetime.now().isoformat()}")
 
         for epoch in range(epoch_done+1, epochs+1):
             saved=False
@@ -173,7 +174,7 @@ class GPTTrainer:
             )
         except Exception as e:
             BotLogger.error(
-                f"Pretrained GPT load failed: {self.file_name} \n\
+                f"Pretrained GPT load failed: {self.modelID} \n\
                 Exception: {str(e)}"
             )
             raise RuntimeError("Pretrained GPT load failed")
@@ -193,7 +194,7 @@ class GPTTrainer:
                     self.scheduler.step()
             except Exception as e:
                 BotLogger.error(
-                    f"GPT checkpoint load failed: {self.file_name} \n\
+                    f"GPT checkpoint load failed: {self.modelID} \n\
                     Exception: {str(e)}"
                 )
                 return None
@@ -239,6 +240,7 @@ class SoVITsTrainer:
         device: Optional[str] = None    # 指定计算设备
     ):
         self.hparams = hparams
+        self.hparams.model.version = 'v4'
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
         dataset = TextAudioSpeakerDataset(self.hparams.data)
@@ -279,12 +281,12 @@ class SoVITsTrainer:
         )        
         self.scaler = GradScaler(enabled=self.hparams.train.fp16_run)
 
-        self.file_name = Path(self.hparams.data.processed_dir).name
-        (Path(WEIGHTS_PATH) / self.file_name).mkdir(parents=True, exist_ok=True)
+        self.modelID = Path(self.hparams.data.processed_dir).name
+        (Path(WEIGHTS_PATH) / self.modelID).mkdir(parents=True, exist_ok=True)
         # 类似 ./data/weights/20250409145258452558.1ed301dd.788fc313bf38482aa63fe2ea09781878/gen.pth
-        self.generator_weights_path = Path(WEIGHTS_PATH) / self.file_name / SOVITS_G_WEIGHTS_FILE
+        self.generator_weights_path = Path(WEIGHTS_PATH) / self.modelID / SOVITS_G_WEIGHTS_FILE
         # 类似 ./data/weights/20250409145258452558.1ed301dd.788fc313bf38482aa63fe2ea09781878/sovits.pth
-        self.sovits_weights_path = Path(WEIGHTS_PATH) / self.file_name / SOVITS_HALF_WEIGHTS_FILE
+        self.sovits_weights_path = Path(WEIGHTS_PATH) / self.modelID / SOVITS_HALF_WEIGHTS_FILE
 
     def train(self, epochs: Optional[int]=100):
         """ 执行训练 """
@@ -308,7 +310,7 @@ class SoVITsTrainer:
             self.scheduler_g.step()
 
         saved = False
-        BotLogger.info(f"Startup SoVITS training: {self.file_name} \nTime: {datetime.now().isoformat()}")
+        BotLogger.info(f"Startup SoVITS training: {self.modelID} \nTime: {datetime.now().isoformat()}")
         for epoch in range(epoch_done+1, epochs+1):
             saved = False
             BotLogger.info(f"Launch SoVITS epoch: {epoch}")
@@ -408,7 +410,7 @@ class SoVITsTrainer:
         
             except Exception as e:
                 BotLogger.error(
-                    f"SoVITS checkpoint load failed:  {self.file_name} \n\
+                    f"SoVITS checkpoint load failed:  {self.modelID} \n\
                         Exception: {str(e)}"
                 )
                 return None
@@ -433,7 +435,7 @@ class SoVITsTrainer:
 
         except Exception as e:
             BotLogger.error(
-                f"Pretrained SoVITS load failed:  {self.file_name} \n\
+                f"Pretrained SoVITS load failed:  {self.modelID} \n\
                     Exception: {str(e)}"
             )
             raise RuntimeError("Pretrained SoVITS load failed")

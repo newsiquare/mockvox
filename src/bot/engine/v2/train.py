@@ -66,6 +66,7 @@ class GPTTrainer:
         device: Optional[str] = None
     ):
         self.hparams = hparams
+        self.hparams.model.version = 'v2'
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
         dataset = Text2SemanticDataset(self.hparams.data)
@@ -247,6 +248,7 @@ class SoVITsTrainer:
         device: Optional[str] = None    # 指定计算设备
     ):
         self.hparams = hparams
+        self.hparams.model.version = 'v2'
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
         dataset = TextAudioSpeakerDataset(self.hparams.data)

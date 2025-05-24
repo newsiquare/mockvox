@@ -35,11 +35,11 @@ class TextToSemantic:
         except FileNotFoundError:
             BotLogger.error(f"Pretrained model not found: {PRETRAINED_S2G_FILE}")
     
-    def process(self, file_path: str) -> List:
+    def process(self, file_id: str, model_id: str) -> List:
         results = []
         # 路径配置
-        asr_dir = Path(ASR_PATH) / file_path
-        processed_dir = Path(PROCESS_PATH) / file_path
+        asr_dir = Path(ASR_PATH) / file_id
+        processed_dir = Path(PROCESS_PATH) / model_id
         semantic_file = processed_dir / "text2semantic.json"
         # 已处理
         if semantic_file.exists():
@@ -47,7 +47,7 @@ class TextToSemantic:
                 "Text to semantic has been done",
                 extra={
                     "action": "text_to_semantic",
-                    "file_name": file_path,
+                    "file_id": file_id,
                     "json_file": semantic_file
                 }
             )
@@ -57,14 +57,6 @@ class TextToSemantic:
 
         # 处理文本转语义
         asr_data = load_asr_data(asr_dir)
-        try:
-            if(not isinstance(asr_data, dict)) or asr_data['version']!="v2":
-                BotLogger.error(f"Version mismatch: {asr_dir}")
-                raise RuntimeError(f"Version mismatch: {str(e)}") from e
-        except Exception as e:
-            BotLogger.error(f"Version mismatch: {asr_dir}")
-            raise RuntimeError(f"Version mismatch: {str(e)}") from e       
-
         lines = asr_data["results"]    
 
         for line in lines:
@@ -89,7 +81,7 @@ class TextToSemantic:
             "Text to semantic done",
             extra={
                 "action": "text_to_semantic",
-                "file_name": file_path,
+                "file_id": file_id,
                 "json_file": semantic_file
             }
         )
@@ -99,9 +91,10 @@ if __name__ == '__main__':
     # 示例用法
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('file', type=str, help='processed file name.')
+    parser.add_argument('file', type=str, help='processed file id.')
+    parser.add_argument('model', type=str, help='model id.')
     args = parser.parse_args()
 
     t2s = TextToSemantic()
-    results = t2s.process(args.file)
+    results = t2s.process(args.file, args.model)
     print(results)

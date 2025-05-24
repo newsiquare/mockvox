@@ -37,17 +37,17 @@ class ConditionalFormatter(logging.Formatter):
         ),
         "data_processed": (
             '%(asctime)s - %(name)s - %(levelname)s - '
-            '[action=%(action)s] [file_name=%(file_name)s]'
+            '[action=%(action)s] [file_id=%(file_id)s]'
             '[json=%(json_file)s] - %(message)s'
         ),
         "feature_extracted": (
             '%(asctime)s - %(name)s - %(levelname)s - '
-            '[action=%(action)s] [file_name=%(file_name)s]'
+            '[action=%(action)s] [file_id=%(file_id)s]'
             ' - %(message)s'
         ),
         "text_to_semantic": (
             '%(asctime)s - %(name)s - %(levelname)s - '
-            '[action=%(action)s] [file_name=%(file_name)s]'
+            '[action=%(action)s] [file_id=%(file_id)s]'
             '[json=%(json_file)s] - %(message)s'
         ),
         "default": '%(asctime)s - %(name)s - %(levelname)s - %(message)s'

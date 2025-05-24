@@ -51,7 +51,7 @@ cd bot
 
 ```bash
 🐍 Create Python virtual environment
-conda create -n bot python=3.10 -y
+conda create -n bot python=3.11 -y
 conda activate bot
 
 📦 Install dependencies

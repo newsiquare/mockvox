@@ -265,5 +265,9 @@
     "训练完成": "Train done",
     "语言不存在": "Language does not exist",
     "下载推理结果文件": "Download inference result file",
-    "参考音频文件ID (调用 /uploadRef 上传后返回的参考音频文件ID)": "Reference audio file ID (ID returned after calling /uploadRef to upload)"
+    "参考音频文件ID (调用 /uploadRef 上传后返回的参考音频文件ID)": "Reference audio file ID (ID returned after calling /uploadRef to upload)",
+    "获取模型信息": "Get model information",
+    "返回模型版本及训练轮次": "Return model version and training epochs",
+    "继续训练": "Resume training",
+    "模型ID (调用 /train 返回的模型ID)": "Model ID (returned by calling /train)"
 }

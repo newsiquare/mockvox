@@ -40,19 +40,20 @@ class FeatureExtractor:
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")        
         self.model = CNHubert().to(self.device)
    
-    def extract(self, file_path: str, denoised: bool = True):
+    def extract(self, file_id: str, model_id: str, denoised: bool = True):
         """
         主处理流程
-        :param file_path: 相对路径标识符
+        :param file_id: 文件标识符
+        :param model_id: 模型标识符
         :param denoised: 是否使用降噪后的音频
         """
         # 构建目录路径
-        asr_dir = Path(ASR_PATH) / file_path
+        asr_dir = Path(ASR_PATH) / file_id
         wav_root = DENOISED_ROOT_PATH if denoised else SLICED_ROOT_PATH
-        wav_dir = Path(wav_root) / file_path
+        wav_dir = Path(wav_root) / file_id
 
         # 创建输出目录
-        processed_dir = Path(PROCESS_PATH) / file_path
+        processed_dir = Path(PROCESS_PATH) / model_id
         hubert_dir = processed_dir / "cnhubert"
         wav32_dir = processed_dir / "wav32k"
         # 已处理
@@ -61,7 +62,7 @@ class FeatureExtractor:
                 "Feature extract has been done",
                 extra={
                     "action": "feature_extracted",
-                    "file_name": file_path
+                    "file_id": file_id
                 }
             )
             return 
@@ -71,14 +72,6 @@ class FeatureExtractor:
 
         # 处理ASR结果
         asr_data = load_asr_data(asr_dir)
-        try:
-            if(not isinstance(asr_data, dict)) or asr_data['version']!="v2":
-                BotLogger.error(f"Version mismatch: {asr_dir}")
-                raise RuntimeError(f"Version mismatch: {str(e)}") from e
-        except Exception as e:
-            BotLogger.error(f"Version mismatch: {asr_dir}")
-            raise RuntimeError(f"Version mismatch: {str(e)}") from e       
-
         lines = asr_data["results"]
         for line in lines:
             wav_file = wav_dir / f"{line['key']}.wav"
@@ -97,7 +90,7 @@ class FeatureExtractor:
             "Feature extract done",
             extra={
                 "action": "feature_extracted",
-                "file_name": file_path
+                "file_id": file_id
             }
         )
 
@@ -164,8 +157,9 @@ if __name__ == '__main__':
     # 示例用法
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('file', type=str, help='processed file name.')
+    parser.add_argument('file', type=str, help='processed file id.')
+    parser.add_argument('model', type=str, help='model id.')
     args = parser.parse_args()
 
     extractor = FeatureExtractor()
-    extractor.extract(args.file, denoised=True)
+    extractor.extract(args.file, args.model, denoised=True)

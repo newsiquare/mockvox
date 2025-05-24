@@ -13,7 +13,7 @@ import json
 from bot.config import PRETRAINED_PATH, PROCESS_PATH, ASR_PATH
 from bot.text import Normalizer, symbols
 from bot.utils import BotLogger
-from .asr import load_asr_data
+from bot.engine.v2.asr import load_asr_data
 
 # 特殊符号处理配置，格式：(原符号，语言，替换符号)
 special = [
@@ -55,20 +55,21 @@ class DataProcessor:
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.mlm.to(self.device)   
 
-    def process(self, file_name) -> List:
+    def process(self, file_id, model_id) -> List:
         """
         主处理流程
         
         参数:
-            file_name -- 输入文件名（不带后缀）
+            file_id -- 输入文件ID
+            model_id -- 输入模型ID
             
         返回:
             List 处理结果列表，元素格式为[key, phones, word2ph, norm_text]
         """
         results = []
         # 路径配置
-        asr_dir = os.path.join(ASR_PATH, file_name)
-        processed_dir = os.path.join(PROCESS_PATH, file_name)
+        asr_dir = os.path.join(ASR_PATH, file_id)
+        processed_dir = os.path.join(PROCESS_PATH, model_id)
         bert_dir = os.path.join(processed_dir, "bert")
         Path(bert_dir).mkdir(parents=True, exist_ok=True)
         json_file = os.path.join(processed_dir, 'name2text.json')
@@ -79,7 +80,7 @@ class DataProcessor:
                 "Data process has been done",
                 extra={
                     "action": "data_processed",
-                    "file_name": file_name,
+                    "file_id": file_id,
                     "json_file": json_file
                 }
             )
@@ -87,14 +88,6 @@ class DataProcessor:
 
         # 加载ASR数据
         asr_data = load_asr_data(asr_dir)
-        try:
-            if(not isinstance(asr_data, dict)) or asr_data['version']!="v4":
-                BotLogger.error(f"Version mismatch: {asr_dir}")
-                raise RuntimeError(f"Version mismatch: {str(e)}") from e
-        except Exception as e:
-            BotLogger.error(f"Version mismatch: {asr_dir}")
-            raise RuntimeError(f"Version mismatch: {str(e)}") from e       
-
         lines = asr_data["results"]        
         # 逐条处理数据
         for line in lines:
@@ -123,7 +116,7 @@ class DataProcessor:
 
             except Exception as e:
                 BotLogger.error(
-                    f"Data process failed: {file_name} \nException: {str(e)}",
+                    f"Data process failed: {file_id} \nException: {str(e)}",
                     extra={"action": "data_process_error"}
                 )
                 raise RuntimeError(f"Data process failed: {str(e)}") from e
@@ -135,7 +128,7 @@ class DataProcessor:
             "Data process done",
             extra={
                 "action": "data_processed",
-                "file_name": file_name,
+                "file_id": file_id,
                 "json_file": json_file
             }
         )

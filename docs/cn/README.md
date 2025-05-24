@@ -51,7 +51,7 @@ cd bot
 
 ```bash
 🐍 创建 Python 虚拟环境
-conda create -n bot python=3.10 -y
+conda create -n bot python=3.11 -y
 conda activate bot
 
 📦 安装依赖

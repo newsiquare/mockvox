@@ -265,5 +265,9 @@
     "训练完成": "Entraînement terminé",
     "语言不存在": "La langue n’existe pas",
     "下载推理结果文件": "Télécharger le fichier des résultats d'inférence",
-    "参考音频文件ID (调用 /uploadRef 上传后返回的参考音频文件ID)": "ID du fichier audio de référence (ID retourné après l'appel à /uploadRef pour téléversement)"
+    "参考音频文件ID (调用 /uploadRef 上传后返回的参考音频文件ID)": "ID du fichier audio de référence (ID retourné après l'appel à /uploadRef pour téléversement)",
+    "获取模型信息": "Obtenir les informations du modèle",
+    "返回模型版本及训练轮次": "Retourner la version du modèle et le nombre d'époques d'entraînement",
+    "继续训练": "Reprendre l'entraînement",
+    "模型ID (调用 /train 返回的模型ID)": "ID de modèle (renvoyé par l'appel à /train) "
 }

@@ -4,7 +4,6 @@ from pathlib import Path
 import os
 import gc
 import torch
-import torch.multiprocessing as mp
 import traceback
 import time
 
@@ -13,46 +12,22 @@ from bot.config import get_config, SLICED_ROOT_PATH, DENOISED_ROOT_PATH, ASR_PAT
 from bot.engine.v2 import slice_audio, batch_denoise
 from bot.engine.v2.inference import Inferencer as InferencerV2
 from bot.engine.v4.inference import Inferencer as InferencerV4
-from bot.engine.v2 import batch_asr as batch_asr_v2
-from bot.engine.v4 import batch_asr as batch_asr_v4
-from bot.engine.v2 import (
-    DataProcessor as DataProcessorV2,
-    FeatureExtractor as FeatureExtractorV2,
-    TextToSemantic as TextToSemanticV2
-)
-from bot.engine.v2.train import (
-    SoVITsTrainer as SoVITsTrainerV2, 
-    GPTTrainer as GPTTrainerV2
-)
-
-from bot.engine.v4 import (
-    DataProcessor,
-    FeatureExtractor,
-    TextToSemantic
-)
-from bot.engine.v4.train import (
-    SoVITsTrainer, 
-    GPTTrainer
-)            
-# v4需要从ASR结果中读取language信息
-from bot.engine.v4.asr import load_asr_data
-
+from bot.engine.v2 import batch_asr
+from bot.engine import TrainingPipeline, ResumingPipeline, VersionDispatcher
+         
 from bot.config import (
-    PROCESS_PATH,
-    SOVITS_MODEL_CONFIG,
-    GPT_MODEL_CONFIG,
     WEIGHTS_PATH,
     SOVITS_HALF_WEIGHTS_FILE,
     GPT_HALF_WEIGHTS_FILE,
+    SOVITS_G_WEIGHTS_FILE,
+    GPT_WEIGHTS_FILE,
     OUT_PUT_PATH,
-    OUT_PUT_FILE,
     ASR_PATH
 )
 import soundfile as sf
-from bot.utils import get_hparams_from_file
 
 CLI_HELP_MSG = f"""
-    MockVoi command line support the following subcommands:        
+    MockVox command line support the following subcommands:        
 """
 cfg = get_config()
 
@@ -79,16 +54,10 @@ def handle_upload(args):
 
         # 语音识别
         asr_path = os.path.join(ASR_PATH, stem)
-        if(args.version=='v2'):
-            if(args.denoise):
-                batch_asr_v2(args.language, denoised_files, asr_path)
-            else:
-                batch_asr_v2(args.language, sliced_files, asr_path)
+        if(args.denoise):
+            batch_asr(args.language, denoised_files, asr_path)
         else:
-            if(args.denoise):
-                batch_asr_v4(args.language, denoised_files, asr_path)
-            else:
-                batch_asr_v4(args.language, sliced_files, asr_path)
+            batch_asr(args.language, sliced_files, asr_path)
 
         BotLogger.info(f"{i18n('ASR完成. 结果已保存在')}: {os.path.join(asr_path, 'output.json')}")
 
@@ -98,141 +67,13 @@ def handle_upload(args):
         )
 
 def handle_train(args):
-    if(args.version=='v2'):
-        train_v2(args)
-    elif(args.version=='v4'):
-        train_v4(args)
-    else:
-        BotLogger.error(f"{i18n('不支持的版本')}: {args.version}")
-        return       
-
-def train_v4(args):
-    # 从ASR结果中读取language信息
-    asr_file = os.path.join(ASR_PATH, args.fileID)
-    asr_data = load_asr_data(asr_file)
     try:
-        if(not isinstance(asr_data, dict)) or asr_data['version']!="v4":
-            BotLogger.error(f"{i18n('版本不匹配')}: {asr_file}")
-            return
-    except Exception as e:
-        BotLogger.error(f"{i18n('版本不匹配')}: {asr_file}")
-        return    
-    
-    try:      
-        processor = DataProcessor(language=asr_data['language'])
-        processor.process(args.fileID)
-        extractor = FeatureExtractor()
-        extractor.extract(file_path=args.fileID, denoised=args.denoise)
-        t2s = TextToSemantic()
-        t2s.process(args.fileID)
-        del processor, extractor, t2s
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-            torch.cuda.synchronize()
-            torch.cuda.ipc_collect()
-            gc.collect()       
-
-        mp.set_start_method('spawn', force=True)  # 强制使用 spawn 模式
-        hps_sovits = get_hparams_from_file(SOVITS_MODEL_CONFIG)
-        processed_path = Path(PROCESS_PATH) / args.fileID
-        hps_sovits.data.processed_dir = processed_path
-        trainer_sovits = SoVITsTrainer(hparams=hps_sovits)
-        trainer_sovits.train(epochs=args.epochs_sovits)
-
-        del trainer_sovits, hps_sovits
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-            torch.cuda.synchronize()
-            torch.cuda.ipc_collect()
-            gc.collect()
-
-        hps_gpt = get_hparams_from_file(GPT_MODEL_CONFIG)
-        hps_gpt.data.semantic_path = processed_path / 'name2text.json'
-        hps_gpt.data.phoneme_path = processed_path / 'text2semantic.json'
-        hps_gpt.data.bert_path = processed_path / 'bert'
-        trainer_gpt = GPTTrainer(hparams=hps_gpt)
-        trainer_gpt.train(epochs=args.epochs_gpt)
-        del trainer_gpt, hps_gpt
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-            torch.cuda.synchronize()
-            torch.cuda.ipc_collect()
-            gc.collect()
-
-        sovits_half_weights_path = Path(WEIGHTS_PATH) / args.fileID / SOVITS_HALF_WEIGHTS_FILE
-        gpt_half_weights_path = Path(WEIGHTS_PATH) / args.fileID / GPT_HALF_WEIGHTS_FILE
-
-        BotLogger.info(f"{i18n('训练完成')}. \n \
-                        SoVITS checkpoint saved in: {sovits_half_weights_path} \n \
-                        GPT checkpoint saved in: {gpt_half_weights_path}")
-
+        components = VersionDispatcher.create_components(args.version)
+        pipeline = TrainingPipeline(args, components)
+        pipeline.execute() 
     except Exception as e:
         BotLogger.error(
             f"{i18n('训练过程错误')}: {args.fileID} | Traceback :\n{traceback.format_exc()}"
-        )
-
-def train_v2(args):
-    # 从ASR结果中读取language信息
-    asr_file = os.path.join(ASR_PATH, args.fileID)
-    asr_data = load_asr_data(asr_file)
-    try:
-        if(not isinstance(asr_data, dict)) or asr_data['version']!="v2":
-            BotLogger.error(f"{i18n('版本不匹配')}: {asr_file}")
-            return
-    except Exception as e:
-        BotLogger.error(f"{i18n('版本不匹配')}: {asr_file}")
-        return   
-    try:      
-        processor = DataProcessorV2(language=asr_data['language'])
-        processor.process(args.fileID)
-        extractor = FeatureExtractorV2()
-        extractor.extract(file_path=args.fileID, denoised=args.denoise)
-        t2s = TextToSemanticV2()
-        t2s.process(args.fileID)
-        del processor, extractor, t2s
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-            torch.cuda.synchronize()
-            torch.cuda.ipc_collect()
-            gc.collect()       
-
-        mp.set_start_method('spawn', force=True)  # 强制使用 spawn 模式
-        hps_sovits = get_hparams_from_file(SOVITS_MODEL_CONFIG)
-        processed_path = Path(PROCESS_PATH) / args.fileID
-        hps_sovits.data.processed_dir = processed_path
-        trainer_sovits = SoVITsTrainerV2(hparams=hps_sovits)
-        trainer_sovits.train(epochs=args.epochs_sovits)
-
-        del trainer_sovits, hps_sovits
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-            torch.cuda.synchronize()
-            torch.cuda.ipc_collect()
-            gc.collect()
-
-        hps_gpt = get_hparams_from_file(GPT_MODEL_CONFIG)
-        hps_gpt.data.semantic_path = processed_path / 'name2text.json'
-        hps_gpt.data.phoneme_path = processed_path / 'text2semantic.json'
-        hps_gpt.data.bert_path = processed_path / 'bert'
-        trainer_gpt = GPTTrainerV2(hparams=hps_gpt)
-        trainer_gpt.train(epochs=args.epochs_gpt)
-        del trainer_gpt, hps_gpt
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-            torch.cuda.synchronize()
-            torch.cuda.ipc_collect()
-            gc.collect()
-
-        sovits_half_weights_path = Path(WEIGHTS_PATH) / args.fileID / SOVITS_HALF_WEIGHTS_FILE
-        gpt_half_weights_path = Path(WEIGHTS_PATH) / args.fileID / GPT_HALF_WEIGHTS_FILE
-
-        BotLogger.info(f"{i18n('训练完成')}. \n \
-                        SoVITS checkpoint saved in: {sovits_half_weights_path} \n \
-                        GPT checkpoint saved in: {gpt_half_weights_path}")
-
-    except Exception as e:
-        BotLogger.error(
-            f"{i18n('训练过程错误')}: {args.fileID}\nTraceback:{traceback.format_exc()}"
         )
 
 def handle_inference(args):
@@ -240,15 +81,19 @@ def handle_inference(args):
         gpt_path = Path(WEIGHTS_PATH) / args.modelID / GPT_HALF_WEIGHTS_FILE
         sovits_path = Path(WEIGHTS_PATH) / args.modelID / SOVITS_HALF_WEIGHTS_FILE
         reasoning_result_path = Path(OUT_PUT_PATH)
-        if not os.path.exists(gpt_path):
+        if not gpt_path.exists():
             BotLogger.error(i18n("路径错误! 找不到GPT模型"))
             return
-        if not os.path.exists(sovits_path):
+        if not sovits_path.exists():
             BotLogger.error(i18n("路径错误! 找不到SOVITS模型"))
             return
-        if not os.path.exists(reasoning_result_path):
-            os.makedirs(reasoning_result_path, exist_ok=True)
-        if args.version == 'v2':
+        if not reasoning_result_path.exists():
+            reasoning_result_path.mkdir(parents=True, exist_ok=True)
+
+        gpt_ckpt = torch.load(gpt_path, map_location="cpu")
+        version = gpt_ckpt["config"]["model"]["version"]
+        BotLogger.info(f"Model Version: {version}")
+        if version == 'v2':
             inference = InferencerV2(gpt_path, sovits_path)
         else:
             inference = InferencerV4(gpt_path, sovits_path)
@@ -260,7 +105,7 @@ def handle_inference(args):
                                     text=args.targetText, # 目标文本
                                     text_language=args.targetLanguage, top_p=1, temperature=1, top_k=15, speed=1)
         timestamp = str(int(time.time()))
-        outputname = reasoning_result_path / OUT_PUT_FILE+"_"+timestamp+".WAV"
+        outputname = reasoning_result_path / Path(timestamp+".WAV")
         if synthesis_result is None:
             return
         else:
@@ -279,6 +124,48 @@ def handle_inference(args):
             torch.cuda.synchronize()
             torch.cuda.ipc_collect()
             gc.collect()
+
+def handle_resume(args):
+    try:
+        gpt_weights = Path(WEIGHTS_PATH) / args.modelID / GPT_WEIGHTS_FILE
+        gpt_ckpt = torch.load(gpt_weights, map_location="cpu")
+        version = gpt_ckpt["config"]["model"]["version"]
+        
+        sovits_weights = Path(WEIGHTS_PATH) / args.modelID / SOVITS_G_WEIGHTS_FILE
+        sovits_ckpt = torch.load(sovits_weights, map_location="cpu")
+        
+        gpt_epoch = gpt_ckpt["iteration"]
+        sovits_epoch = sovits_ckpt["iteration"]
+        BotLogger.info(f"Model Version: {version}\n"
+                       f"SOVITS trained epoch: {sovits_epoch}\n"
+                       f"GPT trained epoch: {gpt_epoch}")
+
+        components = VersionDispatcher.create_components(version)
+        pipeline = ResumingPipeline(args, components)
+        pipeline.execute() 
+    except Exception as e:
+        BotLogger.error(
+            f"{i18n('训练过程错误')}: {args.modelID} | Traceback :\n{traceback.format_exc()}"
+        )
+
+def handle_info(args):
+    gpt_weights = Path(WEIGHTS_PATH) / args.modelID / GPT_WEIGHTS_FILE
+    sovits_weights = Path(WEIGHTS_PATH) / args.modelID / SOVITS_G_WEIGHTS_FILE
+    if not gpt_weights.exists() or not sovits_weights.exists():
+        BotLogger.error(f"Model checkpoint not found.")
+        return
+
+    gpt_ckpt = torch.load(gpt_weights, map_location="cpu")
+    version = gpt_ckpt["config"]["model"]["version"]
+    
+    sovits_ckpt = torch.load(sovits_weights, map_location="cpu")
+    
+    gpt_epoch = gpt_ckpt["iteration"]
+    sovits_epoch = sovits_ckpt["iteration"]
+    BotLogger.info(f"Model Version: {version}\n"
+                    f"SOVITS trained epoch: {sovits_epoch}\n"
+                    f"GPT trained epoch: {gpt_epoch}")
+
 def main():
     parser = argparse.ArgumentParser(prog='mockvoi', description=CLI_HELP_MSG)
     subparsers = parser.add_subparsers(dest='command', help='')
@@ -289,7 +176,6 @@ def main():
     parser_upload.add_argument('--no-denoise', dest='denoise', action='store_false', 
                                help='Disable denoise processing (default: enable denoise).')
     parser_upload.set_defaults(denoise=True)
-    parser_upload.add_argument('--version', type=str, default='v4', help='Default version is v4.')
     parser_upload.add_argument('--language', type=str, default='zh', help='Language code, support zh can en ja ko.')
     parser_upload.set_defaults(func=handle_upload)
 
@@ -302,7 +188,6 @@ def main():
     parser_inference.add_argument('--no-denoise', dest='denoise', action='store_false', 
                                help='Disable denoise processing (default: enable denoise).')
     parser_inference.set_defaults(denoise=True)
-    parser_inference.add_argument('--version', type=str, default='v4', help='Default version is v4.')
     parser_inference.add_argument('--promptLanguage',default='zh', type=str, help='Prompt language.')
     parser_inference.add_argument('--targetLanguage', default='zh',type=str, help='Target Language.')
     parser_inference.set_defaults(func=handle_inference)
@@ -317,6 +202,18 @@ def main():
     parser_train.add_argument('--epochs_gpt', type=int, default=10, help='Train epochs of GPT (default:10).')
     parser_train.add_argument('--version', type=str, default='v4', help='Default version is v4.')
     parser_train.set_defaults(func=handle_train)
+
+    # resume 子命令
+    parser_resume = subparsers.add_parser('resume', help='Resume train specified model id.')
+    parser_resume.add_argument('modelID', type=str, help='Returned model id from train.')
+    parser_resume.add_argument('--epochs_sovits', type=int, default=10, help='Train epochs of SoVITS (default:10).')
+    parser_resume.add_argument('--epochs_gpt', type=int, default=10, help='Train epochs of GPT (default:10).')
+    parser_resume.set_defaults(func=handle_resume)
+
+    # info 子命令
+    parser_info = subparsers.add_parser('info', help='Get specified model info.')
+    parser_info.add_argument('modelID', type=str, help='Returned model id from train.')
+    parser_info.set_defaults(func=handle_info)
 
     args = parser.parse_args()
     if hasattr(args, 'func'):

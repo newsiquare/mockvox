@@ -75,7 +75,7 @@ class CantoneseASR:
 
 class JapaneseASR:
     def __init__(self,
-                 language: str = "can",
+                 language: str = "ja",
                  region: str = None,
                  asr_model_name: str = 'iic/speech_UniASR_asr_2pass-ja-16k-common-vocab93-tensorflow1-offline',
                  device: Optional[str] = None
@@ -103,7 +103,7 @@ class JapaneseASR:
 
 class KoreanASR:
     def __init__(self,
-                 language: str = "can",
+                 language: str = "ko",
                  region: str = None,
                  asr_model_name: str = 'iic/speech_UniASR_asr_2pass-ko-16k-common-vocab6400-tensorflow1-offline',
                  device: Optional[str] = None
@@ -152,10 +152,11 @@ class EnglishASR:
             )
 
             asr_result=[]
-            for output in outputs:
+            # Parakeet-TDT 模型是一个 ​​TDT(Text-based Dialogue Transcription)模型, 有两个解码器
+            for output in outputs[0]:
                 asr_result.append({
                     "key": Path(input_path).stem,
-                    "text": output.text
+                    "text": output
                 })
 
             if not isinstance(asr_result, list) or len(asr_result) == 0:
@@ -202,7 +203,7 @@ class AutoSpeechRecognition:
 def load_asr_data(asr_dir: Union[str,Path]) -> Dict:
     """
     解析ASR识别结果文件
-    返回格式: [{"key": "文件名", "text": "识别文本"}, ...]
+    返回格式: {"language": "zh", "results": [{"key": "文件名", "text": "识别文本"}, ...]}
     """
     result = {}
     asr_file = Path(asr_dir) / 'output.json'
@@ -251,7 +252,6 @@ def batch_asr(language, file_list: List[str], output_dir: str):
                     }) 
 
         output_data = {
-            "version": "v2",
             "language": language,
             "results": combined_results            
         }

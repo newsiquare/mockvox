@@ -217,7 +217,7 @@ async def start_train(
 
         # 记录任务提交日志
         BotLogger.info(
-            f"{i18n("训练任务已进入Celery处理队列")} \n"
+            f"{i18n('训练任务已进入Celery处理队列')} \n"
             f"task id: {task.id} \n"
             f"model id: {model_id}"
         )

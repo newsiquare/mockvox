@@ -197,7 +197,7 @@ async def start_train(
     response_description=i18n("返回任务ID"),
     tags=[i18n("模型训练")]
 )
-async def start_train(
+async def resume(
     model_id: str = Form(..., description=i18n("模型ID (调用 /train 返回的模型ID)")),
     epochs_sovits: int = Form(10, description=i18n("SoVITs訓練輪次")),
     epochs_gpt: int = Form(10, description=i18n("GPT训练轮次")),
@@ -218,12 +218,13 @@ async def start_train(
         # 记录任务提交日志
         BotLogger.info(
             f"{i18n('训练任务已进入Celery处理队列')} \n"
-            f"task id: {task.id} \n"
-            f"model id: {model_id}"
+            f"task_id: {task.id} \n"
+            f"model_id: {model_id}"
         )
 
         return {
             "message": i18n("训练任务已进入Celery处理队列"),
+            "model_id": model_id,
             "task_id": task.id
         }
 

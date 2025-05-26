@@ -60,6 +60,7 @@ def handle_upload(args):
             batch_asr(args.language, sliced_files, asr_path)
 
         MockVoxLogger.info(f"{i18n('ASR完成. 结果已保存在')}: {os.path.join(asr_path, 'output.json')}")
+        MockVoxLogger.info(f"File ID: {stem}")
 
     except Exception as e:
         MockVoxLogger.error(
@@ -113,7 +114,7 @@ def handle_inference(args):
             if result_list:
                 last_sampling_rate, last_audio_data = result_list[-1]
                 sf.write(outputname, last_audio_data, int(last_sampling_rate))
-                MockVoxLogger.info(f"Audio saved in {outputname},task_id={timestamp}")
+                MockVoxLogger.info(f"Audio saved in {outputname}")
     except Exception as e:
         MockVoxLogger.error(
             f"{i18n('推理过程错误')}: {args.modelID} | Traceback :\n{traceback.format_exc()}"

@@ -68,7 +68,7 @@ class ConditionalFormatter(logging.Formatter):
 os.makedirs(LOG_PATH, exist_ok=True)
 log_file = os.path.join(LOG_PATH, "mockvox.log")
 
-MockVoxLogger = logging.getLogger("MockVoxLog")
+MockVoxLogger = logging.getLogger("MockVox")
 MockVoxLogger.setLevel(logging.INFO)
 
 if not MockVoxLogger.handlers:

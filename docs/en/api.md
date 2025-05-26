@@ -60,10 +60,10 @@ graph TD
 
 Parameters:
 
-| Parameter | Type | Description |
-|------|------|-----|
-| file | File | WAV/MP3/FLAC formats |
-| language | String | Language code (default: zh, supported: zh/can/en/ja/ko) |
+| Parameter | Type | Description | Default | Required |
+|------|------|-----|-----|-----|
+| file | File | WAV/MP3/FLAC formats | - | Yes |
+| language | String | Language code (supported: zh/can/en/ja/ko) | zh | No |
 
 Response example:
 
@@ -84,10 +84,10 @@ Response example:
 
 Parameters:
 
-| Parameter | Type | Description |
-|------|------|-----|
-| file_id | String | File ID from /upload |
-| results | List | Corrected ASR outputs |
+| Parameter | Type | Description | Required |
+|------|------|-----|-----|
+| file_id | String | File ID from /upload | Yes |
+| results | List | Corrected ASR outputs | Yes |
 
 Request format:
 
@@ -107,13 +107,13 @@ Request format:
 
 Parameters：
 
-| Parameter | Type | Description |
-|------|------|-----|
-| file_id | String | File ID from /upload |
-| epochs_sovits | Integer | SoVITS training epochs |
-| epochs_gpt | Integer | GPT training epochs |
-| version | String | Model version (v2/v4, default: v4) |
-| denoised | Bool | Use denoised audio (default: True) |
+| Parameter | Type | Description | Default| Required |
+|------|------|-----|-----|-----|
+| file_id | String | File ID from /upload | - | Yes |
+| epochs_sovits | Integer | SoVITS training epochs | 1 | No |
+| epochs_gpt | Integer | GPT training epochs | 1 | No |
+| version | String | Model version (v2/v4) | v4 | No
+| denoised | Bool | Use denoised audio | True | No |
 
 Response example:
 
@@ -131,11 +131,11 @@ Response example:
 
 Parameters:
 
-| Parameter      | Type    | Description |
-|----------------|---------|-------------|
-| model_id       | String  | Model ID from /train |
-| epochs_sovits  | Integer | SoVITS training epochs |
-| epochs_gpt     | Integer | GPT training epochs |
+| Parameter      | Type    | Description | Default | Required |
+|----------------|---------|-------------|-------|----------|
+| model_id       | String  | Model ID from /train | - | Yes |
+| epochs_sovits  | Integer | SoVITS training epochs | 2 | No |
+| epochs_gpt     | Integer | GPT training epochs | 2 | No |
 
 ### 5. Upload Reference Audio
 
@@ -161,19 +161,20 @@ Response example:
 
 Parameters:
 
-| Parameter | Type | Default | Description |
-|------|------|-----|-----|
-| model_id | String | - | Model ID from /train |
-| ref_audio_file_id | String | - | Reference audio ID from /uploadRef |
-| ref_text | String | - | Text of reference audio |
-| ref_language | String | zh | Language code (zh/can/en/ja/ko) |
-| target_text | String | - | Target synthesis text |
-| target_language | String | zh | Target language code |
-| top_p | Float | 1 | Top-p sampling |
-| temperature | Float | 1 | Sampling temperature |
-| speed | Float | 1 | Speech speed |
+| Parameter | Type | Description | Default | Required |
+|------|------|-----|-----|-----|
+| model_id | String | Model ID from /train | - | Yes |
+| ref_audio_file_id | String | Reference audio ID from /uploadRef | - | Yes |
+| ref_text | String | Text of reference audio | - | Yes |
+| ref_language | String | Language code (zh/can/en/ja/ko) | zh | No |
+| target_text | String | Target synthesis text | - | Yes |
+| target_language | String | Target language code | zh | No |
+| top_p | Float | Top-p sampling | 1 | No |
+| top_k | Integer | Top-k sampling | 15 | No |
+| temperature | Float | Sampling temperature | 1 | No |
+| speed | Float | Speech speed | 1 | No |
 
-Language codes: See [CLI Guide](./cli.md)
+Target language codes: See [CLI Guide](./cli.md)
 
 Response example:
 

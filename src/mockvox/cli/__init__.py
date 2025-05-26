@@ -198,16 +198,16 @@ def main():
     parser_train.add_argument('--no-denoise', dest='denoise', action='store_false', 
                                help='Disable denoise processing (default: enable denoise).')
     parser_train.set_defaults(denoise=True)
-    parser_train.add_argument('--epochs_sovits', type=int, default=10, help='Train epochs of SoVITS (default:10).')
-    parser_train.add_argument('--epochs_gpt', type=int, default=10, help='Train epochs of GPT (default:10).')
+    parser_train.add_argument('--epochs_sovits', type=int, default=1, help='Train epochs of SoVITS (default:1).')
+    parser_train.add_argument('--epochs_gpt', type=int, default=1, help='Train epochs of GPT (default:1).')
     parser_train.add_argument('--version', type=str, default='v4', help='Default version is v4.')
     parser_train.set_defaults(func=handle_train)
 
     # resume 子命令
     parser_resume = subparsers.add_parser('resume', help='Resume train specified model id.')
     parser_resume.add_argument('modelID', type=str, help='Returned model id from train.')
-    parser_resume.add_argument('--epochs_sovits', type=int, default=10, help='Train epochs of SoVITS (default:10).')
-    parser_resume.add_argument('--epochs_gpt', type=int, default=10, help='Train epochs of GPT (default:10).')
+    parser_resume.add_argument('--epochs_sovits', type=int, default=2, help='Train epochs of SoVITS (default:2).')
+    parser_resume.add_argument('--epochs_gpt', type=int, default=2, help='Train epochs of GPT (default:2).')
     parser_resume.set_defaults(func=handle_resume)
 
     # info 子命令

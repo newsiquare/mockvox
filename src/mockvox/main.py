@@ -145,8 +145,8 @@ async def asr_revision(
 )
 async def start_train(
     file_id: str = Form(..., description=i18n("文件ID (调用 /upload 上传后返回的文件ID)")),
-    epochs_sovits: int = Form(10, description=i18n("SoVITs訓練輪次")),
-    epochs_gpt: int = Form(10, description=i18n("GPT训练轮次")),
+    epochs_sovits: int = Form(1, description=i18n("SoVITs訓練輪次")),
+    epochs_gpt: int = Form(1, description=i18n("GPT训练轮次")),
     version: str = Form('v4', description=i18n("版本")),
     denoised: bool = Form(True, description=i18n("是否已降噪")),
     config: str = Form("{}", description=i18n("JSON 格式的配置参数"))
@@ -199,8 +199,8 @@ async def start_train(
 )
 async def resume(
     model_id: str = Form(..., description=i18n("模型ID (调用 /train 返回的模型ID)")),
-    epochs_sovits: int = Form(10, description=i18n("SoVITs訓練輪次")),
-    epochs_gpt: int = Form(10, description=i18n("GPT训练轮次")),
+    epochs_sovits: int = Form(2, description=i18n("SoVITs訓練輪次")),
+    epochs_gpt: int = Form(2, description=i18n("GPT训练轮次")),
     config: str = Form("{}", description=i18n("JSON 格式的配置参数"))
 ):
     try:

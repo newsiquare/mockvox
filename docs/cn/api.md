@@ -60,10 +60,10 @@ graph TD
 
 参数：
 
-| 参数 | 类型 | 说明 |
-|------|------|-----|
-| file | File | 支持 WAV/MP3/FLAC 格式 |
-| language | String | 语言(默认zh, 支持zh/can/en/ja/ko) |
+| 参数 | 类型 | 说明 | 默认值 | 必填 |
+|------|------|-----|-----|-----|
+| file | File | 支持 WAV/MP3/FLAC 格式 | - | 是 |
+| language | String | 语言(支持zh/can/en/ja/ko) | zh | 否 |
 
 响应示例：
 
@@ -84,10 +84,10 @@ graph TD
 
 参数：
 
-| 参数 | 类型 | 说明 |
-|------|------|-----|
-| file_id | String | /upload 返回的文件ID |
-| results | List | ASR校对结果 |
+| 参数 | 类型 | 说明 | 必填 |
+|------|------|-----|-----|
+| file_id | String | /upload 返回的文件ID | 是 |
+| results | List | ASR校对结果 | 是 |
 
 请求格式：
 
@@ -107,13 +107,13 @@ graph TD
 
 训练参数：
 
-| 参数 | 类型 | 说明 |
-|------|------|-----|
-| file_id | String | /upload 返回的文件ID |
-| epochs_sovits | Integer | SoVITS训练轮次 |
-| epochs_gpt | Integer | GPT训练轮次 |
-| version | String | 模型版本(支持v2/v4), 默认v4 |
-| denoised | Bool | 是否已降噪, 默认True |
+| 参数 | 类型 | 说明 | 默认值 | 必填 |
+|------|------|-----|-----|-----|
+| file_id | String | /upload 返回的文件ID | - | 是 |
+| epochs_sovits | Integer | SoVITS训练轮次 | 1 | 否 |
+| epochs_gpt | Integer | GPT训练轮次 | 1 | 否 |
+| version | String | 模型版本(支持v2/v4) | v4 | 否 |
+| denoised | Bool | 是否已降噪 | True | 否 |
 
 响应示例：
 
@@ -131,11 +131,11 @@ graph TD
 
 训练参数：
 
-| 参数 | 类型 | 说明 |
-|------|------|-----|
-| model_id | String | /train 返回的模型ID |
-| epochs_sovits | Integer | SoVITS训练轮次 |
-| epochs_gpt | Integer | GPT训练轮次 |
+| 参数 | 类型 | 说明 | 默认值 | 必填 |
+|------|------|-----|-----|-----|
+| model_id | String | /train 返回的模型ID | - | 是 |
+| epochs_sovits | Integer | SoVITS训练轮次 | 2 | 否 |
+| epochs_gpt | Integer | GPT训练轮次 | 2 | 否 |
 
 ### 5. 上传参考语音
 
@@ -161,17 +161,18 @@ graph TD
 
 参数：
 
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|-----|-----|
-| model_id | String | - | /train 返回的模型ID |
-| ref_audio_file_id | String | - | /uploadRef 返回的参考语音文件ID |
-| ref_text | String | - | 参考语音的文本 |
-| ref_language | String | zh | 参考语音的语言(zh/can/en/ja/ko) |
-| target_text | String | - | 待合成的目标文本 |
-| target_language | String | zh | 目标文本的语言编码 |
-| top_p | Float | 1 | top_p |
-| temperature | Float | 1 | temperature |
-| speed | Float | 1 | 语速 |
+| 参数 | 类型 | 说明 | 默认值 | 必填 |
+|------|------|-----|-----|-----|
+| model_id | String | /train 返回的模型ID | - | 是 |
+| ref_audio_file_id | String | /uploadRef 返回的参考语音文件ID | - | 是 |
+| ref_text | String | 参考语音的文本 | - | 是 |
+| ref_language | String | 参考语音的语言(zh/can/en/ja/ko) | zh | 否 |
+| target_text | String | 待合成的目标文本 | - | 是 |
+| target_language | String | 目标文本的语言编码 | zh | 否 |
+| top_p | Float | top_p | 1 | 否 |
+| top_k | Integer | top_k | 15 | 否 |
+| temperature | Float | temperature | 1 | 否 |
+| speed | Float | 语速 | 1 | 否 |
 
 目标文本语言编码参见 [《命令行用户指南》](./cli.md)
 

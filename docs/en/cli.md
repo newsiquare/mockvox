@@ -68,8 +68,8 @@ mockvox train [OPTIONS] FILE_ID # File ID from upload response
 | Parameter              | Description                          | Default | Required |
 |------------------------|--------------------------------------|---------|----------|
 | `FILE_ID`              | Identifier from upload operation     | -       | Yes      |
-| `--epochs_sovits EPOCH`| Training epochs for SoVITS model     | 10      | No       |
-| `--epochs_gpt EPOCH`   | Training epochs for GPT model        | 10      | No       |
+| `--epochs_sovits EPOCH`| Training epochs for SoVITS model     | 1      | No       |
+| `--epochs_gpt EPOCH`   | Training epochs for GPT model        | 1      | No       |
 | `--no-denoise`         | Use non-denoised audio               | Denoised| No       |
 
 **Example**:

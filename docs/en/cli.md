@@ -134,8 +134,8 @@ mockvox resume [options] ModelID
 | Parameter             | Description                          | Default | Required |
 |-----------------------|--------------------------------------|---------|----------|
 | `MODEL_ID`            | Model ID from training               | -       | Yes      |
-| `--epochs_sovits EPOCH`| Training epochs for SoVITS model     | 10      | No       |
-| `--epochs_gpt EPOCH`   | Training epochs for GPT model        | 10      | No       |
+| `--epochs_sovits EPOCH`| Training epochs for SoVITS model     | 2      | No       |
+| `--epochs_gpt EPOCH`   | Training epochs for GPT model        | 2      | No       |
 
 **​​Example**​​:
 

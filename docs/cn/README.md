@@ -37,7 +37,7 @@
 ### 克隆本项目
 
 ```bash
-git clone github.com.cn/hotpot/mockvox.git
+git clone https://github.com.cn/hotpot/mockvox.git
 cd mockvox
 ```
 

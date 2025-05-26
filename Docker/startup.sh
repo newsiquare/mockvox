@@ -42,5 +42,5 @@ if [ "$REDIS_PORT" != ""]; then
 	sed -i '/^REDIS_PORT=/d' .env 2>/dev/null
 	echo "REDIS_PORT=$REDIS_PORT" >> .env
 
-nohup celery -A src.bot.worker.worker worker --loglevel=info --pool=prefork --concurrency=1 > log/celery.log 2>&1 &
-nohup python src/bot/main.py > log/main.log 2>&1 & 
+nohup celery -A src.mockvox.worker.worker worker --loglevel=info --pool=prefork --concurrency=1 > log/celery.log 2>&1 &
+nohup python src/mockvox/main.py > log/main.log 2>&1 & 

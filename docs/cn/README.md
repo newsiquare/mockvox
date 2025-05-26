@@ -37,8 +37,8 @@
 ### 克隆本项目
 
 ```bash
-git clone git@gitlab.datainside.com.cn:fakevoi/bot.git
-cd bot
+git clone github.com.cn/hotpot/mockvox.git
+cd mockvox
 ```
 
 ---
@@ -51,8 +51,8 @@ cd bot
 
 ```bash
 🐍 创建 Python 虚拟环境
-conda create -n bot python=3.11 -y
-conda activate bot
+conda create -n mockvox python=3.11 -y
+conda activate mockvox
 
 📦 安装依赖
 pip install -e . 
@@ -109,10 +109,10 @@ chmod +x startup_redis.sh && ./startup_redis.sh
 chmod +x check_redis.sh && ./check_redis.sh  # ✅ 状态检查
 
 ⚙️ Celery 工作节点
-nohup celery -A src.bot.worker.worker worker --loglevel=info --pool=prefork --concurrency=1 &
+nohup celery -A src.mockvox.worker.worker worker --loglevel=info --pool=prefork --concurrency=1 &
 
 🌐 Web 服务
-nohup python src/bot/main.py &
+nohup python src/mockvox/main.py &
 ```
 
 API调用参见: [《API用户指南》](./api.md)

@@ -37,8 +37,8 @@ Adapted from [GPT_SoVITS](https://github.com/RVC-Boss/GPT-SoVITS), it maintains 
 ### Clone Repository
 
 ```bash
-git clone git@gitlab.datainside.com.cn:fakevoi/bot.git
-cd bot
+git clone github.com.cn/hotpot/mockvox.git
+cd mockvox
 ```
 
 ---
@@ -51,8 +51,8 @@ cd bot
 
 ```bash
 🐍 Create Python virtual environment
-conda create -n bot python=3.11 -y
-conda activate bot
+conda create -n mockvox python=3.11 -y
+conda activate mockvox
 
 📦 Install dependencies
 pip install -e . 
@@ -109,10 +109,10 @@ chmod +x startup_redis.sh && ./startup_redis.sh
 chmod +x check_redis.sh && ./check_redis.sh  # ✅ Status check
 
 ⚙️ Celery Worker Node
-nohup celery -A src.bot.worker.worker worker --loglevel=info --pool=prefork --concurrency=1 &
+nohup celery -A src.mockvox.worker.worker worker --loglevel=info --pool=prefork --concurrency=1 &
 
 🌐 Web Service
-nohup python src/bot/main.py &
+nohup python src/mockvox/main.py &
 ```
 
 For API usage details, refer to the [API User Guide](./docs/en/api.md).

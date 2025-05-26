@@ -24,4 +24,4 @@ VOLUME /mockvox/pretrained
 
 EXPOSE 5000
 
-CMD ["python", "/mockvox/src/bot/main.py"]
+CMD ["python", "/mockvox/src/mockvox/main.py"]

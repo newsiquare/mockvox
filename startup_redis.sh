@@ -40,7 +40,7 @@ load_env() {
 
 # 清理旧容器
 cleanup() {
-  docker rm -f bot-redis >/dev/null 2>&1 || true
+  docker rm -f mockvox-redis >/dev/null 2>&1 || true
 }
 
 main() {
@@ -55,7 +55,7 @@ main() {
 
   # 运行Docker容器
   docker run -d \
-    --name bot-redis \
+    --name mockvox-redis \
     -p "${REDIS_PORT:-6380}:${REDIS_PORT:-6380}" \
     -v "$(pwd)/$REDIS_DATA_PATH:/data" \
     -v "$(pwd)/$REDIS_CONF_TEMPLATE:/app/redis.conf.template:ro" \
@@ -68,7 +68,7 @@ main() {
 
   echo "Redis服务已启动!"
   echo "连接命令:"
-  echo "docker exec -it bot-redis redis-cli -h 127.0.0.1 -p ${REDIS_PORT} -a $REDIS_PASSWORD"
+  echo "docker exec -it mockvox-redis redis-cli -h 127.0.0.1 -p ${REDIS_PORT} -a $REDIS_PASSWORD"
 }
 
 main "$@"

@@ -4,14 +4,14 @@ build-backend = "setuptools.build_meta"
 
 # Project settings -----------------------------------------------------------------------------------------------------
 [project]
-name = "bot"
+name = "mockvox"
 dynamic = ["version"]
 description = ""
 authors = [{name = "杜荣政", email = "drz@easyman.com.cn"}]
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
-keywords = ["bot", ""]
+keywords = ["mockvox", "TTS"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -70,7 +70,7 @@ docs = [
 ]
 
 [project.scripts]
-mockvoi = "bot.cli:main"
+mockvox = "mockvox.cli:main"
 
 # Tools settings -------------------------------------------------------------------------------------------------------
 [[tool.poetry.source]]
@@ -83,7 +83,7 @@ packages = { find = { where = ["src"], include = ["*"] } }
 package-dir = {"" = "src"}
 
 [tool.setuptools.dynamic]
-version = { attr = "bot.__version__" }
+version = { attr = "mockvox.__version__" }
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

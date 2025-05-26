@@ -174,6 +174,7 @@ class Inferencer:
 
 
     def clean_text_inf(self,text, language):
+        language = language.replace("all_", "")
         phones, word2ph, norm_text = self.clean_text(text, language)
         phones = Normalizer.cleaned_text_to_sequence(phones)
         return phones, word2ph, norm_text
@@ -189,36 +190,36 @@ class Inferencer:
         ("^", "zh", "SP3"),
         # ('@', 'zh', "SP4")#不搞鬼畜了，和第二版保持一致吧
         ]
+        normalizer = nl.Normalizer(language)
         for special_s, special_l, target_symbol in special:
             if special_s in text and language == special_l:
-                return self.clean_special(text, special_s, target_symbol)
-        chinesen = chinese.ChineseNormalizer()
-        norm_text = chinesen.do_normalize(text)
+                return self.clean_special(text, special_s, target_symbol, normalizer)
+
+        norm_text = normalizer.do_normalize(text)
         if language == "zh" or language=="yue":
-            phones, word2ph = chinesen.g2p(norm_text)
+            phones, word2ph = normalizer.g2p(norm_text)
             assert len(phones) == sum(word2ph)
             assert len(norm_text) == len(word2ph)
         elif language == "en":
-            phones = chinesen.g2p(norm_text)
+            phones = normalizer.g2p(norm_text)
             if len(phones) < 4:
                 phones = [','] + phones
             word2ph = None
         else:
-            phones = chinesen.g2p(norm_text)
+            phones = normalizer.g2p(norm_text)
             word2ph = None
         phones = ['UNK' if ph not in symbols else ph for ph in phones]
         return phones, word2ph, norm_text
 
 
-    def clean_special(self, text, special_s, target_symbol):
+    def clean_special(self, text, special_s, target_symbol, normalizer):
         
         """
         特殊静音段sp符号处理
         """
-        chinesen = chinese.ChineseNormalizer()
         text = text.replace(special_s, ",")
-        norm_text = chinesen.do_normalize(text)
-        phones = chinesen.g2p(norm_text)
+        norm_text = normalizer.do_normalize(text)
+        phones = normalizer.g2p(norm_text)
         new_ph = []
         for ph in phones[0]:
             assert ph in symbols
@@ -256,29 +257,64 @@ class Inferencer:
 
 
     def get_phones_and_bert(self, text,language,final=False):
-        
-        language = language.replace("all_","")
-        formattext = text
-        while "  " in formattext:
-            formattext = formattext.replace("  ", " ")
-        if language == "zh":
-            if re.search(r'[A-Za-z]', formattext):
-                formattext = re.sub(r'[a-z]', lambda x: x.group(0).upper(), formattext)
-                formattext = chinese.mix_text_normalize(formattext)
-                return self.get_phones_and_bert(formattext,"zh")
+
+        if language in {"en", "all_zh", "all_ja", "all_ko", "all_can"}:
+            formattext = text
+            while "  " in formattext:
+                formattext = formattext.replace("  ", " ")
+            normalizer = nl.Normalizer(language.replace("all_", ""))
+            if language == "all_zh":
+                if re.search(r"[A-Za-z]", formattext):
+                    formattext = re.sub(r"[a-z]", lambda x: x.group(0).upper(), formattext)
+                    formattext = normalizer.do_normalize(formattext)
+                    return self.get_phones_and_bert(formattext, "zh")
+                else:
+                    phones, word2ph, norm_text = self.clean_text_inf(formattext, language)
+                    bert = self.get_bert_feature(norm_text, word2ph).to(self.device)
+            elif language == "all_can" and re.search(r"[A-Za-z]", formattext):
+                formattext = re.sub(r"[a-z]", lambda x: x.group(0).upper(), formattext)
+                formattext = normalizer.do_normalize(formattext)
+                return self.get_phones_and_bert(formattext, "can")
             else:
                 phones, word2ph, norm_text = self.clean_text_inf(formattext, language)
-                bert = self.get_bert_feature(norm_text, word2ph).to(self.device)
-        elif language == "yue" and re.search(r'[A-Za-z]', formattext):
-                formattext = re.sub(r'[a-z]', lambda x: x.group(0).upper(), formattext)
-                formattext = chinese.mix_text_normalize(formattext)
-                return self.get_phones_and_bert(formattext,"yue")
-        else:
-            phones, word2ph, norm_text = self.clean_text_inf(formattext, language)
-            bert = torch.zeros(
-                (1024, len(phones)),
-                dtype=torch.float16,
-            ).to(self.device)
+                bert = torch.zeros(
+                    (1024, len(phones)),
+                    dtype=torch.float16,
+                ).to(self.device)
+        elif language in {"zh", "ja", "ko", "can", "auto", "auto_can"}:
+            textlist = []
+            langlist = []
+            if language == "auto":
+                for tmp in LangSegmenter.getTexts(text):
+                    langlist.append(tmp["lang"])
+                    textlist.append(tmp["text"])
+            elif language == "auto_can":
+                for tmp in LangSegmenter.getTexts(text):
+                    if tmp["lang"] == "zh":
+                        tmp["lang"] = "can"
+                    langlist.append(tmp["lang"])
+                    textlist.append(tmp["text"])
+            else:
+                for tmp in LangSegmenter.getTexts(text):
+                    if tmp["lang"] == "en":
+                        langlist.append(tmp["lang"])
+                    else:
+                        # 因无法区别中日韩文汉字,以用户输入为准
+                        langlist.append(language)
+                    textlist.append(tmp["text"])
+            phones_list = []
+            bert_list = []
+            norm_text_list = []
+            for i in range(len(textlist)):
+                lang = langlist[i]
+                phones, word2ph, norm_text = self.clean_text_inf(textlist[i], lang)
+                bert = self.get_bert_inf(phones, word2ph, norm_text, lang)
+                phones_list.append(phones)
+                norm_text_list.append(norm_text)
+                bert_list.append(bert)
+            bert = torch.cat(bert_list, dim=1)
+            phones = sum(phones_list, [])
+            norm_text = "".join(norm_text_list)
         if not final and len(phones) < 6:
             return self.get_phones_and_bert("." + text,language,final=True)
 
@@ -338,20 +374,37 @@ class Inferencer:
 
 
     def inference(self,ref_wav_path, prompt_text, prompt_language, text, text_language, how_to_cut=i18n("凑四句一切"), top_k=15, top_p=1, temperature=1, ref_free = False,speed=1,inp_refs=None):
-        if ref_wav_path:pass
+        if ref_wav_path:
+            pass
         else:
             BotLogger.error(i18n('请上传参考音频'))
             return
-        if text:pass
+        if text:
+            pass
         else:
             BotLogger.error(i18n('请填入推理文本'))
             return
-        if "zh" not in prompt_language or "zh" not in text_language:
+        t = []
+        if prompt_text is None or len(prompt_text) == 0:
+            ref_free = True
+        t0 = ttime()
+
+        dict_language = [
+            "all_zh",  # 全部按中文识别
+            "en",  # 全部按英文识别#######不变
+            "all_ja",  # 全部按日文识别
+            "all_can",  # 全部按中文识别
+            "all_ko",  # 全部按韩文识别
+            "zh",  # 按中英混合识别####不变
+            "ja",  # 按日英混合识别####不变
+            "can",  # 按粤英混合识别####不变
+            "ko",  # 按韩英混合识别####不变
+            "auto",  # 多语种启动切分识别语种
+            "auto_can",  # 多语种启动切分识别语种
+        ]
+        if prompt_language not in dict_language or text_language not in dict_language:
             BotLogger.error(i18n('语言不存在'))
             return
-        t = []
-        t0 = ttime()
-        
         if not ref_free:
             prompt_text = prompt_text.strip("\n")
             if prompt_text[-1] not in self.splits:
@@ -402,7 +455,8 @@ class Inferencer:
         texts = self.process_text(texts)
         texts = self.merge_short_text_in_array(texts, 5)
         audio_opt = []
-        phones1,bert1,norm_text1=self.get_phones_and_bert(prompt_text, prompt_language)
+        if not ref_free:
+            phones1,bert1,norm_text1=self.get_phones_and_bert(prompt_text, prompt_language)
         for i_text,text in enumerate(texts):
             # 解决输入目标文本的空行导致报错的问题
             if (len(text.strip()) == 0):
@@ -411,9 +465,13 @@ class Inferencer:
             BotLogger.info(i18n("实际输入的目标文本(每句):")+text)
             phones2,bert2,norm_text2=self.get_phones_and_bert(text, text_language)
             BotLogger.info(i18n("前端处理后的文本(每句):")+norm_text2)
-            bert = torch.cat([bert1, bert2], 1)
-            all_phoneme_ids = torch.LongTensor(phones1+phones2).to(self.device).unsqueeze(0)
+            if not ref_free:
 
+                bert = torch.cat([bert1, bert2], 1)
+                all_phoneme_ids = torch.LongTensor(phones1+phones2).to(self.device).unsqueeze(0)
+            else:
+                bert = bert2
+                all_phoneme_ids = torch.LongTensor(phones2).to(device).unsqueeze(0)
             bert = bert.to(self.device).unsqueeze(0)
             all_phoneme_len = torch.tensor([all_phoneme_ids.shape[-1]]).to(self.device)
 
@@ -433,14 +491,15 @@ class Inferencer:
                 pred_semantic = pred_semantic[:, -idx:].unsqueeze(0)
             t3 = ttime()
             refers=[]
-            if(inp_refs):
+            if inp_refs:
                 for path in inp_refs:
                     try:
                         refer = self.get_spepc(self.hps, path.name).to(torch.float16).to(self.device)
                         refers.append(refer)
                     except:
                         traceback.print_exc()
-            if(len(refers)==0):refers = [self.get_spepc(self.hps, ref_wav_path).to(torch.float16).to(self.device)]
+            if(len(refers)==0):
+                refers = [self.get_spepc(self.hps, ref_wav_path).to(torch.float16).to(self.device)]
             audio = self.vq_model.decode(pred_semantic, torch.LongTensor(phones2).to(self.device).unsqueeze(0), refers,speed=speed)[0, 0]
             
             max_audio=torch.abs(audio).max()#简单防止16bit爆音

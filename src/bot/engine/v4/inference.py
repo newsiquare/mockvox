@@ -426,8 +426,7 @@ class Inferencer:
             BotLogger.error(i18n('请填入推理文本'))
             return
         t = []
-        if prompt_text is None or len(prompt_text) == 0:
-            ref_free = True
+        ref_free = False
             
         t0 = ttime()
 

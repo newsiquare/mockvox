@@ -14,6 +14,19 @@ MockVox is a voice synthesis & cloning toolkit supporting three core operations:
 
 ---
 
+## Usage Workflow
+
+```mermaid
+graph TD
+    A[Upload Audio File] --> B[ASR Revision]
+    B --> C[Model Training]
+    C --> D[Inference]
+    C -.-> |Optional| G[Resume Training]
+    G -.-> D
+```
+
+---
+
 ## Command Reference
 
 ### 1. 🚀 Upload Voice Sample

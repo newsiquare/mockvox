@@ -109,6 +109,8 @@ nohup celery -A src.bot.worker.worker worker --loglevel=info --pool=prefork --co
 nohup python src/bot/main.py &
 ```
 
+For API usage details, refer to the [API User Guide](./docs/en/api.md).
+
 ### 🐳 Docker Deployment
 
 ```bash

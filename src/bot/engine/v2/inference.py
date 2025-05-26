@@ -7,9 +7,10 @@ from bot.models.v2.SynthesizerTrn import SynthesizerTrn
 from time import time as ttime
 import numpy as np
 import librosa
+from bot.text.LangSegmenter import LangSegmenter
 from bot.models import CNHubert
-from bot.text import chinese
 from bot.text import Normalizer
+from bot.text import normalizer as nl
 from bot.config import PRETRAINED_PATH
 from bot.text import symbols 
 from transformers import AutoTokenizer, AutoModelForMaskedLM

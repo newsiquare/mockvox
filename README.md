@@ -58,7 +58,13 @@ conda activate bot
 pip install -e . 
 ```
 
-#### 2. Install FFmpeg
+#### 2. Copy .env
+
+```bash
+cp .env.sample .env
+```
+
+#### 3. Install FFmpeg
 
 ```bash
 🎬 Ubuntu installation
@@ -66,7 +72,7 @@ sudo apt update && sudo apt install ffmpeg
 ffmpeg -version  # Verify installation
 ```
 
-#### 3. Download Pretrained Models
+#### 4. Download Pretrained Models
 
 ```bash
 🔧 GPT-SoVITS Core Components

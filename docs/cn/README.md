@@ -58,7 +58,13 @@ conda activate bot
 pip install -e . 
 ```
 
-#### 2. 安装 FFmpeg
+#### 2. 复制.env文件
+
+```bash
+cp .env.sample .env
+```
+
+#### 3. 安装 FFmpeg
 
 ```bash
 🎬 Ubuntu 安装脚本
@@ -66,7 +72,7 @@ sudo apt update && sudo apt install ffmpeg
 ffmpeg -version  # 验证安装
 ```
 
-#### 3. 下载预训练模型
+#### 4. 下载预训练模型
 
 ```bash
 🔧 GPT-SoVITS核心组件

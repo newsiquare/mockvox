@@ -97,6 +97,10 @@ mockvox inference [选项] 模型ID 参考音频 提示文本 目标文本
 | `目标文本`          | 待合成的目标文本                      | -      | 是   |
 | `--promptLanguage`      | 参考音频的语言编码(支持 zh/can/en/ja/ko)     | zh   | 否   |
 | `--targetLanguage`      | 目标文本的语言编码                        | zh   | 否   |
+| `--top_p` | Top-p | 1 | 否 |
+| `--top_k` | Top-k | 15 | 否 |
+| `--temperature` | temperature | 1 | 否 |
+| `--speed` | 语速 | 1 | 否 |
 
 **目标文本语言编码**:
 

@@ -96,6 +96,11 @@ mockvox inference [OPTIONS] MODEL_ID REF_AUDIO PROMPT_TEXT TARGET_TEXT
 | `TARGET_TEXT`         | Text to synthesize                   | -       | Yes      |
 | `--promptLanguage LANG`| Language of reference audio (zh/can/en/ja/ko) | zh | No |
 | `--targetLanguage LANG`| Target text language code            | zh  | No       |
+| `--top_p` | Top-p sampling | 1 | No |
+| `--top_k` | Top-k sampling | 15 | No |
+| `--temperature` | Sampling temperature | 1 | No |
+| `--speed` | Speech speed | 1 | No |
+
 
 **Target Language Codes**:
 

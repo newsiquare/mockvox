@@ -104,7 +104,7 @@ def handle_inference(args):
                                     prompt_text=args.promptText, # 参考文本
                                     prompt_language=args.promptLanguage, 
                                     text=args.targetText, # 目标文本
-                                    text_language=args.targetLanguage, top_p=args.topP, temperature=args.temperature, top_k=args.topK, speed=args.speed)
+                                    text_language=args.targetLanguage, top_p=args.top_p, temperature=args.temperature, top_k=args.top_k, speed=args.speed)
         timestamp = str(int(time.time()))
         outputname = reasoning_result_path / Path(timestamp+".WAV")
         if synthesis_result is None:
@@ -191,8 +191,8 @@ def main():
     parser_inference.set_defaults(denoise=True)
     parser_inference.add_argument('--promptLanguage',default='zh', type=str, help='Prompt language.')
     parser_inference.add_argument('--targetLanguage', default='zh',type=str, help='Target Language.')
-    parser_inference.add_argument('--topP', default=1,type=str, help='top_p')
-    parser_inference.add_argument('--topK', default=15,type=str, help="GPT sampling parameters (do not set too low when there is no reference text.) If you don't understand, use the default.")
+    parser_inference.add_argument('--top_p', default=1,type=str, help='top_p')
+    parser_inference.add_argument('--top_k', default=15,type=str, help="GPT sampling parameters (do not set too low when there is no reference text.) If you don't understand, use the default.")
     parser_inference.add_argument('--temperature', default=1,type=str, help='GPT temperature')
     parser_inference.add_argument('--speed', default=1,type=str, help='speed')
     parser_inference.set_defaults(func=handle_inference)

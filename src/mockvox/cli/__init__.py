@@ -97,14 +97,13 @@ def handle_inference(args):
         if version == 'v2':
             inference = InferencerV2(gpt_path, sovits_path)
         else:
-            inference = InferencerV4(gpt_path, sovits_path)
-        
+            inference = InferencerV4(gpt_path, sovits_path) 
         # Synthesize audio
         synthesis_result = inference.inference(ref_wav_path=args.refWavFilePath,# 参考音频 
                                     prompt_text=args.promptText, # 参考文本
                                     prompt_language=args.promptLanguage, 
                                     text=args.targetText, # 目标文本
-                                    text_language=args.targetLanguage, top_p=args.top_p, temperature=args.temperature, top_k=args.top_k, speed=args.speed)
+                                    text_language=args.targetLanguage, top_p=float(args.top_p), temperature=float(args.temperature), top_k=int(args.top_k), speed=float(args.speed))
         timestamp = str(int(time.time()))
         outputname = reasoning_result_path / Path(timestamp+".WAV")
         if synthesis_result is None:

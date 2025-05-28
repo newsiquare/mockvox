@@ -20,27 +20,37 @@ from mockvox.nn.mel import spectrogram_torch
 from mockvox.models.v2.t2s_model import Text2SemanticDecoder
 from io import BytesIO
 from mockvox.models.v4.synthesizer import SynthesizerTrnV3
-from mockvox.models.v2.SynthesizerTrn import Generator
+from mockvox.models.v2.SynthesizerTrn import Generator,SynthesizerTrn
 from peft import LoraConfig, get_peft_model
 from mockvox.nn import mel_spectrogram_torch
 from mockvox.text.LangSegmenter import LangSegmenter
+import traceback
 
 class Inferencer:
+    MODEL_MAPPING = {
+        "zh": "GPT-SoVITS/chinese-roberta-wwm-ext-large",
+        "en": "FacebookAI/roberta-large",
+        "ja": "tohoku-nlp/bert-large-japanese-v2",
+        "ko": "klue/bert-base",
+        "can": "GPT-SoVITS/chinese-roberta-wwm-ext-large"
+        }  
     def __init__(
         self,
         gpt_path: Optional[str] = None,
-        sovits_path: Optional[str] = None
+        sovits_path: Optional[str] = None,
+        version: Optional[str] = None
     ):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         
-        self.splits = {"，", "。", "？", "！", ",", ".", "?", "!", "~", ":", "：", "—", "…", }
-                       
+        
+        self.splits = {"，", "。", "？", "！", ",", ".", "?", "!", "~", ":", "：", "—", "…", }     
         self.punctuation = set(['!', '?', '…', ',', '.', '-'," "])
         self.hz = 50
         self.t2s_model,self.config,self.max_sec = self._change_gpt_weights(gpt_path)
-        self.resample_transform_dict={}
         self.vq_model, self.hps,self.mel_fn_v4 = self._change_sovits_weights(sovits_path)
-        self.hifigan_model = self._init_hifigan()
+        if version=="v4":
+            self.resample_transform_dict={}
+            self.hifigan_model = self._init_hifigan()
 
     def _init_hifigan(self):
         hifigan_model = Generator(
@@ -80,14 +90,21 @@ class Inferencer:
         hps = dict_s2["config"]
         hps = DictToAttrRecursive(hps)
         hps.model.semantic_frame_rate = "25hz"
-        hps.model.version = "v4"
-
-        vq_model = SynthesizerTrnV3(
-            hps.data.filter_length // 2 + 1,
-            hps.train.segment_size // hps.data.hop_length_v4,
-            n_speakers=hps.data.n_speakers,
-            **hps.model
-        )
+        if hps.model.version == "v4":
+            vq_model = SynthesizerTrnV3(
+                hps.data.filter_length // 2 + 1,
+                hps.train.segment_size // hps.data.hop_length_v4,
+                n_speakers=hps.data.n_speakers,
+                **hps.model
+            )
+        else:
+            vq_model = SynthesizerTrn(
+                hps.data.filter_length // 2 + 1,
+                hps.train.segment_size // hps.data.hop_length,
+                n_speakers=hps.data.n_speakers,
+                **hps.model
+            )
+            if_lora_v3=False
         vq_model = vq_model.half().to(self.device)
         vq_model.eval()
         if if_lora_v3 == False:
@@ -262,6 +279,8 @@ class Inferencer:
             if len(phones) < 4:
                 phones = [','] + phones
             word2ph = None
+        elif language=="ja":
+            phones,word2ph = normalizer.g2p(norm_text)
         else:
             phones = normalizer.g2p(norm_text)
             word2ph = None
@@ -284,10 +303,8 @@ class Inferencer:
                 new_ph.append(ph)
         return new_ph, phones[1], norm_text
 
-    def get_bert_feature(self, text, word2ph):
-        bert_path = os.environ.get(
-        "bert_path", os.path.join(PRETRAINED_PATH, 'GPT-SoVITS/chinese-roberta-wwm-ext-large')
-        )
+    def get_bert_feature(self, text, word2ph,language):
+        bert_path = os.path.join(PRETRAINED_PATH,self.MODEL_MAPPING.get(language, "GPT-SoVITS/chinese-roberta-wwm-ext-large"))
         tokenizer = AutoTokenizer.from_pretrained(bert_path)
         bert_model = AutoModelForMaskedLM.from_pretrained(bert_path)
         bert_model = bert_model.half().to(self.device)
@@ -297,7 +314,8 @@ class Inferencer:
                 inputs[i] = inputs[i].to(self.device)
             res = bert_model(**inputs, output_hidden_states=True)
             res = torch.cat(res["hidden_states"][-3:-2], -1)[0].cpu()[1:-1]
-        assert len(word2ph) == len(text)
+        if language == "zh":
+            assert len(word2ph) == len(text)
         phone_level_feature = []
         for i in range(len(word2ph)):
             repeat_feature = res[i].repeat(word2ph[i], 1)
@@ -318,11 +336,14 @@ class Inferencer:
                     return self.get_phones_and_bert(formattext, "zh")
                 else:
                     phones, word2ph, norm_text = self.clean_text_inf(formattext, language)
-                    bert = self.get_bert_feature(norm_text, word2ph).to(self.device)
+                    bert = self.get_bert_feature(norm_text, word2ph,language).to(self.device)
             elif language == "all_can" and re.search(r"[A-Za-z]", formattext):
                 formattext = re.sub(r"[a-z]", lambda x: x.group(0).upper(), formattext)
                 formattext = normalizer.do_normalize(formattext)
                 return self.get_phones_and_bert(formattext, "can")
+            elif language == "all_ja":
+                phones, word2ph, norm_text = self.clean_text_inf(formattext, language)
+                bert = self.get_bert_feature(norm_text, word2ph,language).to(self.device)
             else:
                 phones, word2ph, norm_text = self.clean_text_inf(formattext, language)
                 bert = torch.zeros(
@@ -370,8 +391,8 @@ class Inferencer:
 
     def get_bert_inf(self, phones, word2ph, norm_text, language):
         language=language.replace("all_","")
-        if language == "zh":
-            bert = self.get_bert_feature(norm_text, word2ph).to(self.device)#.to(dtype)
+        if language == "zh" or language == "ja":
+            bert = self.get_bert_feature(norm_text, word2ph,language).to(self.device)#.to(dtype)
         else:
             bert = torch.zeros(
                 (1024, len(phones)),
@@ -405,16 +426,20 @@ class Inferencer:
         if(maxx>1):audio/=min(2,maxx)
         audio_norm = audio
         audio_norm = audio_norm.unsqueeze(0)
+        if hps.model.version == "v4":
+            hot_length = hps.data.hop_length_v4
+        else:
+            hot_length = hps.data.hop_length
         spec = spectrogram_torch(
             audio_norm,
             hps.data.filter_length,
-            hps.data.hop_length_v4,
+            hot_length,
             hps.data.win_length,
             center=False,
         )
         return spec
 
-    def inference(self,ref_wav_path, prompt_text, prompt_language, text, text_language, how_to_cut=i18n("凑四句一切"), top_k=15, top_p=1, temperature=1, ref_free = False,speed=1,if_freeze=False):
+    def inference(self,ref_wav_path, prompt_text, prompt_language, text, text_language, how_to_cut=i18n("凑四句一切"), top_k=15, top_p=1,inp_refs=None, temperature=1, ref_free = False,speed=1,if_freeze=False):
         if ref_wav_path:
             pass
         else:
@@ -426,7 +451,8 @@ class Inferencer:
             MockVoxLogger.error(i18n('请填入推理文本'))
             return
         t = []
-        ref_free = False
+        if prompt_text is None or len(prompt_text) == 0:
+            ref_free = True
             
         t0 = ttime()
 
@@ -459,7 +485,7 @@ class Inferencer:
             int(self.hps.data.sampling_rate * 0.3),
             dtype=np.float16,
         )        
-
+        
         ssl_model = CNHubert()
         ssl_model.eval()
         ssl_model = ssl_model.half().to(self.device)
@@ -501,7 +527,6 @@ class Inferencer:
         audio_opt = []
         if not ref_free:
             phones1,bert1,norm_text1=self.get_phones_and_bert(prompt_text, prompt_language)
-        cache = {}
         for i_text,text in enumerate(texts):
             # 解决输入目标文本的空行导致报错的问题
             if len(text.strip()) == 0:
@@ -521,72 +546,84 @@ class Inferencer:
             all_phoneme_len = torch.tensor([all_phoneme_ids.shape[-1]]).to(self.device)
 
             t2 = ttime()
-            if i_text in cache and if_freeze == True:
-                pred_semantic = cache[i_text]
-            else:
-                with torch.no_grad():
-                    pred_semantic, idx = self.t2s_model.infer_panel(
-                        all_phoneme_ids,
-                        all_phoneme_len,
-                        None if ref_free else prompt,
-                        bert,
-                        # prompt_phone_len=ph_offset,
-                        top_k=top_k,
-                        top_p=top_p,
-                        temperature=temperature,
-                        early_stop_num=self.hz * self.max_sec,
-                    )
-                    pred_semantic = pred_semantic[:, -idx:].unsqueeze(0)
-                    cache[i_text] = pred_semantic
-            t3 = ttime()
-            refer = self.get_spepc(self.hps, ref_wav_path).to(self.device).to(torch.float16)
-            phoneme_ids0 = torch.LongTensor(phones1).to(self.device).unsqueeze(0)
-            phoneme_ids1 = torch.LongTensor(phones2).to(self.device).unsqueeze(0)
-            fea_ref, ge = self.vq_model.decode_encp(prompt.unsqueeze(0), phoneme_ids0, refer)
-            ref_audio, sr = torchaudio.load(ref_wav_path)
-            ref_audio = ref_audio.to(self.device).float()
-            if ref_audio.shape[0] == 2:
-                ref_audio = ref_audio.mean(0).unsqueeze(0)
-            tgt_sr= 32000
-            if sr != tgt_sr:
-                ref_audio = self.resample(ref_audio, sr,tgt_sr)
-            mel2 = self.mel_fn_v4(ref_audio)
-            mel2 = self.norm_spec(mel2)
-            T_min = min(mel2.shape[2], fea_ref.shape[2])
-            mel2 = mel2[:, :, :T_min]
-            fea_ref = fea_ref[:, :, :T_min]
-            Tref= 500
-            Tchunk= 1000
-            if T_min > Tref:
-                mel2 = mel2[:, :, -Tref:]
-                fea_ref = fea_ref[:, :, -Tref:]
-                T_min = Tref
-            chunk_len = Tchunk - T_min
-            mel2 = mel2.to(torch.float16)
-            fea_todo, ge = self.vq_model.decode_encp(pred_semantic, phoneme_ids1, refer, ge, speed)
-            cfm_resss = []
-            idx = 0
-            while 1:
-                fea_todo_chunk = fea_todo[:, :, idx : idx + chunk_len]
-                if fea_todo_chunk.shape[-1] == 0:
-                    break
-                idx += chunk_len
-                fea = torch.cat([fea_ref, fea_todo_chunk], 2).transpose(2, 1)
-                cfm_res = self.vq_model.cfm.inference(
-                    fea, torch.LongTensor([fea.size(1)]).to(fea.device), mel2, 8, inference_cfg_rate=0
+            
+            with torch.no_grad():
+                pred_semantic, idx = self.t2s_model.infer_panel(
+                    all_phoneme_ids,
+                    all_phoneme_len,
+                    None if ref_free else prompt,
+                    bert,
+                    # prompt_phone_len=ph_offset,
+                    top_k=top_k,
+                    top_p=top_p,
+                    temperature=temperature,
+                    early_stop_num=self.hz * self.max_sec,
                 )
-                cfm_res = cfm_res[:, :, mel2.shape[2] :]
-                mel2 = cfm_res[:, :, -T_min:]
-                fea_ref = fea_todo_chunk[:, :, -T_min:]
-                cfm_resss.append(cfm_res)
-            cfm_res = torch.cat(cfm_resss, 2)
-            cfm_res = self.denorm_spec(cfm_res)
-            if self.hifigan_model == None:
-                self._init_hifigan()
-            vocoder_model=self.hifigan_model
-            with torch.inference_mode():
-                wav_gen = vocoder_model(cfm_res)
-                audio = wav_gen[0][0]
+                pred_semantic = pred_semantic[:, -idx:].unsqueeze(0)
+                    
+            t3 = ttime()
+            if self.hps.model.version == "v4":
+                refer = self.get_spepc(self.hps, ref_wav_path).to(self.device).to(torch.float16)
+                phoneme_ids0 = torch.LongTensor(phones1).to(self.device).unsqueeze(0)
+                phoneme_ids1 = torch.LongTensor(phones2).to(self.device).unsqueeze(0)
+                fea_ref, ge = self.vq_model.decode_encp(prompt.unsqueeze(0), phoneme_ids0, refer)
+                ref_audio, sr = torchaudio.load(ref_wav_path)
+                ref_audio = ref_audio.to(self.device).float()
+                if ref_audio.shape[0] == 2:
+                    ref_audio = ref_audio.mean(0).unsqueeze(0)
+                tgt_sr= 32000
+                if sr != tgt_sr:
+                    ref_audio = self.resample(ref_audio, sr,tgt_sr)
+                mel2 = self.mel_fn_v4(ref_audio)
+                mel2 = self.norm_spec(mel2)
+                T_min = min(mel2.shape[2], fea_ref.shape[2])
+                mel2 = mel2[:, :, :T_min]
+                fea_ref = fea_ref[:, :, :T_min]
+                Tref= 500
+                Tchunk= 1000
+                if T_min > Tref:
+                    mel2 = mel2[:, :, -Tref:]
+                    fea_ref = fea_ref[:, :, -Tref:]
+                    T_min = Tref
+                chunk_len = Tchunk - T_min
+                mel2 = mel2.to(torch.float16)
+                fea_todo, ge = self.vq_model.decode_encp(pred_semantic, phoneme_ids1, refer, ge, speed)
+                cfm_resss = []
+                idx = 0
+                while 1:
+                    fea_todo_chunk = fea_todo[:, :, idx : idx + chunk_len]
+                    if fea_todo_chunk.shape[-1] == 0:
+                        break
+                    idx += chunk_len
+                    fea = torch.cat([fea_ref, fea_todo_chunk], 2).transpose(2, 1)
+                    cfm_res = self.vq_model.cfm.inference(
+                        fea, torch.LongTensor([fea.size(1)]).to(fea.device), mel2, 8, inference_cfg_rate=0
+                    )
+                    cfm_res = cfm_res[:, :, mel2.shape[2] :]
+                    mel2 = cfm_res[:, :, -T_min:]
+                    fea_ref = fea_todo_chunk[:, :, -T_min:]
+                    cfm_resss.append(cfm_res)
+                cfm_res = torch.cat(cfm_resss, 2)
+                cfm_res = self.denorm_spec(cfm_res)
+                if self.hifigan_model == None:
+                    self._init_hifigan()
+                vocoder_model=self.hifigan_model
+                with torch.inference_mode():
+                    wav_gen = vocoder_model(cfm_res)
+                    audio = wav_gen[0][0]
+            else:
+                refers=[]
+                if inp_refs:
+                    for path in inp_refs:
+                        try:
+                            refer = self.get_spepc(self.hps, path.name).to(torch.float16).to(self.device)
+                            refers.append(refer)
+                        except:
+                            traceback.print_exc()
+                if(len(refers)==0):
+                    refers = [self.get_spepc(self.hps, ref_wav_path).to(torch.float16).to(self.device)]
+                audio = self.vq_model.decode(pred_semantic, torch.LongTensor(phones2).to(self.device).unsqueeze(0), refers,speed=speed)[0, 0]
+            
             max_audio=torch.abs(audio).max()#简单防止16bit爆音
             if max_audio>1:audio=audio/max_audio
             audio_opt.append(audio)
@@ -596,7 +633,10 @@ class Inferencer:
             t1 = ttime()
         MockVoxLogger.info("%.3f\t%.3f\t%.3f\t%.3f" % (t[0], sum(t[1::3]), sum(t[2::3]), sum(t[3::3])))
         audio_opt = torch.cat(audio_opt, 0)
-        opt_st = 48000
+        if self.hps.model.version == "v4":
+            opt_st = 48000
+        else:
+            opt_st = self.hps.data.sampling_rate
         audio_opt = audio_opt.cpu().detach().numpy()
 
         yield opt_st, (audio_opt* 32767).astype(np.int16)

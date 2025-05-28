@@ -10,8 +10,7 @@ import time
 from mockvox.utils import MockVoxLogger, allowed_file, generate_unique_filename, i18n
 from mockvox.config import get_config, SLICED_ROOT_PATH, DENOISED_ROOT_PATH, ASR_PATH
 from mockvox.engine.v2 import slice_audio, batch_denoise
-from mockvox.engine.v2.inference import Inferencer as InferencerV2
-from mockvox.engine.v4.inference import Inferencer as InferencerV4
+from mockvox.engine.v4.inference import Inferencer
 from mockvox.engine.v2 import batch_asr
 from mockvox.engine import TrainingPipeline, ResumingPipeline, VersionDispatcher
          
@@ -94,10 +93,8 @@ def handle_inference(args):
         gpt_ckpt = torch.load(gpt_path, map_location="cpu")
         version = gpt_ckpt["config"]["model"]["version"]
         MockVoxLogger.info(f"Model Version: {version}")
-        if version == 'v2':
-            inference = InferencerV2(gpt_path, sovits_path)
-        else:
-            inference = InferencerV4(gpt_path, sovits_path) 
+        
+        inference = Inferencer(gpt_path, sovits_path,version) 
         # Synthesize audio
         synthesis_result = inference.inference(ref_wav_path=args.refWavFilePath,# 参考音频 
                                     prompt_text=args.promptText, # 参考文本

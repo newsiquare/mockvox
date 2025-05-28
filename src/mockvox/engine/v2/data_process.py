@@ -13,7 +13,7 @@ import json
 from mockvox.config import PRETRAINED_PATH, PROCESS_PATH, ASR_PATH
 from mockvox.text import Normalizer, symbols
 from mockvox.utils import MockVoxLogger
-from .asr import load_asr_data
+from mockvox.engine.v2.asr import load_asr_data
 
 # 特殊符号处理配置，格式：(原符号，语言，替换符号)
 special = [
@@ -25,7 +25,7 @@ class DataProcessor:
     MODEL_MAPPING = {
         "zh": "GPT-SoVITS/chinese-roberta-wwm-ext-large",
         "en": "FacebookAI/roberta-large",
-        "ja": "tohoku-nlp/bert-base-japanese-v3",
+        "ja": "tohoku-nlp/bert-large-japanese-v2",
         "ko": "klue/bert-base",
         "can": "GPT-SoVITS/chinese-roberta-wwm-ext-large"
     }
@@ -50,9 +50,8 @@ class DataProcessor:
         self.tokenizer = AutoTokenizer.from_pretrained(bert_dir, local_files_only=True)
         self.mlm = AutoModelForMaskedLM.from_pretrained(bert_dir, local_files_only=True)
         self.language = language
-        self.normalizer = Normalizer(language, mixed=False)
+        self.normalizer = Normalizer(language)
 
-        # 设备配置（优先使用GPU）
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.mlm.to(self.device)   
 
@@ -89,8 +88,7 @@ class DataProcessor:
 
         # 加载ASR数据
         asr_data = load_asr_data(asr_dir)
-        lines = asr_data["results"]     
-        
+        lines = asr_data["results"]        
         # 逐条处理数据
         for line in lines:
             try:
@@ -165,7 +163,7 @@ class DataProcessor:
         norm_text = self.normalizer.do_normalize(text)
 
         # 不同语言的分词处理
-        if self.language=="zh" or self.language=="cant":
+        if self.language=="zh" or self.language=="can":
             phones, word2ph = self.normalizer.g2p(norm_text)
             assert len(phones) == sum(word2ph)
             assert len(norm_text) == len(word2ph)
@@ -174,6 +172,9 @@ class DataProcessor:
             if len(phones) < 4:  # 确保最小长度
                 phones = [','] + phones
             word2ph = None
+        elif self.language=="ja":
+            phones,word2ph = self.normalizer.g2p(norm_text)
+            assert len(phones) == sum(word2ph)
         else:
             phones = self.normalizer.g2p(norm_text)
             word2ph = None

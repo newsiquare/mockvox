@@ -21,7 +21,7 @@ from mockvox.utils import (
     i18n,
     generate_unique_filename
 )
-from mockvox.engine.v2 import load_asr_data
+from mockvox.engine.v2 import load_asr_data, DataProcessor, FeatureExtractor
 
 
 class VersionDispatcher:
@@ -38,8 +38,6 @@ class VersionDispatcher:
         """创建版本相关组件"""
         module = cls.get_module(version)
         return (
-            module.DataProcessor,
-            module.FeatureExtractor,
             module.TextToSemantic,
             module.SoVITsTrainer,
             module.GPTTrainer
@@ -52,8 +50,7 @@ class TrainingPipeline:
         self.modelID = Path(generate_unique_filename(args.fileID)).stem
         
         # 初始化版本相关组件
-        (self.DataProcessor, self.FeatureExtractor, 
-         self.TextToSemantic, self.SoVITsTrainer, 
+        (self.TextToSemantic, self.SoVITsTrainer, 
          self.GPTTrainer) = components
         
         # 公共路径
@@ -74,10 +71,10 @@ class TrainingPipeline:
         asr_file = os.path.join(ASR_PATH, self.args.fileID)
         asr_data = load_asr_data(asr_file)
         
-        processor = self.DataProcessor(language=asr_data['language'])
+        processor = DataProcessor(language=asr_data['language'])
         processor.process(self.args.fileID, self.modelID)
         
-        extractor = self.FeatureExtractor()
+        extractor = FeatureExtractor()
         extractor.extract(self.args.fileID, self.modelID, 
                          denoised=self.args.denoise)
         
@@ -142,8 +139,7 @@ class ResumingPipeline:
         self.modelID = args.modelID
         
         # 初始化版本相关组件
-        (self.DataProcessor, self.FeatureExtractor, 
-         self.TextToSemantic, self.SoVITsTrainer, 
+        (self.TextToSemantic, self.SoVITsTrainer, 
          self.GPTTrainer) = components
         
         # 公共路径

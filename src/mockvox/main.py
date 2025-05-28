@@ -263,7 +263,6 @@ async def start_inference(
         gpt_ckpt = torch.load(gpt_path, map_location="cpu")
         version = gpt_ckpt["config"]["model"]["version"]
         MockVoxLogger.info(f"Model Version: {version}")
-
         sovits_path = Path(WEIGHTS_PATH) / model_id / SOVITS_HALF_WEIGHTS_FILE
         if not sovits_path.exists():
             MockVoxLogger.error(i18n("路径错误! 找不到SOVITS模型"))
@@ -276,33 +275,29 @@ async def start_inference(
             return
         # 发送异步任务
         task = inference_task.delay(
-            gpt_path,                   
-            sovits_path , 
-            os.path.join(Path(REF_AUDIO_PATH),filename) , 
-            ref_text , 
-            ref_language, 
-            target_text , 
-            target_language ,
-            top_p , 
-            top_k , 
-            temperature , 
-            speed,
-            version
+            gpt_model_path=str(gpt_path),                   
+            soVITS_model_path=str(sovits_path) , 
+            ref_audio_path=str(Path(REF_AUDIO_PATH)/filename), 
+            ref_text=ref_text , 
+            ref_language=ref_language, 
+            target_text=target_text , 
+            target_language=target_language ,
+            top_p=top_p , 
+            top_k=top_k , 
+            temperature=temperature , 
+            speed=speed,
+            version=version
         )
         # 确保任务对象有效
         if not isinstance(task, AsyncResult):
             MockVoxLogger.error(i18n("Celery推理任务提交失败"))
             raise HTTPException(500, i18n("Celery推理任务提交失败"))
 
-        # 记录任务提交日志
         MockVoxLogger.info(
-            i18n("推理任务已进入Celery处理队列"),
-            extra={
-                "action": "default",
-                "task_id": task.id
-            }
+            f"{i18n('推理任务已进入Celery处理队列')} \n"
+            f"task_id: {task.id} \n"
+            f"model_id: {model_id}"
         )
-
         return {
             "message": i18n("推理任务已进入Celery处理队列"),
             "task_id": task.id

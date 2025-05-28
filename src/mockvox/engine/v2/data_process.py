@@ -97,6 +97,7 @@ class DataProcessor:
                 
                 # 文本标准化处理
                 phones, word2ph, norm_text = self._normalize(text)
+                # 跳过空切片
                 if len(phones)==0: continue
                 
                 # 保存BERT特征
@@ -167,13 +168,8 @@ class DataProcessor:
             phones, word2ph = self.normalizer.g2p(norm_text)
             assert len(phones) == sum(word2ph)
             assert len(norm_text) == len(word2ph)
-        elif self.language=="en":
-            phones = self.normalizer.g2p(norm_text)
-            if len(phones) < 4:  # 确保最小长度
-                phones = [','] + phones
-            word2ph = None
-        elif self.language=="ja":
-            phones,word2ph = self.normalizer.g2p(norm_text)
+        elif self.language in ["en", "ja"]:
+            phones, word2ph = self.normalizer.g2p(norm_text)
             assert len(phones) == sum(word2ph)
         else:
             phones = self.normalizer.g2p(norm_text)

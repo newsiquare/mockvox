@@ -274,12 +274,7 @@ class Inferencer:
             phones, word2ph = normalizer.g2p(norm_text)
             assert len(phones) == sum(word2ph)
             assert len(norm_text) == len(word2ph)
-        elif language == "en":
-            phones = normalizer.g2p(norm_text)
-            if len(phones) < 4:
-                phones = [','] + phones
-            word2ph = None
-        elif language=="ja":
+        elif language in ["en", "ja"]:
             phones,word2ph = normalizer.g2p(norm_text)
         else:
             phones = normalizer.g2p(norm_text)
@@ -341,7 +336,7 @@ class Inferencer:
                 formattext = re.sub(r"[a-z]", lambda x: x.group(0).upper(), formattext)
                 formattext = normalizer.do_normalize(formattext)
                 return self.get_phones_and_bert(formattext, "can")
-            elif language == "all_ja":
+            elif language in {"all_ja", "en"}:
                 phones, word2ph, norm_text = self.clean_text_inf(formattext, language)
                 bert = self.get_bert_feature(norm_text, word2ph,language).to(self.device)
             else:

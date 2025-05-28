@@ -55,10 +55,10 @@ class JapaneseNormalizer:
 
 
     def g2p(self, norm_text, with_prosody=True):
-        phones,word2ph = preprocess_jap(norm_text, with_prosody)
+        phones, word2ph = preprocess_jap(norm_text, with_prosody)
         phones = [post_replace_ph(i) for i in phones]
         # todo: implement tones and word2ph
-        return phones,word2ph
+        return phones, word2ph
 
 def post_replace_ph(ph):
     rep_map = {
@@ -208,5 +208,6 @@ if __name__ == "__main__":
     normalizer = JapaneseNormalizer()
     norm_text = normalizer.do_normalize("Hello.こんにちは！今日もNiCe天気ですね！tokyotowerに行きましょう！")
     print(f"normalized text: {norm_text}")
-    phones = normalizer.g2p(norm_text)
+    phones, word2ph = normalizer.g2p(norm_text)
     print(f"phoneme: {phones}")
+    print(f"word2ph: {word2ph}")

@@ -187,6 +187,7 @@ class en_G2p(G2p):
 
         # steps
         prons = []
+        word2ph = []
         for o_word, pos in tokens:
             # 还原 g2p_en 小写操作逻辑
             word = o_word.lower()
@@ -214,10 +215,11 @@ class en_G2p(G2p):
                 # 递归查找预测
                 pron = self._qryword(o_word)
 
+            word2ph += [len(pron)]
             prons.extend(pron)
             prons.extend([" "])
 
-        return prons[:-1]
+        return prons[:-1], word2ph
 
     def _qryword(self, o_word):
         word = o_word.lower()
@@ -350,5 +352,6 @@ if __name__ == '__main__':
     normalizer = EnglishNormalizer()
     text = "e.g. I used openai's AI tool to draw a picture."
     text = normalizer.do_normalize(text)
-    phones = normalizer.g2p(text)
-    print(phones)    
+    phones, word2ph = normalizer.g2p(text)
+    print(f"phones: {phones}")
+    print(f"word2ph: {word2ph}")    

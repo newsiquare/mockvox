@@ -204,7 +204,8 @@ class DataProcessor:
             res = torch.cat(res["hidden_states"][-3:-2], -1)[0].cpu()[1:-1]
 
         # 验证对齐关系
-        assert len(word2ph) == len(text)
+        if self.language=="zh" or self.language=="can":
+            assert len(word2ph) == len(text)
         
         # 构建音节重复特征
         phone_level_feature = []

@@ -154,7 +154,7 @@ async def start_train(
     try:
         # 发送异步任务
         task = train_task.delay(
-            file_name=file_id,
+            file_id=file_id,
             sovits_epochs=epochs_sovits,
             gpt_epochs=epochs_gpt, 
             version=version,

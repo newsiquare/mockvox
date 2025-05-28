@@ -25,7 +25,7 @@ class DataProcessor:
     MODEL_MAPPING = {
         "zh": "GPT-SoVITS/chinese-roberta-wwm-ext-large",
         "en": "FacebookAI/roberta-large",
-        "ja": "tohoku-nlp/bert-base-japanese-v3",
+        "ja": "tohoku-nlp/bert-large-japanese-v2",
         "ko": "klue/bert-base",
         "can": "GPT-SoVITS/chinese-roberta-wwm-ext-large"
     }
@@ -172,6 +172,9 @@ class DataProcessor:
             if len(phones) < 4:  # 确保最小长度
                 phones = [','] + phones
             word2ph = None
+        elif self.language=="ja":
+            phones,word2ph = self.normalizer.g2p(norm_text)
+            assert len(phones) == sum(word2ph)
         else:
             phones = self.normalizer.g2p(norm_text)
             word2ph = None

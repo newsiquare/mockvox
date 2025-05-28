@@ -55,10 +55,10 @@ class JapaneseNormalizer:
 
 
     def g2p(self, norm_text, with_prosody=True):
-        phones = preprocess_jap(norm_text, with_prosody)
+        phones,word2ph = preprocess_jap(norm_text, with_prosody)
         phones = [post_replace_ph(i) for i in phones]
         # todo: implement tones and word2ph
-        return phones
+        return phones,word2ph
 
 def post_replace_ph(ph):
     rep_map = {
@@ -99,20 +99,26 @@ def preprocess_jap(text, with_prosody=False):
     text = text.lower()
     sentences = re.split(_japanese_marks, text)
     marks = re.findall(_japanese_marks, text)
-    text = []
+    phones = []
+    word2ph = []
     for i, sentence in enumerate(sentences):
         if re.match(_japanese_characters, sentence):
             if with_prosody:
-                text += pyopenjtalk_g2p_prosody(sentence)[1:-1]
+                phone = pyopenjtalk_g2p_prosody(sentence)[1:-1]
+                word2ph += [len(phone)]
+                phones += phone
             else:
                 p = pyopenjtalk.g2p(sentence)
-                text += p.split(" ")
+                word2ph += [len(phone.split(" "))]
+                phones += p.split(" ")
 
         if i < len(marks):
             if marks[i] == " ":  # 防止意外的UNK
                 continue
-            text += [marks[i].replace(" ", "")]
-    return text
+            phone = [marks[i].replace(" ", "")]
+            word2ph += [len(phone)]
+            phones += phone
+    return phones,word2ph
 
 # Copied from espnet https://github.com/espnet/espnet/blob/master/espnet2/text/phoneme_tokenizer.py
 def pyopenjtalk_g2p_prosody(text, drop_unvoiced_vowels=True):

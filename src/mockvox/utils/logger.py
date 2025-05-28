@@ -7,18 +7,18 @@ class ConditionalFormatter(logging.Formatter):
     _FORMATS = {
         "file_saved": (
             '%(asctime)s - %(name)s - %(levelname)s - '
-            '[action=%(action)s] [file_name=%(file_name)s] '
+            '[action=%(action)s] [file_id=%(file_id)s] '
             '[file_size=%(file_size)s] [content_type=%(content_type)s] - %(message)s'
         ),
         "stage1_task_submitted": (
             '%(asctime)s - %(name)s - %(levelname)s - '
             '[action=%(action)s] [task_id=%(task_id)s] '
-            '[file_name=%(file_name)s] - %(message)s'
+            '[file_id=%(file_id)s] - %(message)s'
         ),
         "stage2_task_submitted": (
             '%(asctime)s - %(name)s - %(levelname)s - '
             '[action=%(action)s] [task_id=%(task_id)s] '
-            '[file_name=%(file_name)s] - %(message)s'
+            '[file_id=%(file_id)s] - %(message)s'
         ),
         "file_sliced": (
             '%(asctime)s - %(name)s - %(levelname)s - '

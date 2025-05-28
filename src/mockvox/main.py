@@ -177,7 +177,6 @@ async def start_train(
 
         return {
             "message": i18n("训练任务已进入Celery处理队列"),
-            "file_id": file_id,
             "task_id": task.id
         }
 

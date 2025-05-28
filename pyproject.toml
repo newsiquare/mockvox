@@ -56,7 +56,9 @@ dependencies = [
     "cuda-python",
     "nemo_toolkit[asr]==2.0.0",
     "split_lang",
-    "addict"
+    "addict",
+    "fugashi",
+    "unidic_lite"
 ]
 
 # Optional dependencies ------------------------------------------------------------------------------------------------

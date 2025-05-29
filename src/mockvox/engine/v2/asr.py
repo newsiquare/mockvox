@@ -83,10 +83,8 @@ class JapaneseASR:
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         # 语音识别
         self.model = AutoModel(
-            # model=os.path.join(PRETRAINED_PATH,asr_model_name), model_revision='v2.0.4',
-            # vad_model=None, vad_model_revision=None,
-            model="paraformer-ko", model_revision="v2.0.4",
-            vad_model="fsmn-vad", vad_model_revision="v2.0.4",
+            model=os.path.join(PRETRAINED_PATH,asr_model_name), model_revision='v2.0.4',
+            vad_model=None, vad_model_revision=None,
             punc_model=None, punc_model_revision=None,
             device=self.device,
             disable_update=True
@@ -113,8 +111,10 @@ class KoreanASR:
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         # 语音识别
         self.model = AutoModel(
-            model=os.path.join(PRETRAINED_PATH,asr_model_name), model_revision='v1.0.1',
-            vad_model=None, vad_model_revision=None,
+            # model=os.path.join(PRETRAINED_PATH,asr_model_name), model_revision='v1.0.1',
+            # vad_model=None, vad_model_revision=None,
+            model="paraformer-ko", model_revision="v2.0.4",
+            vad_model="fsmn-vad", vad_model_revision="v2.0.4",
             punc_model=None, punc_model_revision=None,
             device=self.device,
             disable_update=True

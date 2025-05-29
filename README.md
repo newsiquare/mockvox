@@ -96,7 +96,7 @@ git clone https://huggingface.co/FacebookAI/roberta-large.git ./pretrained/Faceb
 modelscope download --model 'iic/speech_UniASR_asr_2pass-ja-16k-common-vocab93-tensorflow1-offline'  --local_dir './pretrained/iic/speech_UniASR_asr_2pass-ja-16k-common-vocab93-tensorflow1-offline' # Japanese ASR
 git clone https://huggingface.co/tohoku-nlp/bert-large-japanese-v2.git ./pretrained/tohoku-nlp/bert-large-japanese-v2 # Japanese BERT
 modelscope download --model 'iic/speech_UniASR_asr_2pass-ko-16k-common-vocab6400-tensorflow1-online' --local_dir './pretrained/iic/speech_UniASR_asr_2pass-ko-16k-common-vocab6400-tensorflow1-online' # Korean ASR
-git clone https://huggingface.co/klue/bert-base.git ./pretrained/klue/bert-base # Korean BERT
+git clone https://huggingface.co/klue/roberta-large.git ./pretrained/klue/roberta-large # Korean BERT
 ```
 
 Command-line interface is now ready for use.  [CLI Guide](./docs/en/cli.md)

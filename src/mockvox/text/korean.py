@@ -128,8 +128,8 @@ def get_phoneme_counts(text):
     return counts
 
 def divide_hangul(text):
-    text = j2hcj(h2j(text))
     word2ph = get_phoneme_counts(text)
+    text = j2hcj(h2j(text))
     result = []
     i = 0
     for char in text:
@@ -139,9 +139,9 @@ def divide_hangul(text):
                 word2ph[i] = word2ph[i]+1
             else:
                 result.append(char)
-            i=i+1
         else:
             result.append(char)
+            i=i+1
     return ''.join(result), word2ph
 
 def hangul_number(num, sino=True):

@@ -26,7 +26,7 @@ class DataProcessor:
         "zh": "GPT-SoVITS/chinese-roberta-wwm-ext-large",
         "en": "FacebookAI/roberta-large",
         "ja": "tohoku-nlp/bert-large-japanese-v2",
-        "ko": "klue/bert-base",
+        "ko": "klue/roberta-large",
         "can": "GPT-SoVITS/chinese-roberta-wwm-ext-large"
     }
 

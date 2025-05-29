@@ -96,7 +96,7 @@ git clone https://huggingface.co/FacebookAI/roberta-large.git ./pretrained/Faceb
 modelscope download --model 'iic/speech_UniASR_asr_2pass-ja-16k-common-vocab93-tensorflow1-offline'  --local_dir './pretrained/iic/speech_UniASR_asr_2pass-ja-16k-common-vocab93-tensorflow1-offline' #日语ASR
 git clone https://huggingface.co/tohoku-nlp/bert-large-japanese-v2.git ./pretrained/tohoku-nlp/bert-large-japanese-v2 #日语BERT
 modelscope download --model 'iic/speech_UniASR_asr_2pass-ko-16k-common-vocab6400-tensorflow1-online' --local_dir './pretrained/iic/speech_UniASR_asr_2pass-ko-16k-common-vocab6400-tensorflow1-online' #韩语ASR
-git clone https://huggingface.co/klue/bert-base.git ./pretrained/klue/bert-base #韩语BERT
+git clone https://huggingface.co/klue/roberta-large.git ./pretrained/klue/roberta-large #韩语BERT
 ```
 
 至此，命令行方式已经可以使用。 [《命令行用户指南》](./cli.md)

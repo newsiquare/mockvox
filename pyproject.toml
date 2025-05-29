@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 name = "mockvox"
 dynamic = ["version"]
 description = ""
-authors = [{name = "杜荣政", email = "drz@easyman.com.cn"}]
+authors = [{name = "MockVox Team", email = "drz@easyman.com.cn"}]
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}

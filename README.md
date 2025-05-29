@@ -18,16 +18,19 @@ Adapted from [GPT_SoVITS](https://github.com/RVC-Boss/GPT-SoVITS), it maintains 
 🌟 **Core Features**:
 
 1. **🎧 Zero-shot Text-to-Speech (TTS)**: Instant text-to-voice conversion with just a 5-second voice sample
-2. **🧠 Few-shot TTS**: Fine-tune models with only 1 minute of training data for enhanced voice similarity and authenticity
-3. **🌍 Cross-lingual Support**: Multi-language inference for English, Japanese, Korean, Cantonese and Mandarin
+2. **🌍 Cross-lingual Pipeline**: Full-cycle support for English/Japanese/Korean/Cantonese/Mandarin (training & inference)
+3. **🧠 Few-shot TTS**: Fine-tune models with only 1 minute of training data for enhanced voice similarity and authenticity
 
 🔧 **Key Enhancements**:
 
-1. **🖥️ CLI Interface**: Web UI replaced with flexible command-line operation [CLI Guide](./docs/en/cli.md)
-2. **🏭 Distributed Architecture**: Celery-based multi-process async task scheduling for high concurrency
-3. **⚡ Training Optimization**: Native PyTorch implementation replacing Pytorch Lightning
-4. **🔊 ASR Upgrade**: NVIDIA Parakeet for English, latest ModelScope solutions for Japanese/Korean
-5. **🌐 Multilingual Adaptation**: Language-specific BERT feature extraction models
+1. **🌐 Multilingual Architecture**
+    * Implemented cross-lingual ​​training​​ (previously inference-only)
+    * Language-specific BERT models for feature extraction
+    * Enhanced inference robustness
+2. **🖥️ CLI Interface**: Web UI replaced with flexible command-line operation [CLI Guide](./docs/en/cli.md)
+3. **🏭 Distributed Architecture**: Celery-based multi-process async task scheduling for high concurrency
+4. **⚡ Training Optimization**: Native PyTorch implementation replacing Pytorch Lightning
+5. **🔊 ASR Upgrade**: NVIDIA Parakeet for English, latest ModelScope solutions for Japanese/Korean
 6. **📦 Engineering Refinement**: Code restructuring and performance improvements
 
 ---
@@ -97,7 +100,7 @@ modelscope download --model 'iic/speech_UniASR_asr_2pass-ko-16k-common-vocab6400
 git clone https://huggingface.co/klue/bert-base.git ./pretrained/klue/bert-base # Korean BERT
 ```
 
-Command-line interface is now ready for use.
+Command-line interface is now ready for use.  [CLI Guide](./docs/en/cli.md)
 
 #### 4. Start Services
 

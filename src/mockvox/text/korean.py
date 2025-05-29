@@ -3,6 +3,7 @@ import re
 from jamo import h2j, j2hcj
 import ko_pron
 from g2pk2 import G2p
+import numpy as np
 
 from mockvox.text import symbols
 
@@ -277,17 +278,19 @@ class KoreanNormalizer:
         return text
 
     def g2p(self, text):
-        text = _g2p(text)
-        text = divide_hangul(text)
-        text = fix_g2pk2_error(text)
-        text = re.sub(r"([\u3131-\u3163])$", r"\1.", text)
-        text = [post_replace_ph(i) for i in text]
-        return text
+        phones = _g2p(text)
+        phones = divide_hangul(phones)
+        phones = fix_g2pk2_error(phones)
+        phones = re.sub(r"([\u3131-\u3163])$", r"\1.", phones)
+        phones = [post_replace_ph(i) for i in phones]
+        word2ph = np.ones(len(phones))
+        return phones, word2ph
 
 if __name__ == "__main__":
     text = "안녕하세요"
     normalizer = KoreanNormalizer()
     norm_text = normalizer.do_normalize(text)
     print(f"normalized text: {norm_text}")
-    phones = normalizer.g2p(norm_text)
+    phones, word2ph = normalizer.g2p(norm_text)
     print(f"phoneme: {phones}")
+    print(f"word2ph: {word2ph}")

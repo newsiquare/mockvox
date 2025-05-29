@@ -168,7 +168,7 @@ class DataProcessor:
             phones, word2ph = self.normalizer.g2p(norm_text)
             assert len(phones) == sum(word2ph)
             assert len(norm_text) == len(word2ph)
-        elif self.language in ["en", "ja"]:
+        elif self.language in ["en", "ja", "ko"]:
             phones, word2ph = self.normalizer.g2p(norm_text)
             assert len(phones) == sum(word2ph)
         else:

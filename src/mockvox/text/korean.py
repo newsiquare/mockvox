@@ -131,10 +131,15 @@ def divide_hangul(text):
     text = j2hcj(h2j(text))
     word2ph = get_phoneme_counts(text)
     result = []
-    for i, char in enumerate(text):
-        if char in _hangul_divided:
-            result.append(_hangul_divided[char])
-            word2ph[i] = word2ph[i]+1
+    i = 0
+    for char in text:
+        if char != " ":
+            if char in _hangul_divided:
+                result.append(_hangul_divided[char])
+                word2ph[i] = word2ph[i]+1
+            else:
+                result.append(char)
+            i=i+1
         else:
             result.append(char)
     return ''.join(result), word2ph

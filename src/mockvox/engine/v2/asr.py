@@ -20,15 +20,15 @@ class ChineseASR:
                  language: str = "zh",  # 没有使用，是为了统一ASR类的输入参数         
                  region: str = None,
                  asr_model_name: str = 'iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch',
-                 vad_model_name: str = 'iic/speech_fsmn_vad_zh-cn-16k-common-pytorch',
-                 punc_model_name: str = 'iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch',
+                #  vad_model_name: str = 'iic/speech_fsmn_vad_zh-cn-16k-common-pytorch',
+                 punc_model_name: str = 'iic/punc_ct-transformer_cn-en-common-vocab471067-large',
                  device: Optional[str] = None
         ): 
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         # 语音识别
         self.model = AutoModel(
             model=os.path.join(PRETRAINED_PATH,asr_model_name), model_revision='v2.0.4',
-            vad_model=os.path.join(PRETRAINED_PATH,vad_model_name), vad_model_revision='v2.0.4',
+            vad_model=None, vad_model_revision=None,
             punc_model=os.path.join(PRETRAINED_PATH,punc_model_name), punc_model_revision='v2.0.4',
             device=self.device,
             disable_update=True
@@ -50,6 +50,7 @@ class CantoneseASR:
                  language: str = "can",
                  region: str = None,
                  asr_model_name: str = 'iic/speech_UniASR_asr_2pass-cantonese-CHS-16k-common-vocab1468-tensorflow1-online',
+                 punc_model_name: str = 'iic/punc_ct-transformer_cn-en-common-vocab471067-large',
                  device: Optional[str] = None
         ): 
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
@@ -57,7 +58,7 @@ class CantoneseASR:
         self.model = AutoModel(
             model=os.path.join(PRETRAINED_PATH,asr_model_name), model_revision='v2.0.4',
             vad_model=None, vad_model_revision=None,
-            punc_model=None, punc_model_revision=None,
+            punc_model=punc_model_name, punc_model_revision='v2.0.4',
             device=self.device,
             disable_update=True
         )
@@ -78,6 +79,7 @@ class JapaneseASR:
                  language: str = "ja",
                  region: str = None,
                  asr_model_name: str = 'iic/speech_UniASR_asr_2pass-ja-16k-common-vocab93-tensorflow1-offline',
+                 punc_model_name: str = 'iic/punc_ct-transformer_cn-en-common-vocab471067-large',
                  device: Optional[str] = None
         ): 
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
@@ -85,7 +87,7 @@ class JapaneseASR:
         self.model = AutoModel(
             model=os.path.join(PRETRAINED_PATH,asr_model_name), model_revision='v2.0.4',
             vad_model=None, vad_model_revision=None,
-            punc_model=None, punc_model_revision=None,
+            punc_model=punc_model_name, punc_model_revision='v2.0.4',
             device=self.device,
             disable_update=True
         )
@@ -106,6 +108,7 @@ class KoreanASR:
                  language: str = "ko",
                  region: str = None,
                  asr_model_name: str = 'iic/speech_UniASR_asr_2pass-ko-16k-common-vocab6400-tensorflow1-online',
+                 punc_model_name: str = 'iic/punc_ct-transformer_cn-en-common-vocab471067-large',
                  device: Optional[str] = None
         ): 
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
@@ -113,7 +116,7 @@ class KoreanASR:
         self.model = AutoModel(
             model=os.path.join(PRETRAINED_PATH,asr_model_name), model_revision='v2.0.4',
             vad_model=None, vad_model_revision=None,
-            punc_model=None, punc_model_revision=None,
+            punc_model=punc_model_name, punc_model_revision='v2.0.4',
             device=self.device,
             disable_update=True
         )

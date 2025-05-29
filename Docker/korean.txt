@@ -1,14 +1,12 @@
-https://huggingface.co/klue/bert-base/resolve/main/config.json
-  out=pretrained/klue/bert-base/config.json
-https://huggingface.co/klue/bert-base/resolve/main/model.safetensors
-  out=pretrained/klue/bert-base/model.safetensors
-https://huggingface.co/klue/bert-base/resolve/main/pytorch_model.bin
-  out=pretrained/klue/bert-base/pytorch_model.bin
-https://huggingface.co/klue/bert-base/resolve/main/special_tokens_map.json
-  out=pretrained/klue/bert-base/special_tokens_map.json
-https://huggingface.co/klue/bert-base/resolve/main/tokenizer.json
-  out=pretrained/klue/bert-base/tokenizer.json
-https://huggingface.co/klue/bert-base/resolve/main/tokenizer_config.json
-  out=pretrained/klue/bert-base/tokenizer_config.json
-https://huggingface.co/klue/bert-base/resolve/main/vocab.txt
-  out=pretrained/klue/bert-base/vocab.txt
+https://huggingface.co/klue/roberta-large/resolve/main/config.json
+  out=pretrained/klue/roberta-large/config.json
+https://huggingface.co/klue/roberta-large/resolve/main/pytorch_model.bin
+  out=pretrained/klue/roberta-large/pytorch_model.bin
+https://huggingface.co/klue/roberta-large/resolve/main/special_tokens_map.json
+  out=pretrained/klue/roberta-large/special_tokens_map.json
+https://huggingface.co/klue/roberta-large/resolve/main/tokenizer.json
+  out=pretrained/klue/roberta-large/tokenizer.json
+https://huggingface.co/klue/roberta-large/resolve/main/tokenizer_config.json
+  out=pretrained/klue/roberta-large/tokenizer_config.json
+https://huggingface.co/klue/roberta-large/resolve/main/vocab.txt
+  out=pretrained/klue/roberta-large/vocab.txt

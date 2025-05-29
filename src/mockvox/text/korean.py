@@ -137,7 +137,7 @@ def divide_hangul(text):
             word2ph[i] = word2ph[i]+1
         else:
             result.append(char)
-    return ''.join(result)
+    return ''.join(result), word2ph
 
 def hangul_number(num, sino=True):
     """Reference https://github.com/Kyubyong/g2pK"""
@@ -288,12 +288,11 @@ class KoreanNormalizer:
         return text
 
     def g2p(self, text):
-        phones = _g2p(text)
-        phones = divide_hangul(phones)
+        text = _g2p(text)
+        phones, word2ph = divide_hangul(text)
         phones = fix_g2pk2_error(phones)
         phones = re.sub(r"([\u3131-\u3163])$", r"\1.", phones)
         phones = [post_replace_ph(i) for i in phones]
-        word2ph = np.ones(len(phones),dtype=int)
         return phones, word2ph
 
 if __name__ == "__main__":

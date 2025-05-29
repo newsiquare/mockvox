@@ -1,6 +1,6 @@
 # reference: https://github.com/ORI-Muchim/MB-iSTFT-VITS-Korean/blob/main/text/korean.py
 import re
-from jamo import h2j, j2hcj
+from jamo import h2j, j2hcj, hangul_to_jamo
 import ko_pron
 from g2pk2 import G2p
 import numpy as np
@@ -13,9 +13,7 @@ _korean_classifiers = (
 )
 
 # List of (hangul, hangul divided) pairs:
-_hangul_divided = [
-    (re.compile("%s" % x[0]), x[1])
-    for x in [
+_hangul_divided = {
         # ('ㄳ', 'ㄱㅅ'),   # g2pk2, A Syllable-ending Rule
         # ('ㄵ', 'ㄴㅈ'),
         # ('ㄶ', 'ㄴㅎ'),
@@ -27,21 +25,20 @@ _hangul_divided = [
         # ('ㄿ', 'ㄹㅍ'),
         # ('ㅀ', 'ㄹㅎ'),
         # ('ㅄ', 'ㅂㅅ'),
-        ("ㅘ", "ㅗㅏ"),
-        ("ㅙ", "ㅗㅐ"),
-        ("ㅚ", "ㅗㅣ"),
-        ("ㅝ", "ㅜㅓ"),
-        ("ㅞ", "ㅜㅔ"),
-        ("ㅟ", "ㅜㅣ"),
-        ("ㅢ", "ㅡㅣ"),
-        ("ㅑ", "ㅣㅏ"),
-        ("ㅒ", "ㅣㅐ"),
-        ("ㅕ", "ㅣㅓ"),
-        ("ㅖ", "ㅣㅔ"),
-        ("ㅛ", "ㅣㅗ"),
-        ("ㅠ", "ㅣㅜ"),
-    ]
-]
+        "ㅘ": "ㅗㅏ",
+        "ㅙ": "ㅗㅐ",
+        "ㅚ": "ㅗㅣ",
+        "ㅝ": "ㅜㅓ",
+        "ㅞ": "ㅜㅔ",
+        "ㅟ": "ㅜㅣ",
+        "ㅢ": "ㅡㅣ",
+        "ㅑ": "ㅣㅏ",
+        "ㅒ": "ㅣㅐ",
+        "ㅕ": "ㅣㅓ",
+        "ㅖ": "ㅣㅔ",
+        "ㅛ": "ㅣㅗ",
+        "ㅠ": "ㅣㅜ",
+}
 
 # List of (Latin alphabet, hangul) pairs:
 _latin_to_hangul = [
@@ -100,7 +97,6 @@ _ipa_to_lazy_ipa = [
     ]
 ]
 
-
 def fix_g2pk2_error(text):
     new_text = ""
     i = 0
@@ -115,19 +111,33 @@ def fix_g2pk2_error(text):
     new_text += text[i:]
     return new_text
 
-
 def latin_to_hangul(text):
     for regex, replacement in _latin_to_hangul:
         text = re.sub(regex, replacement, text)
     return text
 
+def get_phoneme_counts(text):
+    counts = []
+    for char in text:
+        # 分解字符为初声、中声、终声列表
+        jamos = hangul_to_jamo(char)
+        # 过滤空字符并统计有效音素
+        valid_phonemes = [j for j in jamos if j.strip()]
+        if len(valid_phonemes)>0:
+            counts.append(len(valid_phonemes)+1)
+    return counts
 
 def divide_hangul(text):
     text = j2hcj(h2j(text))
-    for regex, replacement in _hangul_divided:
-        text = re.sub(regex, replacement, text)
-    return text
-
+    word2ph = get_phoneme_counts(text)
+    result = []
+    for i, char in enumerate(text):
+        if char in _hangul_divided:
+            result.append(_hangul_divided[char])
+            word2ph[i] = word2ph[i]+1
+        else:
+            result.append(char)
+    return ''.join(result)
 
 def hangul_number(num, sino=True):
     """Reference https://github.com/Kyubyong/g2pK"""

@@ -70,17 +70,23 @@ Response example:
 ```json
 {
     "file_id": "20250522095117519601.e6abd9db.896806622ccb47a9ac1ee1669daf1938",
-    "task_id": "40425f97-11ab-4d68-b645-bd8dda294c4c",
-    "asr": [
-        {"key": "0000000000_0000193600", "text": "Hello world"},
-        {"key": "0000193600_0000361920", "text": "Good morning"}
-    ]
+    "task_id": "40425f97-11ab-4d68-b645-bd8dda294c4c"
 }
 ```
 
 ### 2. ASR Result Verification
 
 **Endpoint**：`POST /revision`
+
+​​**Note**​​: ASR results can be retrieved via GET /tasks/{task_id}.
+
+```json
+    "asr": [
+        {"key": "0000000000_0000193600", "text": "Hello world"},
+        {"key": "0000193600_0000361920", "text": "Good morning"}
+    ]
+```
+
 
 Parameters:
 
@@ -120,10 +126,11 @@ Response example:
 ```json
 {
     "message": "Training task queued in Celery",
-    "file_id": "20250522095117519601.e6abd9db.896806622ccb47a9ac1ee1669daf1938",
     "task_id": "40425f97-11ab-4d68-b645-bd8dda294c4c"
 }
 ```
+
+​**Note**​​: Model id can be retrieved via GET /tasks/{task_id}.
 
 ### 4. Resume Training
 
@@ -136,6 +143,8 @@ Parameters:
 | model_id       | String  | Model ID from /train | - | Yes |
 | epochs_sovits  | Integer | SoVITS training epochs | 2 | No |
 | epochs_gpt     | Integer | GPT training epochs | 2 | No |
+
+​**Note**​​: Resume training status can be retrieved via GET /tasks/{task_id}.
 
 ### 5. Upload Reference Audio
 
@@ -190,6 +199,10 @@ Response example:
 **Endpoint**：`GET /output/{task_id}`
 
 ## Task Monitoring
+
+**Endpoint**: `GET /tasks/{task_id}`
+
+**Example**:  
 
 ```bash
 curl -X GET http://127.0.0.1:5000/tasks/{task_id}

@@ -151,7 +151,7 @@ mockvox resume 20250524182510033061.370358d9.af07654e5ffe46c788448c05a0dedca3 --
 **Implementation Details**​​:
 
 1. Automatically loads the latest checkpoint from ./data/weights/{ModelID} directory
-2. New training results will be incrementally merged into existing model files
+2. New training results will overwrite existing model files
 
 ### 5. ℹ️ View Model Information
 

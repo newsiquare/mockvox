@@ -70,17 +70,22 @@ graph TD
 ```json
 {
     "file_id": "20250522095117519601.e6abd9db.896806622ccb47a9ac1ee1669daf1938",
-    "task_id": "40425f97-11ab-4d68-b645-bd8dda294c4c",
-    "asr": [
-        {"key": "0000000000_0000193600", "text": "Hello world"},
-        {"key": "0000193600_0000361920", "text": "Good morning"}
-    ]
+    "task_id": "40425f97-11ab-4d68-b645-bd8dda294c4c"
 }
 ```
 
 ### 2. ASR结果校对
 
 **接口路径**：`POST /revision`
+
+**说明**: ASR 结果可通过 `GET /tasks/{task_id}` 获取
+
+```json
+    "asr": [
+        {"key": "0000000000_0000193600", "text": "Hello world"},
+        {"key": "0000193600_0000361920", "text": "Good morning"}
+    ]
+```
 
 参数：
 
@@ -120,10 +125,11 @@ graph TD
 ```json
 {
     "message": "训练任务已进入Celery处理队列",
-    "file_id": "20250522095117519601.e6abd9db.896806622ccb47a9ac1ee1669daf1938",
     "task_id": "40425f97-11ab-4d68-b645-bd8dda294c4c"
 }
 ```
+
+**说明**: Model id 可通过 `GET /tasks/{task_id}` 获取
 
 ### 4. 继续训练
 
@@ -136,6 +142,8 @@ graph TD
 | model_id | String | /train 返回的模型ID | - | 是 |
 | epochs_sovits | Integer | SoVITS训练轮次 | 2 | 否 |
 | epochs_gpt | Integer | GPT训练轮次 | 2 | 否 |
+
+**说明**: 训练结果状态可通过 `GET /tasks/{task_id}` 获取
 
 ### 5. 上传参考语音
 
@@ -190,6 +198,10 @@ graph TD
 **接口路径**：`GET /output/{task_id}`
 
 ## 任务监控
+
+**接口路径**: `GET /tasks/{task_id}`
+
+**示例**:  
 
 ```bash
 curl -X GET http://127.0.0.1:5000/tasks/{task_id}

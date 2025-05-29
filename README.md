@@ -40,7 +40,7 @@ Adapted from [GPT_SoVITS](https://github.com/RVC-Boss/GPT-SoVITS), it maintains 
 ### Clone Repository
 
 ```bash
-git clone https://github.com/hotpot/mockvox.git
+git clone https://github.com/mockvox/mockvox.git
 cd mockvox
 ```
 

@@ -283,7 +283,7 @@ class KoreanNormalizer:
         phones = fix_g2pk2_error(phones)
         phones = re.sub(r"([\u3131-\u3163])$", r"\1.", phones)
         phones = [post_replace_ph(i) for i in phones]
-        word2ph = np.ones(len(phones))
+        word2ph = np.ones(len(phones),dtype=int)
         return phones, word2ph
 
 if __name__ == "__main__":

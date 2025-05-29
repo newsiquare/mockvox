@@ -105,16 +105,14 @@ class KoreanASR:
     def __init__(self,
                  language: str = "ko",
                  region: str = None,
-                 asr_model_name: str = 'iic/speech_UniASR_asr_2pass-ko-16k-common-vocab6400-tensorflow1-offline',
+                 asr_model_name: str = 'iic/speech_UniASR_asr_2pass-ko-16k-common-vocab6400-tensorflow1-online',
                  device: Optional[str] = None
         ): 
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         # 语音识别
         self.model = AutoModel(
-            # model=os.path.join(PRETRAINED_PATH,asr_model_name), model_revision='v1.0.1',
-            # vad_model=None, vad_model_revision=None,
-            model="paraformer-ko", model_revision="v2.0.4",
-            vad_model="fsmn-vad", vad_model_revision="v2.0.4",
+            model=os.path.join(PRETRAINED_PATH,asr_model_name), model_revision='v2.0.4',
+            vad_model=None, vad_model_revision=None,
             punc_model=None, punc_model_revision=None,
             device=self.device,
             disable_update=True

@@ -11,7 +11,7 @@ RUN apt-get update && \
 WORKDIR /mockvox
 COPY ./src/ /mockvox/src/
 COPY ./Docker/ /mockvox/Docker/
-COPY ./.env.sample pyproject.toml /mockvox
-RUN pip install -e .  
+COPY ./.env.sample ./pyproject.toml /mockvox/
+RUN pip install -e .
 
 EXPOSE 5000

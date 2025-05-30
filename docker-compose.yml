@@ -8,6 +8,11 @@ services:
     # 暴露端口
     ports:
       - "6383:6379"   # 如果端口冲突修改映射到本地的端口 - "${REDIS_PORT}:6379"
+    healthcheck:  # 添加健康检查
+      test: ["CMD", "redis-cli", "-a", "123456", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
   gpt-sovits:
     image: mockvox/mockvox:latest   
     container_name: mockvox
@@ -23,4 +28,8 @@ services:
     working_dir: /mockvox
     ports:
       - "5000:5000"
-    command: /bin/bash -c "chmod +x Docker/startup.sh && ./Docker/startup.sh"
+    depends_on:
+      redis:
+        condition: service_healthy  # 等待Redis就绪
+    command: /bin/bash -c "chmod +x Docker/startup.sh && ./Docker/startup.sh; tail -f /dev/null"
+    restart: unless-stopped

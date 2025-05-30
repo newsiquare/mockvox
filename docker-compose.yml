@@ -7,15 +7,15 @@ services:
       - REDIS_PASSWORD=123456
     # 暴露端口
     ports:
-      - "6379:6379"   # 如果端口冲突修改映射到本地的端口 - "${REDIS_PORT}:6379"
+      - "6383:6379"   # 如果端口冲突修改映射到本地的端口 - "${REDIS_PORT}:6379"
     # 启动时使用密码
     command: redis-server --requirepass ${REDIS_PASSWORD} --bind 0.0.0.0 --protected-mode no
   gpt-sovits:
     image: mockvox/mockvox:latest   
     container_name: mockvox
     environment:
-      - REDIS_PASSWORD=123456 # 与下面设置的redis密码保持一致
-      - REDIS_PORT=6379 # 与下面redis暴露端口保持一致
+      - REDIS_PASSWORD=123456 # 与上面设置的redis密码保持一致
+      - REDIS_PORT=6383 # 与上面redis暴露端口保持一致
       - MODEL_TYPE=nomal # 默认下载训练模型中文ch，其他可填值：en、can、ja、ko、full
     volumes:
       - ./data/output:/mockvox/data/output
@@ -25,5 +25,5 @@ services:
     working_dir: /mockvox
     ports:
       - "5000:5000"
-    command: /bin/bash -c "chmod +x Docker/mockvox/startup.sh && ./Docker/mockvox/startup.sh"
+    command: /bin/bash -c "chmod +x Docker/startup.sh && ./Docker/startup.sh"
   

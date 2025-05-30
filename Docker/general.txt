@@ -2,9 +2,9 @@ https://huggingface.co/lj1995/GPT-SoVITS/gsv-v2final-pretrained/resolve/main/s1b
   out=pretrained/GPT-SoVITS/gsv-v2final-pretrained/s1bert25hz-5kh-longer-epoch=12-step=369668.ckpt
 https://huggingface.co/lj1995/GPT-SoVITS/resolve/main/s1v3.ckpt
   out=pretrained/GPT-SoVITS/s1v3.ckpt
-https://huggingface.co/lj1995/GPT-SoVITS/gsv-v2final-pretrained/resolve/main/s2D2333k.pth
+https://huggingface.co/lj1995/GPT-SoVITS/resolve/main/gsv-v2final-pretrained/s2D2333k.pth
   out=pretrained/GPT-SoVITS/gsv-v2final-pretrained/s2D2333k.pth
-https://huggingface.co/lj1995/GPT-SoVITS/gsv-v2final-pretrained/resolve/main/s2G2333k.pth
+https://huggingface.co/lj1995/GPT-SoVITS/resolve/main/gsv-v2final-pretrained/s2G2333k.pth
   out=pretrained/GPT-SoVITS/gsv-v2final-pretrained/s2G2333k.pth
 https://huggingface.co/lj1995/GPT-SoVITS/resolve/main/chinese-hubert-base/config.json
   out=pretrained/GPT-SoVITS/chinese-hubert-base/config.json

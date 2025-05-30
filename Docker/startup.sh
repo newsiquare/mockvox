@@ -15,16 +15,16 @@ if [ "$MODEL_TYPE" == "full" ]; then
 	chmod +x /mockvox/Docker/koreanDownload.sh
 	/mockvox/Docker/koreanDownload.sh
 	python /mockvox/Docker/koreanDownload.py
-elif [ "$MODEL_TYPE" == "english" ]; then
+elif [ "$MODEL_TYPE" == "en" ]; then
 	chmod +x /mockvox/Docker/englishDownload.sh
 	/mockvox/Docker/engliseDownload.sh
-elif [ "$MODEL_TYPE" == "cantonese" ]; then
+elif [ "$MODEL_TYPE" == "can" ]; then
 	python /mockvox/Docker/cantoneseDownload.py
-elif [ "$MODEL_TYPE" == "japanese" ]; then
+elif [ "$MODEL_TYPE" == "ja" ]; then
 	chmod +x /mockvox/Docker/japaneseDownload.sh
 	/mockvox/Docker/japaneseDownload.sh
 	python /mockvox/Docker/japaneseDownload.py
-elif [ "$MODEL_TYPE" == "korean" ]; then
+elif [ "$MODEL_TYPE" == "ko" ]; then
 	chmod +x /mockvox/Docker/koreanDownload.sh
 	/mockvox/Docker/koreanDownload.sh
 	python /mockvox/Docker/koreanDownload.py

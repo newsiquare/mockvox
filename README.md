@@ -122,7 +122,6 @@ For API usage details, refer to the [API User Guide](./docs/en/api.md).
 ### 🐳 Docker Deployment
 
 ```bash
-cd Docker
 docker-compose up # 🚢 Launch full-stack services
 ```
 

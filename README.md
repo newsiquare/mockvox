@@ -134,7 +134,7 @@ docker-compose up # 🚢 Launch full-stack services
 - 📁 All models are stored in `./pretrained` by default
 - ⚠️ Initial run requires ~15GB model downloads
 - 🔄 Modify `.env` for service configuration
-- 📚 Complete CLI reference: [CLI Documentation](./docs/en/cli.md)
+- 📚 Complete CLI, API reference: [CLI Guide](./docs/en/cli.md) or [API User Guide](./docs/en/api.md)
 
 ---
 

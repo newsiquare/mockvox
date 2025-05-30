@@ -117,7 +117,7 @@ nohup celery -A src.mockvox.worker.worker worker --loglevel=info --pool=prefork 
 nohup python src/mockvox/main.py &
 ```
 
-API调用参见: [《API用户指南》](./api.md)
+API调用参见: [API用户指南](./api.md)
 
 ### 🐳 Docker 容器运行
 
@@ -134,7 +134,7 @@ docker-compose up # 🚢 一键启动全栈服务
 - 📁 所有模型文件默认存储在 `./pretrained` 目录
 - ⚠️ 首次运行需下载约 15GB 的模型文件
 - 🔄 可通过修改 `.env` 文件调整服务配置
-- 📚 完整命令行指南请参阅 [CLI 文档](./cli.md)
+- 📚 完整命令行、API指南请参阅 [命令行用户指南](./cli.md) 或 [API用户指南](./api.md)
 
 ---
 

@@ -7,11 +7,11 @@ LABEL description="Docker image for MockVox"
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ffmpeg aria2 git && \
     rm -rf /var/lib/apt/lists/* 
-     
-WORKDIR /mockvox
-COPY . /mockvox   
-RUN pip install -e .
 
-VOLUME /mockvox/pretrained    
+WORKDIR /mockvox
+COPY ./src/ /mockvox/src/
+COPY ./Docker/ /mockvox/Docker/
+COPY ./.env.sample pyproject.toml /mockvox
+RUN pip install -e .  
 
 EXPOSE 5000

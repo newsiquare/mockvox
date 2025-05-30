@@ -8,8 +8,6 @@ services:
     # 暴露端口
     ports:
       - "6383:6379"   # 如果端口冲突修改映射到本地的端口 - "${REDIS_PORT}:6379"
-    # 启动时使用密码
-    command: redis-server --requirepass ${REDIS_PASSWORD} --bind 0.0.0.0 --protected-mode no
   gpt-sovits:
     image: mockvox/mockvox:latest   
     container_name: mockvox
@@ -26,4 +24,3 @@ services:
     ports:
       - "5000:5000"
     command: /bin/bash -c "chmod +x Docker/startup.sh && ./Docker/startup.sh"
-  

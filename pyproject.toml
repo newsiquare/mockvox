@@ -58,7 +58,8 @@ dependencies = [
     "split_lang",
     "addict",
     "fugashi",
-    "unidic_lite"
+    "unidic_lite",
+    "simplejson"
 ]
 
 # Optional dependencies ------------------------------------------------------------------------------------------------

@@ -41,6 +41,10 @@ cp .env.sample .env
 sed -i '/^REDIS_PASSWORD=/d' .env 2>/dev/null
 echo >> .env
 echo "REDIS_PASSWORD=$REDIS_PASSWORD" >> .env
+# 删除文件中的redis ip配置
+sed -i '/^REDIS_HOST=/d' .env 2>/dev/null
+echo >> .env
+echo "REDIS_HOST=$REDIS_HOST" >> .env
 if [ "$REDIS_PORT" != "" ]; then
 	sed -i '/^REDIS_PORT=/d' .env 2>/dev/null
 	echo >> .env

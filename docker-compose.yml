@@ -18,9 +18,9 @@ services:
       - REDIS_PORT=6379 # 与下面redis暴露端口保持一致
       - MODEL_TYPE=nomal # 默认下载训练模型中文ch，其他可填值：en、can、ja、ko、full
     volumes:
-      - ./output:/mockvox/data/output
+      - ./data/output:/mockvox/data/output
       - ./logs:/mockvox/log
-      - ./mockvox:/mockvox/src/mockvox
+      - ./src/mockvox:/mockvox/src/mockvox
       - ./pretrained:/mockvox/pretrained
     working_dir: /mockvox
     ports:

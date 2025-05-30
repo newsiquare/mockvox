@@ -3,8 +3,7 @@ services:
     image: redis:7.0-alpine
     container_name: mockvox_redis
     # 通过环境变量设置密码（密码由脚本随机生成）
-    environment:
-      - REDIS_PASSWORD=123456
+    command: redis-server --requirepass "123456"
     # 暴露端口
     ports:
       - "6383:6379"   # 如果端口冲突修改映射到本地的端口 - "${REDIS_PORT}:6379"

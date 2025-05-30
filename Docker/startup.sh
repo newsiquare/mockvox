@@ -39,12 +39,14 @@ touch .env.sample
 cp .env.sample .env
 # 删除文件中的redis密码配置
 sed -i '/^REDIS_PASSWORD=/d' .env 2>/dev/null
+echo >> .env
 echo "REDIS_PASSWORD=$REDIS_PASSWORD" >> .env
 if [ "$REDIS_PORT" != "" ]; then
 	sed -i '/^REDIS_PORT=/d' .env 2>/dev/null
+	echo >> .env
 	echo "REDIS_PORT=$REDIS_PORT" >> .env
 fi
 
 mkdir -p /mockvox/log
 nohup celery -A src.mockvox.worker.worker worker --loglevel=info --pool=prefork --concurrency=1 > log/celery.log 2>&1 &
-python src/mockvox/main.py
+nohup python src/mockvox/main.py > log/main.log 2>&1 &

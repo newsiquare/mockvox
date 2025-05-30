@@ -118,7 +118,7 @@ Parameters：
 | file_id | String | File ID from /upload | - | Yes |
 | epochs_sovits | Integer | SoVITS training epochs | 1 | No |
 | epochs_gpt | Integer | GPT training epochs | 1 | No |
-| version | String | Model version (v2/v4) | v4 | No
+| version | String | Model version (v2/v4) | v4 | No |
 | denoised | Bool | Use denoised audio | True | No |
 
 Response example:

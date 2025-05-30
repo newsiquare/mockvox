@@ -125,6 +125,8 @@ For API usage details, refer to the [API User Guide](./docs/en/api.md).
 docker-compose up # 🚢 Launch full-stack services
 ```
 
+**Note**​​: The default Docker image comes with the Mandarin language package. To install English/Japanese/Korean/Cantonese/full versions, modify the MODEL_TYPE variable in the docker-compose.yml file.
+
 ---
 
 ## 🔍 Additional Notes

@@ -57,7 +57,6 @@ class JapaneseNormalizer:
     def g2p(self, norm_text, with_prosody=True):
         phones, word2ph = preprocess_jap(norm_text, with_prosody)
         phones = [post_replace_ph(i) for i in phones]
-        # todo: implement tones and word2ph
         return phones, word2ph
 
 def post_replace_ph(ph):

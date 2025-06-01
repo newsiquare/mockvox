@@ -121,6 +121,12 @@ For API usage details, refer to the [API User Guide](./docs/en/api.md).
 
 ### 🐳 Docker Deployment
 
+#### Using GPU within Docker Containers (Python/PyTorch)​​
+
+To utilize NVIDIA GPUs from within Docker containers for Python/PyTorch applications, it is ​​essential​​ to install the ​​NVIDIA Container Toolkit​​ on the ​​bare-metal host​​ machine.
+
+This toolkit provides the necessary drivers and runtime components to expose host GPU resources to containers. For detailed installation instructions and system requirements, please refer to the [NVIDIA Container Toolkit official guide](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
+
 ```bash
 docker-compose up # 🚢 Launch full-stack services
 ```

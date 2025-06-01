@@ -121,6 +121,12 @@ API调用参见: [API用户指南](./api.md)
 
 ### 🐳 Docker 容器运行
 
+#### 在 Docker 容器内使用 GPU (Python/PyTorch)​​
+
+在 Docker 容器内运行的 Python/PyTorch 应用中使用 NVIDIA GPU，宿主主机​​必须​​已正确安装 ​​NVIDIA Container Toolkit​​。
+
+此工具包负责提供必要的驱动程序和运行时环境，使容器能够访问宿主机的 GPU 资源。有关详细的安装指南和系统要求，请参阅 ​[​NVIDIA Container Toolkit​官方文档](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
+
 ```bash
 docker-compose up # 🚢 一键启动全栈服务
 ```

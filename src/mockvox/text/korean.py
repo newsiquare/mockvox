@@ -3,7 +3,6 @@ import re
 from jamo import h2j, j2hcj, hangul_to_jamo
 import ko_pron
 from g2pk2 import G2p
-import numpy as np
 
 from mockvox.text import symbols
 

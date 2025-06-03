@@ -432,7 +432,7 @@ async def upload_audio(
 @app.get("/tasks/{task_id}",
          summary=i18n("获取任务状态及执行结果"),
          response_description=i18n("返回任务状态及执行结果"),
-         tags=[""])
+         tags=[i18n("获取任务状态及执行结果")])
 def get_task_status(task_id: str):
     task = celeryApp.AsyncResult(task_id)
     return {
@@ -446,7 +446,7 @@ def get_task_status(task_id: str):
 @app.get("/model/{model_id}",
          summary=i18n("获取模型信息"),
          response_description=i18n("返回模型版本及训练轮次"),
-         tags=[""])
+         tags=[i18n("获取模型信息")])
 def get_model_info(model_id: str):
     gpt_weights = Path(WEIGHTS_PATH) / model_id / GPT_WEIGHTS_FILE
     sovits_weights = Path(WEIGHTS_PATH) / model_id / SOVITS_G_WEIGHTS_FILE

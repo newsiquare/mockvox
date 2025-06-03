@@ -131,7 +131,7 @@ API调用参见: [API用户指南](./api.md)
 docker-compose up -d # 🚢 一键启动全栈服务
 ```
 
-**说明**: 默认安装的docker镜像为中文包，如果要安装英/日/韩/粤/full，请修改 `docker-compose.yml` 文件中的 MODEL_TYPE 变量。
+**说明**: 默认安装的docker镜像为full包，如果要单独安装中/英/日/韩/粤，请修改 `docker-compose.yml` 文件中的 MODEL_TYPE 变量。
 
 ---
 

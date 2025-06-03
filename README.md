@@ -131,7 +131,7 @@ This toolkit provides the necessary drivers and runtime components to expose hos
 docker-compose up -d # 🚢 Launch full-stack services
 ```
 
-**Note**​​: The default Docker image comes with the Mandarin language package. To install English/Japanese/Korean/Cantonese/full versions, modify the MODEL_TYPE variable in the docker-compose.yml file.
+**Note**​​: The default Docker image comes with the full language packages. To install Mandarin/English/Japanese/Korean/Cantonese versions, modify the MODEL_TYPE variable in the docker-compose.yml file.
 
 ---
 

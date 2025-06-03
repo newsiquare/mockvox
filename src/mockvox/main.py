@@ -324,7 +324,7 @@ async def download_outputs(task_id:str):
         MockVoxLogger.error(i18n("音频文件不存在"))
         return
 
-    return FileResponse(OUT_PUT_PATH,filename=filename)
+    return FileResponse(os.path.join(OUT_PUT_PATH,filename))
 
 @app.post(
     "/uploadRef",

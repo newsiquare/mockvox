@@ -128,7 +128,7 @@ API调用参见: [API用户指南](./api.md)
 此工具包负责提供必要的驱动程序和运行时环境，使容器能够访问宿主机的 GPU 资源。有关详细的安装指南和系统要求，请参阅 ​[​NVIDIA Container Toolkit​官方文档](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
 
 ```bash
-docker-compose up # 🚢 一键启动全栈服务
+docker-compose up -d # 🚢 一键启动全栈服务
 ```
 
 **说明**: 默认安装的docker镜像为中文包，如果要安装英/日/韩/粤/full，请修改 `docker-compose.yml` 文件中的 MODEL_TYPE 变量。

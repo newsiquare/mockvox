@@ -58,7 +58,7 @@ class CantoneseASR:
         self.model = AutoModel(
             model=os.path.join(PRETRAINED_PATH,asr_model_name), model_revision='v2.0.4',
             vad_model=None, vad_model_revision=None,
-            punc_model=punc_model_name, punc_model_revision='v2.0.4',
+            punc_model=os.path.join(PRETRAINED_PATH,punc_model_name), punc_model_revision='v2.0.4',
             device=self.device,
             disable_update=True
         )
@@ -87,7 +87,7 @@ class JapaneseASR:
         self.model = AutoModel(
             model=os.path.join(PRETRAINED_PATH,asr_model_name), model_revision='v2.0.4',
             vad_model=None, vad_model_revision=None,
-            punc_model=punc_model_name, punc_model_revision='v2.0.4',
+            punc_model=os.path.join(PRETRAINED_PATH, punc_model_name), punc_model_revision='v2.0.4',
             device=self.device,
             disable_update=True
         )
@@ -116,7 +116,7 @@ class KoreanASR:
         self.model = AutoModel(
             model=os.path.join(PRETRAINED_PATH,asr_model_name), model_revision='v2.0.4',
             vad_model=None, vad_model_revision=None,
-            punc_model=punc_model_name, punc_model_revision='v2.0.4',
+            punc_model=os.path.join(PRETRAINED_PATH, punc_model_name), punc_model_revision='v2.0.4',
             device=self.device,
             disable_update=True
         )

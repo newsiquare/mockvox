@@ -128,7 +128,7 @@ To utilize NVIDIA GPUs from within Docker containers for Python/PyTorch applicat
 This toolkit provides the necessary drivers and runtime components to expose host GPU resources to containers. For detailed installation instructions and system requirements, please refer to the [NVIDIA Container Toolkit official guide](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
 
 ```bash
-docker-compose up # 🚢 Launch full-stack services
+docker-compose up -d # 🚢 Launch full-stack services
 ```
 
 **Note**​​: The default Docker image comes with the Mandarin language package. To install English/Japanese/Korean/Cantonese/full versions, modify the MODEL_TYPE variable in the docker-compose.yml file.

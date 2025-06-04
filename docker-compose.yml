@@ -4,9 +4,8 @@ services:
     container_name: mockvox_redis
     # 通过环境变量设置密码（密码由脚本随机生成）
     command: redis-server --requirepass "123456"
-    # 暴露端口
-    ports:
-      - "6383:6379"   # 如果端口冲突修改映射到本地的端口 - "${REDIS_PORT}:6379"
+    networks:
+      - mynetwork
     healthcheck:  # 添加健康检查
       test: ["CMD", "redis-cli", "-a", "123456", "ping"]
       interval: 5s
@@ -24,18 +23,22 @@ services:
     container_name: mockvox
     environment:
       - REDIS_PASSWORD=123456 # 与上面设置的redis密码保持一致
-      - REDIS_PORT=6383 # 与上面redis暴露端口保持一致
-      - REDIS_HOST=127.0.0.1 # 本机ip地址
-      - MODEL_TYPE=full # 默认下载训练模型中文zh，其他可填值：en、can、ja、ko、full
+      - REDIS_PORT=6379 # 与上面redis暴露端口保持一致
+      - REDIS_HOST=mockvox_redis # ip地址
+      - MODEL_TYPE=zh # 默认下载训练模型中文zh，其他可填值：en、can、ja、ko、full
     volumes:
       - ./data:/mockvox/data
       - ./logs:/mockvox/log
       - ./src/mockvox:/mockvox/src/mockvox
       - ./pretrained:/mockvox/pretrained
     working_dir: /mockvox
-    network_mode: host
+    networks:
+      - mynetwork
     depends_on:
-      redis:
+      mockvox_redis:
         condition: service_healthy  # 等待Redis就绪
     command: /bin/bash -c "chmod +x Docker/startup.sh && ./Docker/startup.sh; tail -f /dev/null"
     restart: unless-stopped
+networks:
+  mynetwork:
+    driver: bridge

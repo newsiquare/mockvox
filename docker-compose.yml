@@ -21,6 +21,8 @@ services:
               count: all
               capabilities: [gpu]
     container_name: mockvox
+    ports:
+      - "5000:5000"
     environment:
       - REDIS_PASSWORD=123456 # 与上面设置的redis密码保持一致
       - REDIS_PORT=6379 # 与上面redis暴露端口保持一致
@@ -28,9 +30,10 @@ services:
       - MODEL_TYPE=full # 默认下载训练模型中文zh，其他可填值：en、can、ja、ko、full
     volumes:
       - ./data:/mockvox/data
-      - ./logs:/mockvox/log
+      - ./log:/mockvox/log
       - ./src/mockvox:/mockvox/src/mockvox
       - ./pretrained:/mockvox/pretrained
+      - ./Docker:/mockvox/Docker
     working_dir: /mockvox
     networks:
       - mynetwork

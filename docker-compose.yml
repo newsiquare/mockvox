@@ -33,7 +33,6 @@ services:
       - ./log:/mockvox/log
       - ./src/mockvox:/mockvox/src/mockvox
       - ./pretrained:/mockvox/pretrained
-      - ./Docker:/mockvox/Docker
     working_dir: /mockvox
     networks:
       - mynetwork

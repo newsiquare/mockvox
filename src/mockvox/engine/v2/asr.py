@@ -28,7 +28,7 @@ class ChineseASR:
         # 语音识别
         self.model = AutoModel(
             model=os.path.join(PRETRAINED_PATH,asr_model_name), model_revision='v2.0.4',
-            vad_model=vad_model_name, vad_model_revision='v2.0.4',
+            vad_model=os.path.join(PRETRAINED_PATH,vad_model_name), vad_model_revision='v2.0.4',
             punc_model=os.path.join(PRETRAINED_PATH,punc_model_name), punc_model_revision='v2.0.4',
             device=self.device,
             disable_update=True
@@ -50,6 +50,7 @@ class CantoneseASR:
                  language: str = "can",
                  region: str = None,
                  asr_model_name: str = 'iic/speech_UniASR_asr_2pass-cantonese-CHS-16k-common-vocab1468-tensorflow1-online',
+                 vad_model_name: str = 'iic/speech_fsmn_vad_zh-cn-16k-common-pytorch',
                  punc_model_name: str = 'iic/punc_ct-transformer_cn-en-common-vocab471067-large',
                  device: Optional[str] = None
         ): 
@@ -57,7 +58,7 @@ class CantoneseASR:
         # 语音识别
         self.model = AutoModel(
             model=os.path.join(PRETRAINED_PATH,asr_model_name), model_revision='v2.0.4',
-            vad_model=None, vad_model_revision=None,
+            vad_model=os.path.join(PRETRAINED_PATH,vad_model_name), vad_model_revision='v2.0.4',
             punc_model=os.path.join(PRETRAINED_PATH,punc_model_name), punc_model_revision='v2.0.4',
             device=self.device,
             disable_update=True
@@ -79,6 +80,7 @@ class JapaneseASR:
                  language: str = "ja",
                  region: str = None,
                  asr_model_name: str = 'iic/speech_UniASR_asr_2pass-ja-16k-common-vocab93-tensorflow1-offline',
+                 vad_model_name: str = 'iic/speech_fsmn_vad_zh-cn-16k-common-pytorch',
                  punc_model_name: str = 'iic/punc_ct-transformer_cn-en-common-vocab471067-large',
                  device: Optional[str] = None
         ): 
@@ -86,7 +88,7 @@ class JapaneseASR:
         # 语音识别
         self.model = AutoModel(
             model=os.path.join(PRETRAINED_PATH,asr_model_name), model_revision='v2.0.4',
-            vad_model=None, vad_model_revision=None,
+            vad_model=os.path.join(PRETRAINED_PATH, vad_model_name), vad_model_revision='v2.0.4',
             punc_model=os.path.join(PRETRAINED_PATH, punc_model_name), punc_model_revision='v2.0.4',
             device=self.device,
             disable_update=True
@@ -108,6 +110,7 @@ class KoreanASR:
                  language: str = "ko",
                  region: str = None,
                  asr_model_name: str = 'iic/speech_UniASR_asr_2pass-ko-16k-common-vocab6400-tensorflow1-online',
+                 vad_model_name: str = 'iic/speech_fsmn_vad_zh-cn-16k-common-pytorch',
                  punc_model_name: str = 'iic/punc_ct-transformer_cn-en-common-vocab471067-large',
                  device: Optional[str] = None
         ): 
@@ -115,7 +118,7 @@ class KoreanASR:
         # 语音识别
         self.model = AutoModel(
             model=os.path.join(PRETRAINED_PATH,asr_model_name), model_revision='v2.0.4',
-            vad_model=None, vad_model_revision=None,
+            vad_model=os.path.join(PRETRAINED_PATH, vad_model_name), vad_model_revision='v2.0.4',
             punc_model=os.path.join(PRETRAINED_PATH, punc_model_name), punc_model_revision='v2.0.4',
             device=self.device,
             disable_update=True

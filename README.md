@@ -84,6 +84,7 @@ git clone https://huggingface.co/lj1995/GPT-SoVITS.git ./pretrained/GPT-SoVITS
 🗣️ Voice Processing Suite
 modelscope download --model 'damo/speech_frcrn_ans_cirm_16k' --local_dir './pretrained/damo/speech_frcrn_ans_cirm_16k' # Denoise
 modelscope download --model 'iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch' --local_dir './pretrained/iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch' # Mandarin ASR
+modelscope download --model 'iic/speech_fsmn_vad_zh-cn-16k-common-pytorch' --local_dir './pretrained/iic/speech_fsmn_vad_zh-cn-16k-common-pytorch'
 modelscope download --model 'iic/punc_ct-transformer_cn-en-common-vocab471067-large' --local_dir './pretrained/iic/punc_ct-transformer_cn-en-common-vocab471067-large' # Punctuation restoration
 git clone https://huggingface.co/alextomcat/G2PWModel.git ./pretrained/G2PWModel # Grapheme-to-phoneme
 

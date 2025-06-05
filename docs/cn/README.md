@@ -84,6 +84,7 @@ git clone https://huggingface.co/lj1995/GPT-SoVITS.git ./pretrained/GPT-SoVITS
 🗣️ 语音处理全家桶
 modelscope download --model 'damo/speech_frcrn_ans_cirm_16k' --local_dir './pretrained/damo/speech_frcrn_ans_cirm_16k' #降噪
 modelscope download --model 'iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch' --local_dir './pretrained/iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch' #普通话ASR
+modelscope download --model 'iic/speech_fsmn_vad_zh-cn-16k-common-pytorch' --local_dir './pretrained/iic/speech_fsmn_vad_zh-cn-16k-common-pytorch'
 modelscope download --model 'iic/punc_ct-transformer_cn-en-common-vocab471067-large' --local_dir './pretrained/iic/punc_ct-transformer_cn-en-common-vocab471067-large' #标点恢复
 git clone https://huggingface.co/alextomcat/G2PWModel.git ./pretrained/G2PWModel #词转音素
 

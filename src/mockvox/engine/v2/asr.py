@@ -20,7 +20,7 @@ class ChineseASR:
                  language: str = "zh",  # 没有使用，是为了统一ASR类的输入参数         
                  region: str = None,
                  asr_model_name: str = 'iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch',
-                #  vad_model_name: str = 'iic/speech_fsmn_vad_zh-cn-16k-common-pytorch',
+                 vad_model_name: str = 'iic/speech_fsmn_vad_zh-cn-16k-common-pytorch',
                  punc_model_name: str = 'iic/punc_ct-transformer_cn-en-common-vocab471067-large',
                  device: Optional[str] = None
         ): 
@@ -28,7 +28,7 @@ class ChineseASR:
         # 语音识别
         self.model = AutoModel(
             model=os.path.join(PRETRAINED_PATH,asr_model_name), model_revision='v2.0.4',
-            vad_model=None, vad_model_revision=None,
+            vad_model=vad_model_name, vad_model_revision='v2.0.4',
             punc_model=os.path.join(PRETRAINED_PATH,punc_model_name), punc_model_revision='v2.0.4',
             device=self.device,
             disable_update=True

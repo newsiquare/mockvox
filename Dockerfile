@@ -12,6 +12,6 @@ WORKDIR /mockvox
 COPY ./src/ /mockvox/src/
 COPY ./Docker/ /mockvox/Docker/
 COPY ./.env.sample ./pyproject.toml /mockvox/
-RUN pip install -e .
+RUN pip install --no-cache-dir -e .
 
 EXPOSE 5000

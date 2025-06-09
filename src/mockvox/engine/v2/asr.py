@@ -228,17 +228,15 @@ def batch_add_asr(file_list: List[str], asr_data, output_dir:str):
     output_file = Path(output_dir) / "output.json"
     try:
         asr = AutoSpeechRecognition(asr_data['language'])
-        combined_results = []
         for file in file_list:
             results = asr.execute(input_path=file)
             if results:
                 for result in results:
-                    combined_results.append({
+                    asr_data['results'].append({
                         "key": result['key'],
                         "text": result['text']
                     }) 
         
-        asr_data['results'].extend(combined_results)
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(asr_data, f, ensure_ascii=False, indent=2)
 
@@ -248,7 +246,7 @@ def batch_add_asr(file_list: List[str], asr_data, output_dir:str):
             torch.cuda.synchronize()
             torch.cuda.ipc_collect()
             gc.collect()
-        return combined_results
+        return asr_data['results']
 
     except Exception as e:
         MockVoxLogger.error(

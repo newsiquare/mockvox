@@ -48,7 +48,14 @@ from mockvox.config import (
     GPT_WEIGHTS_FILE,
     SOVITS_G_WEIGHTS_FILE 
 )
-from mockvox.worker import celeryApp, process_file_task, train_task, inference_task, resume_task
+from mockvox.worker import (
+    celeryApp, 
+    process_file_task, 
+    add_audio_task,
+    train_task, 
+    inference_task, 
+    resume_task
+)
 from mockvox.utils import MockVoxLogger, generate_unique_filename, allowed_file, i18n
 
 cfg = get_config()

@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import time
 from pathlib import Path
 from typing import List
 from scipy.io import wavfile
@@ -217,6 +218,7 @@ def slice_audio(input_path: str, output_dir: str) -> List[str]:
         audio = load_audio(input_path, 32000)
         Path(output_dir).mkdir(parents=True, exist_ok=True)
 
+        timestamp = str(int(time.time()))
         sliced_files = []
         for chunk, start, end in slicer.slice(audio):
             # 音量归一化处理
@@ -230,7 +232,7 @@ def slice_audio(input_path: str, output_dir: str) -> List[str]:
 
             sliced_file = os.path.join(
                 output_dir,
-                f"{start:010d}_{end:010d}.wav"  
+                f"{timestamp}_{start:010d}_{end:010d}.wav"  
             )
             sliced_files.append(sliced_file)
             

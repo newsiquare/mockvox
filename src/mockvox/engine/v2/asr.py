@@ -224,7 +224,40 @@ def load_asr_data(asr_dir: Union[str,Path]) -> Dict:
         MockVoxLogger.error(f"ASR result not found: {asr_file}")
     return result
 
-def batch_asr(language, file_list: List[str], output_dir: str):
+def batch_add_asr(file_list: List[str], asr_data, output_dir:str):
+    output_file = Path(output_dir) / "output.json"
+    try:
+        asr = AutoSpeechRecognition(asr_data['language'])
+        combined_results = []
+        for file in file_list:
+            results = asr.execute(input_path=file)
+            if results:
+                for result in results:
+                    combined_results.append({
+                        "key": result['key'],
+                        "text": result['text']
+                    }) 
+        
+        asr_data['results'].extend(combined_results)
+        with open(output_file, 'w', encoding='utf-8') as f:
+            json.dump(asr_data, f, ensure_ascii=False, indent=2)
+
+        del asr
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            torch.cuda.ipc_collect()
+            gc.collect()
+        return combined_results
+
+    except Exception as e:
+        MockVoxLogger.error(
+            f"ASR failed: {output_dir} \nException: {str(e)}",
+            extra={"action": "asr_error"}
+        )
+        raise RuntimeError(f"ASR failed: {str(e)}") from e
+    
+def batch_asr(language, denoise, file_list: List[str], output_dir: str):
     """批量识别函数
     
     Args:
@@ -261,6 +294,7 @@ def batch_asr(language, file_list: List[str], output_dir: str):
 
         output_data = {
             "language": language,
+            "denoised": denoise,
             "results": combined_results            
         }
 
@@ -312,4 +346,4 @@ if __name__ == '__main__':
         if os.path.isfile(os.path.join(root_dir, f))  # 过滤掉目录
     ]
 
-    batch_asr(args.language, file_list, asr_path)
+    batch_asr(args.language, args.denoised, file_list, asr_path)

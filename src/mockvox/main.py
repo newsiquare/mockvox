@@ -270,7 +270,7 @@ async def start_inference(
         for file in glob.glob(os.path.join(Path(REF_AUDIO_PATH),ref_audio_file_id+".*")):
             filename = file
         if filename == '':
-            MockVoxLogger.error(i18n("请上传参考音频"))
+            MockVoxLogger.error(i18n("上传参考音频"))
             return
         # 发送异步任务
         task = inference_task.delay(
@@ -328,9 +328,9 @@ async def download_outputs(task_id:str):
 
 @app.post(
     "/uploadRef",
-    summary=i18n("请上传参考音频"),
+    summary=i18n("上传参考音频"),
     response_description=i18n("返回文件ID"),
-    tags=[i18n("请上传参考音频")]
+    tags=[i18n("上传语音文件")]
 )
 async def upload_ref_audio(
     file: UploadFile = File(..., description=i18n("请上传3~10秒内参考音频，超过会报错！")+i18n("音频文件支持 .WAV .MP3 .FLAC 格式"))
@@ -356,10 +356,83 @@ async def upload_ref_audio(
     return {"file_id": Path(filename).stem}
 
 @app.post(
+    "/add",
+    summary=i18n("添加语音文件"),
+    response_description=i18n("返回存储的文件信息和任务ID"),
+    tags=[i18n("上传语音文件")]        
+)
+async def add_audio(
+    file: UploadFile = File(..., description=i18n("音频文件支持 .WAV .MP3 .FLAC 格式")),
+    file_id: str = Form(..., description=i18n("文件ID (调用 /upload 上传后返回的文件ID)"))
+):
+    try:
+        # 验证文件类型
+        if not allowed_file(file.filename):
+            raise HTTPException(status_code=400, detail=i18n("不支持的文件格式"))
+
+        # 实际文件大小验证
+        if file.size > cfg.MAX_UPLOAD_SIZE:
+            raise HTTPException(413, i18n("文件大小超过限制"))
+
+        # 生成唯一文件名
+        filename = generate_unique_filename(file.filename)
+        save_path = os.path.join(UPLOAD_PATH, filename)
+
+        # 保存文件
+        with open(save_path, 'wb') as f:
+            while chunk := await file.read(1024 * 1024):    # 1Mb chunks
+                f.write(chunk)
+
+        # 记录保存成功日志
+        MockVoxLogger.info(
+            i18n("保存成功"),
+            extra={
+                "action": "file_saved",
+                "file_id": Path(filename).stem,          
+                "file_size": file.size,         
+                "content_type": file.content_type  
+            }
+        )
+
+        # 发送异步任务
+        task = add_audio_task.delay(file_id = file_id, file_name=filename)
+        # 确保任务对象有效
+        if not isinstance(task, AsyncResult):
+            MockVoxLogger.error(f"{i18n('Celery文件处理任务提交失败')} | {filename}")
+            raise HTTPException(500, i18n("Celery文件处理任务提交失败"))
+
+        # 记录任务提交日志
+        MockVoxLogger.info(
+            i18n("文件上传成功, 已进入Celery处理队列"),
+            extra={
+                "action": "stage1_task_submitted",
+                "task_id": task.id,
+                "file_id": Path(filename).stem
+            }
+        )
+        
+        return {
+            "message": i18n("文件上传成功, 已进入Celery处理队列"),
+            "file_id": file_id,
+            "add_audio_file_id": Path(filename).stem,
+            "task_id": task.id
+        }
+
+    except HTTPException as he:
+        raise he
+    
+    except ConnectionError as ce:
+        MockVoxLogger.critical(i18n("消息队列连接失败"), exc_info=True)
+        raise HTTPException(503, i18n("系统暂时不可用"))
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"{i18n('文件处理错误')}: {str(e)}")
+
+@app.post(
     "/upload",
     summary=i18n("上传语音文件"),
     response_description=i18n("返回存储的文件信息和任务ID"),
-    tags=[i18n("语音文件切片及降噪")]
+    tags=[i18n("上传语音文件")]
 )
 async def upload_audio(
     file: UploadFile = File(..., description=i18n("音频文件支持 .WAV .MP3 .FLAC 格式")),
@@ -384,7 +457,6 @@ async def upload_audio(
                 f.write(chunk)
 
         # 记录保存成功日志
-
         MockVoxLogger.info(
             i18n("保存成功"),
             extra={

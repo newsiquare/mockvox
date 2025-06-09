@@ -9,9 +9,9 @@ import time
 
 from mockvox.utils import MockVoxLogger, allowed_file, generate_unique_filename, i18n
 from mockvox.config import get_config, SLICED_ROOT_PATH, DENOISED_ROOT_PATH, ASR_PATH
-from mockvox.engine.v2 import slice_audio, batch_denoise
+from mockvox.engine.v2 import slice_audio, batch_denoise, batch_asr
 from mockvox.engine.v4.inference import Inferencer
-from mockvox.engine.v2 import batch_asr
+from mockvox.engine.v2 import load_asr_data, batch_add_asr
 from mockvox.engine import TrainingPipeline, ResumingPipeline, VersionDispatcher
          
 from mockvox.config import (
@@ -54,13 +54,54 @@ def handle_upload(args):
         # 语音识别
         asr_path = os.path.join(ASR_PATH, stem)
         if(args.denoise):
-            batch_asr(args.language, denoised_files, asr_path)
+            batch_asr(args.language, args.denoise, denoised_files, asr_path)
         else:
-            batch_asr(args.language, sliced_files, asr_path)
+            batch_asr(args.language, args.denoise, sliced_files, asr_path)
 
         MockVoxLogger.info(f"{i18n('ASR完成. 结果已保存在')}: {os.path.join(asr_path, 'output.json')}")
         MockVoxLogger.info(f"File ID: {stem}")
 
+    except Exception as e:
+        MockVoxLogger.error(
+            f"{i18n('文件处理错误')}: {args.file} | Traceback:\n{traceback.format_exc()}"
+        )
+
+def handle_add(args):
+    if not allowed_file(args.file):
+        MockVoxLogger.error(i18n("不支持的文件格式"))
+    if os.path.getsize(args.file) > cfg.MAX_UPLOAD_SIZE:
+        MockVoxLogger.error(i18n("文件大小超过限制"))
+
+    # 从ASR结果中读取参数
+    asr_path = os.path.join(ASR_PATH, args.fileID)
+    asr_file = Path(asr_path) / "output.json"
+    if not asr_file.exists(): 
+        MockVoxLogger.error(
+            f"ASR file not exist: {asr_file}"
+        )
+        return
+    asr_data = load_asr_data(asr_path)
+
+    try:
+        # 文件切割
+        sliced_path = os.path.join(SLICED_ROOT_PATH, args.fileID)
+        sliced_files = slice_audio(args.file, sliced_path)
+        MockVoxLogger.info(f"File sliced: {sliced_path}")
+
+        # 降噪
+        if(asr_data['denoised']):
+            denoised_path = os.path.join(DENOISED_ROOT_PATH, args.fileID)
+            denoised_files = batch_denoise(sliced_files, denoised_path)
+        MockVoxLogger.info(f"File denoised: {denoised_path}")
+
+        # 语音识别
+        if(asr_data['denoised']):
+            batch_add_asr(denoised_files, asr_data, asr_path)
+        else:
+            batch_add_asr(sliced_files, asr_data, asr_path)
+
+        MockVoxLogger.info(f"{i18n('ASR完成. 结果已保存在')}: {os.path.join(asr_path, 'output.json')}")
+        MockVoxLogger.info(f"File ID: {args.fileID}")
     except Exception as e:
         MockVoxLogger.error(
             f"{i18n('文件处理错误')}: {args.file} | Traceback:\n{traceback.format_exc()}"
@@ -164,7 +205,7 @@ def handle_info(args):
                     f"GPT trained epoch: {gpt_epoch}")
 
 def main():
-    parser = argparse.ArgumentParser(prog='mockvoi', description=CLI_HELP_MSG)
+    parser = argparse.ArgumentParser(prog='mockvox', description=CLI_HELP_MSG)
     subparsers = parser.add_subparsers(dest='command', help='')
 
     # upload 子命令
@@ -175,6 +216,12 @@ def main():
     parser_upload.set_defaults(denoise=True)
     parser_upload.add_argument('--language', type=str, default='zh', help='Language code, support zh can en ja ko.')
     parser_upload.set_defaults(func=handle_upload)
+
+    # add 子命令
+    parser_add = subparsers.add_parser('add', help='add specified file to existed File ID.')
+    parser_add.add_argument('fileID', type=str, help='Returned file id from upload.')
+    parser_add.add_argument('file', type=str, help='Full file path to add.')
+    parser_add.set_defaults(func=handle_add)
 
     # inference 子命令
     parser_inference = subparsers.add_parser('inference', help='Inference command line')

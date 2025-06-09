@@ -166,7 +166,7 @@
     "语音降噪": "Réduction du bruit audio",
     "语音降噪工具": "Outil de réduction du bruit audio",
     "请上传3~10秒内参考音频，超过会报错！": "Veuillez télécharger une référence audio de 3 à 10 secondes ; les fichiers plus longs généreront une erreur!",
-    "请上传参考音频": "Veuillez télécharger l'audio de référence",
+    "上传参考音频": "Veuillez télécharger l'audio de référence",
     "请填入推理文本": "Veuillez remplir le texte cible",
     "请填入正确的List路径": "Veuillez Remplir le Chemin Correct de la Liste",
     "请填入正确的音频文件夹路径": "Veuillez Remplir le Chemin Correct du Dossier Audio",
@@ -269,5 +269,6 @@
     "获取模型信息": "Obtenir les informations du modèle",
     "返回模型版本及训练轮次": "Retourner la version du modèle et le nombre d'époques d'entraînement",
     "继续训练": "Reprendre l'entraînement",
-    "模型ID (调用 /train 返回的模型ID)": "ID de modèle (renvoyé par l'appel à /train) "
+    "模型ID (调用 /train 返回的模型ID)": "ID de modèle (renvoyé par l'appel à /train) ",
+    "添加语音文件": "Ajouter un fichier audio"
 }

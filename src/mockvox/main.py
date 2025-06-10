@@ -429,7 +429,7 @@ async def start_streamInference(
             media_type="audio/wav",
             headers={"Content-Type": "audio/wav"}
         )
-    except Exception:
+    except Exception as e:
         raise HTTPException(status_code=500, detail=f"{i18n('推理过程错误')}: {str(e)}")
     finally:
         if torch.cuda.is_available():

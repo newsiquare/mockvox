@@ -23,7 +23,7 @@ def clone_repository(target_dir, repo_url):
 clone_repository("./pretrained/G2PWModel", "https://huggingface.co/alextomcat/G2PWModel.git")
 clone_repository("./pretrained/GPT-SoVITS", "https://huggingface.co/lj1995/GPT-SoVITS.git")
 from fastapi import FastAPI, File, UploadFile, HTTPException, Form
-from fastapi.responses import JSONResponse,FileResponse
+from fastapi.responses import JSONResponse,FileResponse,StreamingResponse
 from fastapi.requests import Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware import Middleware
@@ -33,6 +33,10 @@ import json
 from pathlib import Path
 import glob
 import torch
+import struct
+import gc
+import torch
+from mockvox.engine.v4.inference import Inferencer
 
 from mockvox.config import (
     get_config,
@@ -318,6 +322,122 @@ async def start_inference(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"{i18n('推理过程错误')}: {str(e)}")
+
+def generate_wav_header(sample_rate: int, channels: int, bits_per_sample: int):
+    """
+    生成用于流式传输的WAV文件头
+    """
+    # 对于流式音频，使用未知长度（0xFFFFFFFF）
+    data_size = 0xFFFFFFFF  # 表示音频长度未知
+    
+    # RIFF头 - 使用小于或等于0xFFFFFFFF的值
+    riff_size = 36 + data_size
+    if riff_size > 0xFFFFFFFF:
+        riff_size = 0xFFFFFFFF  # 确保不超过最大允许值
+    
+    riff_chunk = struct.pack('<4sI4s', b'RIFF', riff_size, b'WAVE')
+    
+    # fmt子块
+    fmt_chunk = struct.pack(
+        '<4sIHHIIHH',
+        b'fmt ', 16, 1, channels, sample_rate,
+        sample_rate * channels * (bits_per_sample // 8),
+        channels * (bits_per_sample // 8),
+        bits_per_sample
+    )
+    
+    # data子块 - 同样使用未知长度
+    data_chunk = struct.pack('<4sI', b'data', data_size)
+    
+    return riff_chunk + fmt_chunk + data_chunk
+
+@app.post(
+    "/streamInference",
+    summary=i18n("启动推理"),
+    response_description=i18n("返回任务ID"),
+    tags=[i18n("模型推理")]
+)
+async def start_streamInference(
+    model_id:str = Form(..., description=i18n("模型id")), 
+    ref_audio_file_id:str = Form(..., description=i18n("参考音频文件ID (调用 /uploadRef 上传后返回的参考音频文件ID)")),
+    ref_text:str = Form(..., description=i18n("参考音频的文字")), 
+    ref_language:str = Form('zh', description=i18n("参考音频的语言")), 
+    target_text:str = Form(..., description=i18n("生成音频的文字")), 
+    target_language:str = Form('zh', description=i18n("生成音频的语言")), 
+    top_p:float = Form(1, description=i18n("top_p")), 
+    top_k:int = Form(15, description=i18n("GPT采样参数(无参考文本时不要太低。不懂就用默认)")), 
+    temperature:float = Form(1, description=i18n("temperature")), 
+    speed:float = Form(1, description=i18n("语速")),
+):
+    try:
+
+        gpt_path = Path(WEIGHTS_PATH) / model_id / GPT_HALF_WEIGHTS_FILE
+        if not gpt_path.exists():
+            MockVoxLogger.error(i18n("路径错误! 找不到GPT模型"))
+            return
+        gpt_ckpt = torch.load(gpt_path, map_location="cpu")
+        version = gpt_ckpt["config"]["model"]["version"]
+        MockVoxLogger.info(f"Model Version: {version}")
+        sovits_path = Path(WEIGHTS_PATH) / model_id / SOVITS_HALF_WEIGHTS_FILE
+        if not sovits_path.exists():
+            MockVoxLogger.error(i18n("路径错误! 找不到SOVITS模型"))
+            return
+        filename = ''
+        for file in glob.glob(os.path.join(Path(REF_AUDIO_PATH),ref_audio_file_id+".*")):
+            filename = file
+        if filename == '':
+            MockVoxLogger.error(i18n("请上传参考音频"))
+            return
+        inference = Inferencer(gpt_path,sovits_path,version)
+        # Synthesize audio
+        synthesis_result = inference.inference(ref_wav_path=str(Path(REF_AUDIO_PATH)/filename),# 参考音频 
+                                    prompt_text=ref_text, # 参考文本
+                                    prompt_language=ref_language, 
+                                    text=target_text, # 目标文本
+                                    text_language=target_language, top_p=top_p, temperature=temperature, top_k=top_k, speed=speed,is_stream=True)
+
+        def audio_generator():
+        # 初始标志，确保只发送一次WAV头
+            header_sent = False
+            sample_rate = None
+            buffer = bytearray()
+            max_buffer_size = 44100 * 2  # 约0.5秒的数据量
+            for last_sampling_rate,chunk in synthesis_result:
+                if sample_rate is None:
+                    sample_rate = last_sampling_rate
+                buffer.extend(chunk)
+                if not header_sent:
+                    # 生成支持流式的WAV头（使用0xFFFFFFFF表示未知长度）
+                    wav_header = generate_wav_header(
+                        sample_rate=int(sample_rate),
+                        channels=1,
+                        bits_per_sample=16
+                    )
+                    yield wav_header
+                    header_sent = True
+                # 当缓冲区达到一定大小时发送数据（减少小包传输）
+                if len(buffer) >= max_buffer_size:
+                    yield bytes(buffer)
+                    buffer = bytearray()
+            if buffer:
+                yield bytes(buffer)
+            
+        
+
+        return StreamingResponse(
+            audio_generator(),
+            media_type="audio/wav",
+            headers={"Content-Type": "audio/wav"}
+        )
+    except Exception:
+        pass
+    finally:
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            torch.cuda.ipc_collect()
+            gc.collect()
+
 
 @app.get(
     "/output/{task_id}",

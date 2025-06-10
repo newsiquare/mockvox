@@ -434,7 +434,7 @@ class Inferencer:
         )
         return spec
 
-    def inference(self,ref_wav_path, prompt_text, prompt_language, text, text_language, how_to_cut=i18n("凑四句一切"), top_k=15, top_p=1,inp_refs=None, temperature=1, ref_free = False,speed=1,if_freeze=False):
+    def inference(self,ref_wav_path, prompt_text, prompt_language, text, text_language, how_to_cut=i18n("凑四句一切"), top_k=15, top_p=1,inp_refs=None, temperature=1,speed=1,is_stream=False):
         if ref_wav_path:
             pass
         else:
@@ -445,11 +445,11 @@ class Inferencer:
         else:
             MockVoxLogger.error(i18n('请填入推理文本'))
             return
-        t = []
+        # t = []
         if prompt_text is None or len(prompt_text) == 0:
             ref_free = True
             
-        t0 = ttime()
+        # t0 = ttime()
 
         dict_language = [
             "all_zh",#全部按中文识别
@@ -468,16 +468,15 @@ class Inferencer:
             MockVoxLogger.error(i18n('语言不存在'))
             return
         
-        if not ref_free:
-            prompt_text = prompt_text.strip("\n")
-            if prompt_text[-1] not in self.splits:
-                prompt_text += "。" if prompt_language != "en" else "."
-            MockVoxLogger.info(i18n("实际输入的参考文本:")+prompt_text)
+        prompt_text = prompt_text.strip("\n")
+        if prompt_text[-1] not in self.splits:
+            prompt_text += "。" if prompt_language != "en" else "."
+        MockVoxLogger.info(i18n("实际输入的参考文本:")+prompt_text)
         text = text.strip("\n")
 
         MockVoxLogger.info(i18n("实际输入的目标文本:")+text)
         zero_wav = np.zeros(
-            int(self.hps.data.sampling_rate * 0.3),
+            int(self.hps.data.sampling_rate * 0.4),
             dtype=np.float16,
         )        
         
@@ -486,24 +485,24 @@ class Inferencer:
         ssl_model = ssl_model.half().to(self.device)
         zero_wav_torch = torch.from_numpy(zero_wav)
         zero_wav_torch = zero_wav_torch.half().to(self.device)
-        if not ref_free:
-            with torch.no_grad():
-                wav16k, sr = librosa.load(ref_wav_path, sr=16000)
-                if wav16k.shape[0] > 160000 or wav16k.shape[0] < 48000:
-                    MockVoxLogger.error(i18n("参考音频在3~10秒范围外，请更换！"))
-                    raise OSError(i18n("参考音频在3~10秒范围外，请更换！"))
-                wav16k = torch.from_numpy(wav16k)
-                
-                wav16k = wav16k.half().to(self.device)
-                
-                wav16k = torch.cat([wav16k, zero_wav_torch])
-                ssl_content = ssl_model.model(wav16k.unsqueeze(0))["last_hidden_state"].transpose(1, 2)  # .float()
-                codes = self.vq_model.extract_latent(ssl_content)
-                prompt_semantic = codes[0, 0]
-                prompt = prompt_semantic.unsqueeze(0).to(self.device)
 
-        t1 = ttime()
-        t.append(t1-t0)
+        with torch.no_grad():
+            wav16k, sr = librosa.load(ref_wav_path, sr=16000)
+            if wav16k.shape[0] > 160000 or wav16k.shape[0] < 48000:
+                MockVoxLogger.error(i18n("参考音频在3~10秒范围外，请更换！"))
+                raise OSError(i18n("参考音频在3~10秒范围外，请更换！"))
+            wav16k = torch.from_numpy(wav16k)
+            
+            wav16k = wav16k.half().to(self.device)
+            
+            wav16k = torch.cat([wav16k, zero_wav_torch])
+            ssl_content = ssl_model.model(wav16k.unsqueeze(0))["last_hidden_state"].transpose(1, 2)  # .float()
+            codes = self.vq_model.extract_latent(ssl_content)
+            prompt_semantic = codes[0, 0]
+            prompt = prompt_semantic.unsqueeze(0).to(self.device)
+
+        # t1 = ttime()
+        # t.append(t1-t0)
         if (how_to_cut == i18n("凑四句一切")):
             text = self.cut1(text)
         elif (how_to_cut == i18n("凑50字一切")):
@@ -519,34 +518,33 @@ class Inferencer:
         texts = text.split("\n")
         texts = self.process_text(texts)
         texts = self.merge_short_text_in_array(texts, 5)
+        
+        phones1,bert1,norm_text1=self.get_phones_and_bert(prompt_text, prompt_language)
         audio_opt = []
-        if not ref_free:
-            phones1,bert1,norm_text1=self.get_phones_and_bert(prompt_text, prompt_language)
+        # MockVoxLogger.info("%.3f\t%.3f\t%.3f\t%.3f" % (t[0], sum(t[1::3]), sum(t[2::3]), sum(t[3::3])))
         for i_text,text in enumerate(texts):
-            # 解决输入目标文本的空行导致报错的问题
+            
             if len(text.strip()) == 0:
                 continue
+            # 解决输入目标文本的空行导致报错的问题
+            
             if text[-1] not in self.splits: 
                 text += "。" if text_language != "en" else "."
             MockVoxLogger.info(i18n("实际输入的目标文本(每句):")+text)
             phones2,bert2,norm_text2=self.get_phones_and_bert(text, text_language)
             MockVoxLogger.info(i18n("前端处理后的文本(每句):")+norm_text2)
-            if not ref_free:
-                bert = torch.cat([bert1, bert2], 1)
-                all_phoneme_ids = torch.LongTensor(phones1+phones2).to(self.device).unsqueeze(0)
-            else:
-                bert = bert2
-                all_phoneme_ids = torch.LongTensor(phones2).to(self.device).unsqueeze(0)
+            bert = torch.cat([bert1, bert2], 1)
+            all_phoneme_ids = torch.LongTensor(phones1+phones2).to(self.device).unsqueeze(0)
             bert = bert.to(self.device).unsqueeze(0)
             all_phoneme_len = torch.tensor([all_phoneme_ids.shape[-1]]).to(self.device)
 
-            t2 = ttime()
+            # t2 = ttime()
             
             with torch.no_grad():
                 pred_semantic, idx = self.t2s_model.infer_panel(
                     all_phoneme_ids,
                     all_phoneme_len,
-                    None if ref_free else prompt,
+                    prompt,
                     bert,
                     # prompt_phone_len=ph_offset,
                     top_k=top_k,
@@ -556,7 +554,7 @@ class Inferencer:
                 )
                 pred_semantic = pred_semantic[:, -idx:].unsqueeze(0)
                     
-            t3 = ttime()
+            # t3 = ttime()
             if self.hps.model.version == "v4":
                 refer = self.get_spepc(self.hps, ref_wav_path).to(self.device).to(torch.float16)
                 phoneme_ids0 = torch.LongTensor(phones1).to(self.device).unsqueeze(0)
@@ -620,21 +618,28 @@ class Inferencer:
                 audio = self.vq_model.decode(pred_semantic, torch.LongTensor(phones2).to(self.device).unsqueeze(0), refers,speed=speed)[0, 0]
             
             max_audio=torch.abs(audio).max()#简单防止16bit爆音
-            if max_audio>1:audio=audio/max_audio
+            if max_audio>1:
+                audio=audio/max_audio
             audio_opt.append(audio)
             audio_opt.append(zero_wav_torch)
-            t4 = ttime()
-            t.extend([t2 - t1,t3 - t2, t4 - t3])
-            t1 = ttime()
-        MockVoxLogger.info("%.3f\t%.3f\t%.3f\t%.3f" % (t[0], sum(t[1::3]), sum(t[2::3]), sum(t[3::3])))
-        audio_opt = torch.cat(audio_opt, 0)
-        if self.hps.model.version == "v4":
-            opt_st = 48000
-        else:
-            opt_st = self.hps.data.sampling_rate
-        audio_opt = audio_opt.cpu().detach().numpy()
-
-        yield opt_st, (audio_opt* 32767).astype(np.int16)
+            if is_stream and len(audio_opt) == 2:
+                audio_opt = torch.cat(audio_opt, 0)
+                if self.hps.model.version == "v4":
+                    opt_st = 48000
+                else:
+                    opt_st = self.hps.data.sampling_rate
+                audio_opt = audio_opt.cpu().detach().numpy()
+                yield opt_st, (audio_opt* 32767).astype(np.int16).tobytes()
+                audio_opt = []
+            
+        if len(audio_opt) > 0:
+            audio_opt = torch.cat(audio_opt, 0)
+            if self.hps.model.version == "v4":
+                opt_st = 48000
+            else:
+                opt_st = self.hps.data.sampling_rate
+            audio_opt = audio_opt.cpu().detach().numpy()
+            yield opt_st, (audio_opt* 32767).astype(np.int16).tobytes()
 
     def norm_spec(self,x):
         spec_min = -12
@@ -652,6 +657,14 @@ class Inferencer:
             self.resample_transform_dict[key] = torchaudio.transforms.Resample(sr0, sr1).to(self.device)
         return self.resample_transform_dict[key](audio_tensor)
 
+    def get_audio(self, text,text_language,bert1,phones1,top_k,top_p,temperature,prompt,ref_wav_path,speed,inp_refs,audio_opt,zero_wav_torch):
+        
+        
+        yield audio_opt
+            # t4 = ttime()
+            # t.extend([t2 - t1,t3 - t2, t4 - t3])
+            # t1 = ttime()
+    
 class DictToAttrRecursive(dict):
     def __init__(self, input_dict):
         super().__init__(input_dict)

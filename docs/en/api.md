@@ -55,8 +55,7 @@ graph TD
     E -.-> D
     D --> F[Inference]
     F --> G[Get Results]
-    C --> J[Stream Inference]
-    E -.-> J
+    D --> J[Stream Inference]
 ```
 
 ### 1. Audio Preprocessing
@@ -235,6 +234,27 @@ Response example
     "time": "2025-03-15T14:30:00"
 }
 ```
+
+### 9. Streaming Voice Inference
+
+**Endpoint**：`GET /streamInference`
+
+Parameters:
+
+| Parameter | Type | Description | Default | Required |
+|------|------|-----|-----|-----|
+| model_id | String | Model ID from /train | - | Yes |
+| ref_audio_file_id | String | Reference audio ID from /uploadRef | - | Yes |
+| ref_text | String | Text of reference audio | - | Yes |
+| ref_language | String | Language code (zh/can/en/ja/ko) | zh | No |
+| target_text | String | Target synthesis text | - | Yes |
+| target_language | String | Target language code | zh | No |
+| top_p | Float | Top-p sampling | 1 | No |
+| top_k | Integer | Top-k sampling | 15 | No |
+| temperature | Float | Sampling temperature | 1 | No |
+| speed | Float | Speech speed | 1 | No |
+
+**Return**: Audio file stream
 
 ## Important Notes
 

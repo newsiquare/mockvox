@@ -55,8 +55,7 @@ graph TD
     E -.-> D
     D --> F[语音推理]                  
     F --> G[获取结果]
-    C --> J[流式语音推理]
-    E -.-> J
+    D --> J[流式语音推理]
 ```
 
 ### 1. 语音文件预处理
@@ -235,6 +234,27 @@ curl -X GET http://127.0.0.1:5000/tasks/{task_id}
     "time": "2025-03-15T14:30:00"
 }
 ```
+
+### 9. 流式语音推理
+
+**接口路径**：`GET /streamInference`
+
+参数：
+
+| 参数 | 类型 | 说明 | 默认值 | 必填 |
+|------|------|-----|-----|-----|
+| model_id | String | /train 返回的模型ID | - | 是 |
+| ref_audio_file_id | String | /uploadRef 返回的参考语音文件ID | - | 是 |
+| ref_text | String | 参考语音的文本 | - | 是 |
+| ref_language | String | 参考语音的语言(zh/can/en/ja/ko) | zh | 否 |
+| target_text | String | 待合成的目标文本 | - | 是 |
+| target_language | String | 目标文本的语言编码 | zh | 否 |
+| top_p | Float | top_p | 1 | 否 |
+| top_k | Integer | top_k | 15 | 否 |
+| temperature | Float | temperature | 1 | 否 |
+| speed | Float | 语速 | 1 | 否 |
+
+**返回**: 输出音频文件流
 
 ## 注意事项
 

@@ -45,13 +45,18 @@ curl -X GET http://127.0.0.1:5000/output/{task_id}
 
 ```mermaid
 graph TD
-    A[Upload Audio] --> B[ASR Verification]
-    B --> C[Model Training]
+    A[Upload Audio] -.-> |Optional| B[ASR Verification]
+    A --> C[Model Training]
+    B -.-> C
+    A -.-> |Optional| H[Add Audio]
+    H -.-> C
     C --> D[Upload Reference]
     C -.-> |Optional| E[Resume Training]
     E -.-> D
-    D --> F[Voice Inference]
+    D --> F[Inference]
     F --> G[Get Results]
+    C --> J[Stream Inference]
+    E -.-> J
 ```
 
 ### 1. Audio Preprocessing
@@ -74,7 +79,24 @@ Response example:
 }
 ```
 
-### 2. ASR Result Verification
+### 2. Add Audio Samples to Existing Dataset
+
+**Endpoint**：`POST /add`
+
+**Function**: add new audio files to existing uploaded samples
+
+| Parameter                | Type |  Description                                  | Default | Required |
+|--------------------|------|---------------------------------------|--------|------|
+| `file`      | File | New audio file                      | -   | Yes   |
+| `file_id`   | String |  File ID from /upload                      | -      | Yes   |
+
+1. Adds new audio to specified fileID's dataset
+2. Automatically performs same preprocessing as initial upload
+3. ASR results incrementally update original directory: ./data/asr/{fileID}/output.json
+4. Voice segmentation/denoising outputs stored in original fileID's directory
+5. All data linked using original fileID
+
+### 3. ASR Result Verification
 
 **Endpoint**：`POST /revision`
 
@@ -86,7 +108,6 @@ Response example:
         {"key": "0000193600_0000361920", "text": "Good morning"}
     ]
 ```
-
 
 Parameters:
 
@@ -107,7 +128,7 @@ Request format:
 }
 ```
 
-### 3. Model Training
+### 4. Model Training
 
 **Endpoint**：`POST /train`
 
@@ -132,7 +153,7 @@ Response example:
 
 ​**Note**​​: Model id can be retrieved via GET /tasks/{task_id}.
 
-### 4. Resume Training
+### 5. Resume Training
 
 **Endpoint**: `POST /resume`
 
@@ -146,7 +167,7 @@ Parameters:
 
 ​**Note**​​: Resume training status can be retrieved via GET /tasks/{task_id}.
 
-### 5. Upload Reference Audio
+### 6. Upload Reference Audio
 
 **Endpoint**: `POST /uploadRef`
 
@@ -164,7 +185,7 @@ Response example:
 }
 ```
 
-### 6. Voice Inference
+### 7. Voice Inference
 
 **Endpoint**：`POST /inference`
 
@@ -194,7 +215,7 @@ Response example:
 }
 ```
 
-### 7. Get Inference Results
+### 8. Get Inference Results
 
 **Endpoint**：`GET /output/{task_id}`
 

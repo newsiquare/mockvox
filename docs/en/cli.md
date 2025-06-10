@@ -18,8 +18,11 @@ MockVox is a voice synthesis & cloning toolkit supporting three core operations:
 
 ```mermaid
 graph TD
-    A[Upload Audio File] --> B[ASR Revision]
-    B --> C[Model Training]
+    A[Upload Audio File] -.-> |Optional| B[ASR Revision]
+    A --> C[Model Training]
+    B -.-> C
+    A -.-> |Optional| E[Add Audio]
+    E -.-> C
     C --> D[Inference]
     C -.-> |Optional| G[Resume Training]
     G -.-> D
@@ -57,7 +60,34 @@ Audio slices are stored in `./data/sliced/{fileID}`. Denoised files are saved in
 
 ---
 
-### 2. 🧠 Train Voice Model
+### 2. ➕ Add Audio Samples to Existing Dataset
+
+```bash
+mockvox add fileID file_path
+```
+
+**Function**: add new audio files to existing uploaded samples
+
+| Parameter            | Description                          | Default | Required |
+|----------------------|--------------------------------------|---------|----------|
+| `fileID`          | File ID returned by upload command          | -       | Yes      |
+| `FILE_PATH`       | Absolute path to new audio file          | - | Yes       |
+
+**Example**:
+
+```bash
+mockvox add "20250522095117519601.e6abd9db" /data/additional.wav
+```
+
+1. Adds new audio to specified fileID's dataset
+2. Automatically performs same preprocessing as initial upload
+3. ASR results incrementally update original directory: ./data/asr/{fileID}/output.json
+4. Voice segmentation/denoising outputs stored in original fileID's directory
+5. All data linked using original fileID
+
+---
+
+### 3. 🧠 Train Voice Model
 
 ```bash
 mockvox train [OPTIONS] FILE_ID # File ID from upload response
@@ -81,7 +111,7 @@ mockvox train "20250522095117519601.e6abd9db.896806622ccb47a9ac1ee1669daf1938" -
 
 ---
 
-### 3. 🔊 Generate Synthetic Speech
+### 4. 🔊 Generate Synthetic Speech
 
 ```bash
 mockvox inference [OPTIONS] MODEL_ID REF_AUDIO PROMPT_TEXT TARGET_TEXT
@@ -101,7 +131,6 @@ mockvox inference [OPTIONS] MODEL_ID REF_AUDIO PROMPT_TEXT TARGET_TEXT
 | `--top_k` | Top-k sampling | 15 | No |
 | `--temperature` | Sampling temperature | 1 | No |
 | `--speed` | Speech speed | 1 | No |
-
 
 **Target Language Codes**:
 
@@ -129,7 +158,7 @@ The inference results are saved in the ./data/output directory.
 
 ---
 
-### 4. ⏯ Resume Model Training
+### 5. ⏯ Resume Model Training
 
 ```bash
 mockvox resume [options] ModelID
@@ -154,7 +183,7 @@ mockvox resume 20250524182510033061.370358d9.af07654e5ffe46c788448c05a0dedca3 --
 1. Automatically loads the latest checkpoint from ./data/weights/{ModelID} directory
 2. New training results will overwrite existing model files
 
-### 5. ℹ️ View Model Information
+### 6. ℹ️ View Model Information
 
 ```bash
 mockvox info ModelID
@@ -165,7 +194,6 @@ mockvox info ModelID
 | Parameter             | Description                          | Default | Required |
 |-----------------------|--------------------------------------|---------|----------|
 | `MODEL_ID`            | Model ID from training               | -       | Yes      |
-
 
 ## Key Features
 
@@ -189,4 +217,4 @@ sudo apt-get install mecab libmecab-dev mecab-ipadic
 
 ❗ Training epochs >30 may cause overfitting with small datasets
 
---- 
+---

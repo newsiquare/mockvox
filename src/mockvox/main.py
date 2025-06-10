@@ -351,7 +351,7 @@ def generate_wav_header(sample_rate: int, channels: int, bits_per_sample: int):
     
     return riff_chunk + fmt_chunk + data_chunk
 
-@app.post(
+@app.get(
     "/streamInference",
     summary=i18n("启动推理"),
     response_description=i18n("返回任务ID"),

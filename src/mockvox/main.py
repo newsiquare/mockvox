@@ -353,8 +353,8 @@ def generate_wav_header(sample_rate: int, channels: int, bits_per_sample: int):
 
 @app.get(
     "/streamInference",
-    summary=i18n("启动推理"),
-    response_description=i18n("返回任务ID"),
+    summary=i18n("启动实时流推理"),
+    response_description=i18n("返回实时音频文件流"),
     tags=[i18n("模型推理")]
 )
 async def start_streamInference(

@@ -270,5 +270,7 @@
     "返回模型版本及训练轮次": "Retourner la version du modèle et le nombre d'époques d'entraînement",
     "继续训练": "Reprendre l'entraînement",
     "模型ID (调用 /train 返回的模型ID)": "ID de modèle (renvoyé par l'appel à /train) ",
-    "添加语音文件": "Ajouter un fichier audio"
+    "添加语音文件": "Ajouter un fichier audio",
+    "启动实时流推理": "Démarrer l'inférence en flux continu en temps réel​",
+    "返回实时音频文件流": "Retourner le flux audio en temps réel​"
 }

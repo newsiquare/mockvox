@@ -270,5 +270,7 @@
     "返回模型版本及训练轮次": "Return model version and training epochs",
     "继续训练": "Resume training",
     "模型ID (调用 /train 返回的模型ID)": "Model ID (returned by calling /train)",
-    "添加语音文件": "Add Audio File"
+    "添加语音文件": "Add Audio File",
+    "启动实时流推理": "Start real-time streaming inference​",
+    "返回实时音频文件流": "Return real-time audio file stream​"
 }

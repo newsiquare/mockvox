@@ -22,7 +22,7 @@ def clone_repository(target_dir, repo_url):
 # 检查有没有初始模型
 clone_repository("./pretrained/G2PWModel", "https://huggingface.co/alextomcat/G2PWModel.git")
 clone_repository("./pretrained/GPT-SoVITS", "https://huggingface.co/lj1995/GPT-SoVITS.git")
-from fastapi import FastAPI, File, UploadFile, HTTPException, Form
+from fastapi import FastAPI, File, UploadFile, HTTPException, Form, Query
 from fastapi.responses import JSONResponse,FileResponse,StreamingResponse
 from fastapi.requests import Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -358,16 +358,16 @@ def generate_wav_header(sample_rate: int, channels: int, bits_per_sample: int):
     tags=[i18n("模型推理")]
 )
 async def start_streamInference(
-    model_id:str = Form(..., description=i18n("模型id")), 
-    ref_audio_file_id:str = Form(..., description=i18n("参考音频文件ID (调用 /uploadRef 上传后返回的参考音频文件ID)")),
-    ref_text:str = Form(..., description=i18n("参考音频的文字")), 
-    ref_language:str = Form('zh', description=i18n("参考音频的语言")), 
-    target_text:str = Form(..., description=i18n("生成音频的文字")), 
-    target_language:str = Form('zh', description=i18n("生成音频的语言")), 
-    top_p:float = Form(1, description=i18n("top_p")), 
-    top_k:int = Form(15, description=i18n("GPT采样参数(无参考文本时不要太低。不懂就用默认)")), 
-    temperature:float = Form(1, description=i18n("temperature")), 
-    speed:float = Form(1, description=i18n("语速")),
+    model_id:str = Query(..., title=i18n("模型id")), 
+    ref_audio_file_id:str = Query(..., title=i18n("参考音频文件ID (调用 /uploadRef 上传后返回的参考音频文件ID)")),
+    ref_text:str = Query(..., title=i18n("参考音频的文字")), 
+    ref_language:str = Query('zh', title=i18n("参考音频的语言")), 
+    target_text:str = Query(..., title=i18n("生成音频的文字")), 
+    target_language:str = Query('zh', title=i18n("生成音频的语言")), 
+    top_p:float = Query(1, title=i18n("top_p")), 
+    top_k:int = Query(15, title=i18n("GPT采样参数(无参考文本时不要太低。不懂就用默认)")), 
+    temperature:float = Query(1, title=i18n("temperature")), 
+    speed:float = Query(1, title=i18n("语速")),
 ):
     try:
 

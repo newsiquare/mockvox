@@ -405,7 +405,7 @@ async def start_streamInference(
             for last_sampling_rate,chunk in synthesis_result:
                 if sample_rate is None:
                     sample_rate = last_sampling_rate
-                buffer.extend(chunk)
+                buffer.extend(chunk.tobytes())
                 if not header_sent:
                     # 生成支持流式的WAV头（使用0xFFFFFFFF表示未知长度）
                     wav_header = generate_wav_header(

@@ -204,7 +204,7 @@ class Inferencer:
     
     def cut5(self, inp):
         inp = inp.strip("\n")
-        punds = {',', '.', ';', '?', '!', '、', '，', '。', '？', '！', ';', '：', '…'}
+        punds = {',', '.', ';', '?', '!', '、', '，', '。', '？', '！', ';', '：', '…','《','》'}
         mergeitems = []
         items = []
 
@@ -476,7 +476,7 @@ class Inferencer:
 
         MockVoxLogger.info(i18n("实际输入的目标文本:")+text)
         zero_wav = np.zeros(
-            int(self.hps.data.sampling_rate * 0.4),
+            int(self.hps.data.sampling_rate * 0.3),
             dtype=np.float16,
         )        
         
@@ -589,8 +589,9 @@ class Inferencer:
                         break
                     idx += chunk_len
                     fea = torch.cat([fea_ref, fea_todo_chunk], 2).transpose(2, 1)
+                    # 如果有点电可以调整下面的参数{8,16,32,64,128}
                     cfm_res = self.vq_model.cfm.inference(
-                        fea, torch.LongTensor([fea.size(1)]).to(fea.device), mel2, 8, inference_cfg_rate=0
+                        fea, torch.LongTensor([fea.size(1)]).to(fea.device), mel2, 32, inference_cfg_rate=0
                     )
                     cfm_res = cfm_res[:, :, mel2.shape[2] :]
                     mel2 = cfm_res[:, :, -T_min:]
@@ -616,10 +617,11 @@ class Inferencer:
                 if(len(refers)==0):
                     refers = [self.get_spepc(self.hps, ref_wav_path).to(torch.float16).to(self.device)]
                 audio = self.vq_model.decode(pred_semantic, torch.LongTensor(phones2).to(self.device).unsqueeze(0), refers,speed=speed)[0, 0]
-            
-            max_audio=torch.abs(audio).max()#简单防止16bit爆音
-            if max_audio>1:
-                audio=audio/max_audio
+            audio = torch.clamp(audio, -1.0, 1.0)
+            # max_audio=torch.abs(audio).max()
+            # if max_audio>1:
+            #     audio=audio/max_audio
+            # audio = self.soft_clip(audio)
             audio_opt.append(audio)
             audio_opt.append(zero_wav_torch)
             if is_stream and len(audio_opt) == 2:
@@ -629,7 +631,7 @@ class Inferencer:
                 else:
                     opt_st = self.hps.data.sampling_rate
                 audio_opt = audio_opt.cpu().detach().numpy()
-                yield opt_st, (audio_opt* 32767).astype(np.int16).tobytes()
+                yield opt_st, (audio_opt* 32767).astype(np.int16)
                 audio_opt = []
             
         if len(audio_opt) > 0:
@@ -639,7 +641,16 @@ class Inferencer:
             else:
                 opt_st = self.hps.data.sampling_rate
             audio_opt = audio_opt.cpu().detach().numpy()
-            yield opt_st, (audio_opt* 32767).astype(np.int16).tobytes()
+            yield opt_st, (audio_opt* 32767).astype(np.int16)
+
+    def soft_clip(self, x, threshold=0.9):
+        scale = torch.abs(x) - threshold
+        scale = torch.clamp(scale, min=0)
+        return torch.sign(x) * torch.where(
+            torch.abs(x) > threshold,
+            threshold + (1 - threshold) * torch.tanh(scale / (1 - threshold)),
+            torch.abs(x)
+    )
 
     def norm_spec(self,x):
         spec_min = -12
@@ -657,13 +668,6 @@ class Inferencer:
             self.resample_transform_dict[key] = torchaudio.transforms.Resample(sr0, sr1).to(self.device)
         return self.resample_transform_dict[key](audio_tensor)
 
-    def get_audio(self, text,text_language,bert1,phones1,top_k,top_p,temperature,prompt,ref_wav_path,speed,inp_refs,audio_opt,zero_wav_torch):
-        
-        
-        yield audio_opt
-            # t4 = ttime()
-            # t.extend([t2 - t1,t3 - t2, t4 - t3])
-            # t1 = ttime()
     
 class DictToAttrRecursive(dict):
     def __init__(self, input_dict):

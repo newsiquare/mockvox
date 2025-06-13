@@ -79,25 +79,25 @@ ffmpeg -version  # 验证安装
 
 ```bash
 🔧 GPT-SoVITS核心组件
-git clone https://huggingface.co/lj1995/GPT-SoVITS.git ./pretrained/GPT-SoVITS
+git clone https://hf-mirror.com/lj1995/GPT-SoVITS.git ./pretrained/GPT-SoVITS
 
 🗣️ 语音处理全家桶
 modelscope download --model 'damo/speech_frcrn_ans_cirm_16k' --local_dir './pretrained/damo/speech_frcrn_ans_cirm_16k' #降噪
 modelscope download --model 'iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch' --local_dir './pretrained/iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch' #普通话ASR
 modelscope download --model 'iic/speech_fsmn_vad_zh-cn-16k-common-pytorch' --local_dir './pretrained/iic/speech_fsmn_vad_zh-cn-16k-common-pytorch'
 modelscope download --model 'iic/punc_ct-transformer_cn-en-common-vocab471067-large' --local_dir './pretrained/iic/punc_ct-transformer_cn-en-common-vocab471067-large' #标点恢复
-git clone https://huggingface.co/alextomcat/G2PWModel.git ./pretrained/G2PWModel #词转音素
+git clone https://hf-mirror.com/alextomcat/G2PWModel.git ./pretrained/G2PWModel #词转音素
 
 
 🌐 多语言扩展包（可选）
 # 如果仅使用中文素材训练，则无需安装
 modelscope download --model 'iic/speech_UniASR_asr_2pass-cantonese-CHS-16k-common-vocab1468-tensorflow1-online' --local_dir './pretrained/iic/speech_UniASR_asr_2pass-cantonese-CHS-16k-common-vocab1468-tensorflow1-online' #粤语ASR
-git clone https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2.git ./pretrained/nvidia/parakeet-tdt-0.6b-v2 #英语ASR
-git clone https://huggingface.co/FacebookAI/roberta-large.git ./pretrained/FacebookAI/roberta-large #英语BERT
+git clone https://hf-mirror.com/nvidia/parakeet-tdt-0.6b-v2.git ./pretrained/nvidia/parakeet-tdt-0.6b-v2 #英语ASR
+git clone https://hf-mirror.com/FacebookAI/roberta-large.git ./pretrained/FacebookAI/roberta-large #英语BERT
 modelscope download --model 'iic/speech_UniASR_asr_2pass-ja-16k-common-vocab93-tensorflow1-offline'  --local_dir './pretrained/iic/speech_UniASR_asr_2pass-ja-16k-common-vocab93-tensorflow1-offline' #日语ASR
-git clone https://huggingface.co/tohoku-nlp/bert-large-japanese-v2.git ./pretrained/tohoku-nlp/bert-large-japanese-v2 #日语BERT
+git clone https://hf-mirror.com/tohoku-nlp/bert-large-japanese-v2.git ./pretrained/tohoku-nlp/bert-large-japanese-v2 #日语BERT
 modelscope download --model 'iic/speech_UniASR_asr_2pass-ko-16k-common-vocab6400-tensorflow1-online' --local_dir './pretrained/iic/speech_UniASR_asr_2pass-ko-16k-common-vocab6400-tensorflow1-online' #韩语ASR
-git clone https://huggingface.co/klue/roberta-large.git ./pretrained/klue/roberta-large #韩语BERT
+git clone https://hf-mirror.com/klue/roberta-large.git ./pretrained/klue/roberta-large #韩语BERT
 ```
 
 至此，命令行方式已经可以使用。 [《命令行用户指南》](./cli.md)

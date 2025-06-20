@@ -6,7 +6,7 @@ import jieba
 
 jieba.setLogLevel(logging.CRITICAL)
 
-
+SPECIAL_CHARS = r"0-9〜~,.;:!?，。！？；：、·([{<（【《〈「『“‘)\]}>）】》〉」』”’\"-_——\#$%&……￥'*+<=>?@[\]^_`{|}~ "
 
 from split_lang import LangSplitter
 
@@ -31,7 +31,7 @@ def full_cjk(text):
         (0x2EBF0, 0x2EE5D),  # CJK Extension H
     ]
 
-    pattern = r"[0-9、-〜。！？.!?… ]+$"
+    pattern = rf"^[{SPECIAL_CHARS}]+$"
 
     cjk_text = ""
     for char in text:
@@ -44,9 +44,9 @@ def full_cjk(text):
 
 def split_jako(tag_lang, item):
     if tag_lang == "ja":
-        pattern = r"([\u3041-\u3096\u3099\u309A\u30A1-\u30FA\u30FC]+(?:[0-9、-〜。！？.!?… ]+[\u3041-\u3096\u3099\u309A\u30A1-\u30FA\u30FC]*)*)"
+        pattern = rf"([\u3041-\u3096\u3099\u309A\u30A1-\u30FA\u30FC]+(?:[{SPECIAL_CHARS}]+[\u3041-\u3096\u3099\u309A\u30A1-\u30FA\u30FC]*)*)"
     else:
-        pattern = r"([\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]+(?:[0-9、-〜。！？.!?… ]+[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]*)*)"
+        pattern = rf"([\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]+(?:[{SPECIAL_CHARS}]+[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]*)*)"
 
     lang_list: list[dict] = []
     tag = 0
@@ -151,3 +151,10 @@ if __name__ == "__main__":
 
     text = "ねえ、知ってる？最近、僕は天文学を勉強してるんだ。君の瞳が星空みたいにキラキラしてるからさ。"
     print(LangSegmenter.getTexts(text))
+
+    text = r"こんにちは안녕하세요你好！🍵今日の天気はどうですか？오늘 날씨 어때? 今天天气如何？" \
+             r"12345@#$%^&*()_+-=[]{}\|;:',.<>/?！？、。〜～【】《》「」『』“”‘’¥£€💵" \
+             r"日本語と한국어と中文を混ぜました！피자食べたい? 我想吃披萨🍕！✈️旅行に行きましょう~" \
+             r"한글(韓文), 漢字(汉字), ひらがな(Hiragana) ★★★重要！！"
+    print(LangSegmenter.getTexts(text))
+    

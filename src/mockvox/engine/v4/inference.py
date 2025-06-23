@@ -299,15 +299,12 @@ class Inferencer:
         return new_ph, phones[1], norm_text
 
     def get_bert_feature(self, text, word2ph,language):
-        bert_path = os.path.join(PRETRAINED_PATH,self.MODEL_MAPPING.get(language, "GPT-SoVITS/chinese-roberta-wwm-ext-large"))
-        tokenizer = AutoTokenizer.from_pretrained(bert_path)
-        bert_model = AutoModelForMaskedLM.from_pretrained(bert_path)
-        bert_model = bert_model.half().to(self.device)
+        
         with torch.no_grad():
-            inputs = tokenizer(text, return_tensors="pt")
+            inputs = self.tokenizer(text, return_tensors="pt")
             for i in inputs:
                 inputs[i] = inputs[i].to(self.device)
-            res = bert_model(**inputs, output_hidden_states=True)
+            res = self.bert_model(**inputs, output_hidden_states=True)
             res = torch.cat(res["hidden_states"][-3:-2], -1)[0].cpu()[1:-1]
         if language == "zh":
             assert len(word2ph) == len(text)
@@ -483,6 +480,17 @@ class Inferencer:
         ssl_model = CNHubert()
         ssl_model.eval()
         ssl_model = ssl_model.half().to(self.device)
+        bert_language = ""
+        if "zh" in text_language or "zh" in prompt_language:
+            bert_language="zh"
+        if "ja" in text_language or "ja" in prompt_language:
+            bert_language="ja"
+        if "ko" in text_language or "ko" in prompt_language:
+            bert_language="ko"
+        bert_path = os.path.join(PRETRAINED_PATH,self.MODEL_MAPPING.get(bert_language, "GPT-SoVITS/chinese-roberta-wwm-ext-large"))
+        self.tokenizer = AutoTokenizer.from_pretrained(bert_path)
+        self.bert_model = AutoModelForMaskedLM.from_pretrained(bert_path)
+        self.bert_model = self.bert_model.half().to(self.device)
         zero_wav_torch = torch.from_numpy(zero_wav)
         zero_wav_torch = zero_wav_torch.half().to(self.device)
 

@@ -59,6 +59,19 @@ _ordinal_re = re.compile(r"[0-9]+(st|nd|rd|th)")
 # 数字处理
 _number_re = re.compile(r"[0-9]+")
 
+# 特殊口语处理
+_slang_re = {
+        r'\bgotta\b': "got'a",
+        r'\bgonna\b': "gon'a",
+        r'\bwanna\b': "wan'a",
+        # 添加更多规则
+    }
+
+def _convert_slang(text):
+    processed_text = text
+    for pattern, repl in _slang_re.items():
+        processed_text = re.sub(pattern, repl, processed_text, flags=re.IGNORECASE)
+    return processed_text
 
 def _convert_ordinal(m):
     """
@@ -268,6 +281,8 @@ def normalize(text):
     text = re.sub(r"(?i)e\.g\.", "for example", text)
     # 增加纯大写单词拆分
     text = re.sub(r"(?<!^)(?<![\s])([A-Z])", r" \1", text)
+    # 处理特殊口语单词
+    text = _convert_slang(text)
     return text
 
 

@@ -34,9 +34,12 @@ from pathlib import Path
 import glob
 import torch
 import struct
-import gc
 import torch
+import time
 from mockvox.engine.v4.inference import Inferencer
+from mockvox.models.model_factory import ModelFactory
+from contextlib import asynccontextmanager
+import asyncio
 
 from mockvox.config import (
     get_config,
@@ -74,11 +77,52 @@ class SizeLimitMiddleware(BaseHTTPMiddleware):
             )
         return await call_next(request)
 
+# 应用生命周期管理
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """管理FastAPI应用的生命周期"""
+    # 启动时预加载模型
+    MockVoxLogger.info("Application starting - loading initial models")
+    for model_name in ModelFactory._preloaded_models:
+        ModelFactory.load_model(model_name)
+    
+    # 启动后台清理任务
+    task = asyncio.create_task(cleanup_task())
+    
+    yield
+    
+    # 应用关闭时清理
+    MockVoxLogger.info("Application shutting down - releasing resources")
+    task.cancel()
+    with ModelFactory._lock:
+        # 确保所有模型都释放资源
+        for model_name, data in ModelFactory._models.items():
+            if data["instance"].is_loaded:
+                data["instance"].release()
+
+# 后台清理任务
+async def cleanup_task():
+    """定期清理未使用的模型资源"""
+    while True:
+        try:
+            MockVoxLogger.debug("Running model cleanup task")
+            cleaned = ModelFactory.cleanup_unused_models()
+            if cleaned > 0:
+                MockVoxLogger.info(f"Cleaned {cleaned} unused models")
+            await asyncio.sleep(30)  # 每30秒检查一次
+        except asyncio.CancelledError:
+            MockVoxLogger.info("Cleanup task cancelled")
+            break
+        except Exception as e:
+            MockVoxLogger.error(f"Cleanup task error: {str(e)}")
+            await asyncio.sleep(60)  # 出错后等待更长时间
+
 app = FastAPI(
     title="MockVox API",
     description=i18n("MockVox的API服务"),
     version="0.0.1",
-    middleware=[Middleware(SizeLimitMiddleware)]
+    middleware=[Middleware(SizeLimitMiddleware)],
+    lifespan=lifespan
 )
 
 # 配置CORS
@@ -377,6 +421,7 @@ async def start_streamInference(
             return
         gpt_ckpt = torch.load(gpt_path, map_location="cpu")
         version = gpt_ckpt["config"]["model"]["version"]
+        del gpt_ckpt
         MockVoxLogger.info(f"Model Version: {version}")
         sovits_path = Path(WEIGHTS_PATH) / model_id / SOVITS_HALF_WEIGHTS_FILE
         if not sovits_path.exists():
@@ -389,12 +434,14 @@ async def start_streamInference(
             MockVoxLogger.error(i18n("请上传参考音频"))
             return
         inference = Inferencer(gpt_path,sovits_path,version)
+        
         # Synthesize audio
         synthesis_result = inference.inference(ref_wav_path=str(Path(REF_AUDIO_PATH)/filename),# 参考音频 
                                     prompt_text=ref_text, # 参考文本
                                     prompt_language=ref_language, 
                                     text=target_text, # 目标文本
                                     text_language=target_language, top_p=top_p, temperature=temperature, top_k=top_k, speed=speed,is_stream=True)
+        
 
         def audio_generator():
         # 初始标志，确保只发送一次WAV头
@@ -402,41 +449,55 @@ async def start_streamInference(
             sample_rate = None
             buffer = bytearray()
             max_buffer_size = 44100 * 2  # 约0.5秒的数据量
-            for last_sampling_rate,chunk in synthesis_result:
-                if sample_rate is None:
-                    sample_rate = last_sampling_rate
-                buffer.extend(chunk.tobytes())
-                if not header_sent:
-                    # 生成支持流式的WAV头（使用0xFFFFFFFF表示未知长度）
-                    wav_header = generate_wav_header(
-                        sample_rate=int(sample_rate),
-                        channels=1,
-                        bits_per_sample=16
-                    )
-                    yield wav_header
-                    header_sent = True
-                # 当缓冲区达到一定大小时发送数据（减少小包传输）
-                if len(buffer) >= max_buffer_size:
+            try:
+                for last_sampling_rate,chunk in synthesis_result:
+                    if sample_rate is None:
+                        sample_rate = last_sampling_rate
+                    buffer.extend(chunk.tobytes())
+                    if not header_sent:
+                        # 生成支持流式的WAV头（使用0xFFFFFFFF表示未知长度）
+                        wav_header = generate_wav_header(
+                            sample_rate=int(sample_rate),
+                            channels=1,
+                            bits_per_sample=16
+                        )
+                        yield wav_header
+                        header_sent = True
+                    # 当缓冲区达到一定大小时发送数据（减少小包传输）
+                    if len(buffer) >= max_buffer_size:
+                        yield bytes(buffer)
+                        buffer = bytearray()
+                if buffer:
                     yield bytes(buffer)
-                    buffer = bytearray()
-            if buffer:
-                yield bytes(buffer)
+            finally:
+                inference.release_resources()
             
-        
-
         return StreamingResponse(
             audio_generator(),
             media_type="audio/wav",
             headers={"Content-Type": "audio/wav"}
         )
     except Exception as e:
+        print("错误：",e)
+        if 'inference' in locals() and not inference.resources_released:
+            inference.release_resources()
         raise HTTPException(status_code=500, detail=f"{i18n('推理过程错误')}: {str(e)}")
-    finally:
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-            torch.cuda.synchronize()
-            torch.cuda.ipc_collect()
-            gc.collect()
+    
+
+@app.get("/model-status")
+async def model_status():
+    """查看模型状态"""
+    status = {}
+    with ModelFactory._lock:
+        for name, data in ModelFactory._models.items():
+            status[name] = {
+                "is_loaded": data["instance"].is_loaded,
+                "ref_count": data["ref_count"],
+                "last_used": time.strftime("%Y-%m-%d %H:%M:%S", 
+                                       time.localtime(data["last_used"])),
+                "elapsed": int(time.time() - data["last_used"])
+            }
+    return status
 
 
 @app.get(

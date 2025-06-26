@@ -1,157 +1,54 @@
-import os, re
+import re
 import torch
+import librosa
+import torchaudio
+import traceback
+import numpy as np
+
+
 from typing import Optional
 from mockvox.utils import MockVoxLogger
 from mockvox.utils import i18n
-from time import time as ttime
-import numpy as np
-import librosa
-from mockvox.models import CNHubert
 from mockvox.text import normalizer as nl
 from mockvox.text import Normalizer
 from mockvox.text import symbols 
-from mockvox.config import (
-    PRETRAINED_PATH,
-    PRETRAINED_S2GV4_FILE,
-    PRETRAINED_VOCODER_FILE)
-from transformers import AutoTokenizer, AutoModelForMaskedLM
-import torchaudio
-from mockvox.nn.mel import spectrogram_torch
-from mockvox.models.v2.t2s_model import Text2SemanticDecoder
-from io import BytesIO
-from mockvox.models.v4.synthesizer import SynthesizerTrnV3
-from mockvox.models.v2.SynthesizerTrn import Generator,SynthesizerTrn
-from peft import LoraConfig, get_peft_model
-from mockvox.nn import mel_spectrogram_torch
 from mockvox.text.LangSegmenter import LangSegmenter
-import traceback
+from mockvox.nn.mel import spectrogram_torch
+from mockvox.models.model_factory import ModelFactory
+
+
 
 class Inferencer:
-    MODEL_MAPPING = {
-        "zh": "GPT-SoVITS/chinese-roberta-wwm-ext-large",
-        "en": "FacebookAI/roberta-large",
-        "ja": "tohoku-nlp/bert-large-japanese-v2",
-        "ko": "klue/roberta-large",
-        "can": "GPT-SoVITS/chinese-roberta-wwm-ext-large"
-        }  
+      
     def __init__(
         self,
         gpt_path: Optional[str] = None,
         sovits_path: Optional[str] = None,
-        version: Optional[str] = None
+        version: Optional[str] = None,
+        
     ):
+        self.gpt_path = gpt_path
+        self.sovits_path = sovits_path
+        self.resources_released = False
+        self.hifigan_model = None
+        self.ssl_model = None
+        self.zero_wav_torch = None
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        
-        
         self.splits = {"，", "。", "？", "！", ",", ".", "?", "!", "~", ":", "：", "—", "…", }     
         self.punctuation = set(['!', '?', '…', ',', '.', '-'," "])
         self.hz = 50
-        self.t2s_model,self.config,self.max_sec = self._change_gpt_weights(gpt_path)
-        self.vq_model, self.hps,self.mel_fn_v4 = self._change_sovits_weights(sovits_path)
+        gpt_model = ModelFactory.get_model("gpt_model_"+str(gpt_path))
+        self.t2s_model = gpt_model.tensor
+        self.config = gpt_model.config
+        self.max_sec = gpt_model.max_sec
+        sovits_model = ModelFactory.get_model("sovits_model_"+str(sovits_path))
+        self.vq_model = sovits_model.tensor
+        self.hps = sovits_model.hps
+        self.mel_fn_v4 = sovits_model.mel_fn_v4
         if version=="v4":
             self.resample_transform_dict={}
-            self.hifigan_model = self._init_hifigan()
-
-    def _init_hifigan(self):
-        hifigan_model = Generator(
-            initial_channel=100,
-            resblock="1",
-            resblock_kernel_sizes=[3, 7, 11],
-            resblock_dilation_sizes=[[1, 3, 5], [1, 3, 5], [1, 3, 5]],
-            upsample_rates=[10, 6, 2, 2, 2],
-            upsample_initial_channel=512,
-            upsample_kernel_sizes=[20, 12, 4, 4, 4],
-            gin_channels=0,is_bias=True
-        )
-        hifigan_model.eval()
-        hifigan_model.remove_weight_norm()
-        state_dict_g = torch.load(PRETRAINED_VOCODER_FILE, map_location="cpu")
-        MockVoxLogger.info(f"loading vocoder {hifigan_model.load_state_dict(state_dict_g)}")
-
-        return hifigan_model.half().to(self.device)
+            self.hifigan_model = ModelFactory.get_model("hifigan_model").tensor
         
-    def _change_gpt_weights(self, gpt_path):
-        dict_s1 = torch.load(gpt_path, map_location="cpu")
-        config = dict_s1["config"]
-        max_sec = config["data"]["max_sec"]
-        t2s_model = Text2SemanticDecoder(config=config, top_k=3)
-        
-        state_dict = {k.replace("model.", "", 1) if k.startswith("model.") else k: v 
-                for k, v in dict_s1["weight"].items()}
-        t2s_model.load_state_dict(state_dict)
-        t2s_model = t2s_model.half()
-        t2s_model = t2s_model.to(self.device)
-        t2s_model.eval()
-        return t2s_model,config,max_sec
-
-    def _change_sovits_weights(self, sovits_path):
-
-        dict_s2, if_lora_v3 = self._load_sovits_new(sovits_path)
-        hps = dict_s2["config"]
-        hps = DictToAttrRecursive(hps)
-        hps.model.semantic_frame_rate = "25hz"
-        if hps.model.version == "v4":
-            vq_model = SynthesizerTrnV3(
-                hps.data.filter_length // 2 + 1,
-                hps.train.segment_size // hps.data.hop_length_v4,
-                n_speakers=hps.data.n_speakers,
-                **hps.model
-            )
-        else:
-            vq_model = SynthesizerTrn(
-                hps.data.filter_length // 2 + 1,
-                hps.train.segment_size // hps.data.hop_length,
-                n_speakers=hps.data.n_speakers,
-                **hps.model
-            )
-            if_lora_v3=False
-        vq_model = vq_model.half().to(self.device)
-        vq_model.eval()
-        if if_lora_v3 == False:
-            vq_model.load_state_dict(dict_s2["weight"], strict=False)
-        else:
-            gv4_model,if_lora_v3 = self._load_sovits_new(PRETRAINED_S2GV4_FILE)
-            vq_model.load_state_dict(gv4_model["weight"], strict=False)
-            lora_rank = hps["train"]["lora_rank"]
-            # lora_rank = 32
-            lora_config = LoraConfig(
-                target_modules=["to_k", "to_q", "to_v", "to_out.0"],
-                r=lora_rank,
-                lora_alpha=lora_rank,
-                init_lora_weights=True,
-            )
-            vq_model.cfm = get_peft_model(vq_model.cfm, lora_config)
-            MockVoxLogger.info(f"loading sovits_v4_lora{lora_rank}")
-            vq_model.load_state_dict(dict_s2["weight"], strict=False)
-            vq_model.cfm = vq_model.cfm.merge_and_unload()
-            vq_model.eval()
-        mel_fn_v4 = lambda x: mel_spectrogram_torch(
-            x,
-            **{
-                "n_fft": hps["data"]["filter_length"],
-                "win_size": hps["data"]["win_length"],
-                "hop_size": hps["data"]["hop_length_v4"],
-                "num_mels": hps["data"]["n_mel_channels_v4"],
-                "sampling_rate": hps["data"]["sampling_rate"],
-                "fmin": hps["data"]["mel_fmin"],
-                "fmax": hps["data"]["mel_fmax"],
-                "center": False,
-            },
-        )
-        return vq_model, hps,mel_fn_v4
-    
-    def _load_sovits_new(self, path_sovits):
-        f = open(path_sovits, "rb")
-        if_lora_v3 = False
-        meta = f.read(2)
-        if meta != "PK":
-            if_lora_v3 = True
-            data = b"PK" + f.read()
-            bio = BytesIO()
-            bio.write(data)
-            bio.seek(0)
-            return torch.load(bio, map_location="cpu"),if_lora_v3
-        return torch.load(path_sovits, map_location="cpu"),if_lora_v3
 
     def cut1(self, inp):
         inp = inp.strip("\n")
@@ -301,10 +198,10 @@ class Inferencer:
     def get_bert_feature(self, text, word2ph,language):
         
         with torch.no_grad():
-            inputs = self.tokenizer(text, return_tensors="pt")
+            inputs = ModelFactory.get_model("bert_tokenizer_"+language).tensor(text, return_tensors="pt")
             for i in inputs:
                 inputs[i] = inputs[i].to(self.device)
-            res = self.bert_model(**inputs, output_hidden_states=True)
+            res = ModelFactory.get_model("bert_model_"+language).tensor(**inputs, output_hidden_states=True)
             res = torch.cat(res["hidden_states"][-3:-2], -1)[0].cpu()[1:-1]
         if language == "zh":
             assert len(word2ph) == len(text)
@@ -313,6 +210,8 @@ class Inferencer:
             repeat_feature = res[i].repeat(word2ph[i], 1)
             phone_level_feature.append(repeat_feature)
         phone_level_feature = torch.cat(phone_level_feature, dim=0)
+        ModelFactory.release_model("bert_tokenizer_"+language)
+        ModelFactory.release_model("bert_model_"+language)
         return phone_level_feature.T
 
     def get_phones_and_bert(self, text,language,final=False):        
@@ -442,11 +341,6 @@ class Inferencer:
         else:
             MockVoxLogger.error(i18n('请填入推理文本'))
             return
-        # t = []
-        if prompt_text is None or len(prompt_text) == 0:
-            ref_free = True
-            
-        # t0 = ttime()
 
         dict_language = [
             "all_zh",#全部按中文识别
@@ -472,39 +366,17 @@ class Inferencer:
         text = text.strip("\n")
 
         MockVoxLogger.info(i18n("实际输入的目标文本:")+text)
-        zero_wav = np.zeros(
-            int(self.hps.data.sampling_rate * 0.3),
-            dtype=np.float16,
-        )        
-        
-        ssl_model = CNHubert()
-        ssl_model.eval()
-        ssl_model = ssl_model.half().to(self.device)
-        bert_language = ""
-        if "zh" in text_language or "zh" in prompt_language:
-            bert_language="zh"
-        if "ja" in text_language or "ja" in prompt_language:
-            bert_language="ja"
-        if "ko" in text_language or "ko" in prompt_language:
-            bert_language="ko"
-        bert_path = os.path.join(PRETRAINED_PATH,self.MODEL_MAPPING.get(bert_language, "GPT-SoVITS/chinese-roberta-wwm-ext-large"))
-        self.tokenizer = AutoTokenizer.from_pretrained(bert_path)
-        self.bert_model = AutoModelForMaskedLM.from_pretrained(bert_path)
-        self.bert_model = self.bert_model.half().to(self.device)
-        zero_wav_torch = torch.from_numpy(zero_wav)
-        zero_wav_torch = zero_wav_torch.half().to(self.device)
-
+        self.zero_wav_torch = ModelFactory.get_model("zero_wav_torch_"+str(self.hps.data.sampling_rate)).tensor
+        self.ssl_model = ModelFactory.get_model("ssl_model").tensor
         with torch.no_grad():
             wav16k, sr = librosa.load(ref_wav_path, sr=16000)
             if wav16k.shape[0] > 160000 or wav16k.shape[0] < 48000:
                 MockVoxLogger.error(i18n("参考音频在3~10秒范围外，请更换！"))
                 raise OSError(i18n("参考音频在3~10秒范围外，请更换！"))
             wav16k = torch.from_numpy(wav16k)
-            
             wav16k = wav16k.half().to(self.device)
-            
-            wav16k = torch.cat([wav16k, zero_wav_torch])
-            ssl_content = ssl_model.model(wav16k.unsqueeze(0))["last_hidden_state"].transpose(1, 2)  # .float()
+            wav16k = torch.cat([wav16k, self.zero_wav_torch])
+            ssl_content = self.ssl_model.model(wav16k.unsqueeze(0))["last_hidden_state"].transpose(1, 2)  # .float()
             codes = self.vq_model.extract_latent(ssl_content)
             prompt_semantic = codes[0, 0]
             prompt = prompt_semantic.unsqueeze(0).to(self.device)
@@ -631,7 +503,7 @@ class Inferencer:
             #     audio=audio/max_audio
             # audio = self.soft_clip(audio)
             audio_opt.append(audio)
-            audio_opt.append(zero_wav_torch)
+            audio_opt.append(self.zero_wav_torch)
             if is_stream and len(audio_opt) == 2:
                 audio_opt = torch.cat(audio_opt, 0)
                 if self.hps.model.version == "v4":
@@ -650,6 +522,23 @@ class Inferencer:
                 opt_st = self.hps.data.sampling_rate
             audio_opt = audio_opt.cpu().detach().numpy()
             yield opt_st, (audio_opt* 32767).astype(np.int16)
+        self.release_resources()
+    
+    def release_resources(self):
+        if not self.resources_released:
+            try:
+                if self.t2s_model != None:
+                    ModelFactory.release_model("gpt_model_"+str(self.gpt_path))
+                if self.vq_model != None:
+                    ModelFactory.release_model("sovits_model_"+str(self.sovits_path))
+                if self.hifigan_model != None:
+                    ModelFactory.release_model("hifigan_model")
+                if self.ssl_model != None:
+                    ModelFactory.release_model("ssl_model")
+                if self.zero_wav_torch != None:
+                    ModelFactory.release_model("zero_wav_torch_"+str(self.hps.data.sampling_rate))
+            finally:
+                self.resources_released = True
 
     def soft_clip(self, x, threshold=0.9):
         scale = torch.abs(x) - threshold
@@ -677,29 +566,4 @@ class Inferencer:
         return self.resample_transform_dict[key](audio_tensor)
 
     
-class DictToAttrRecursive(dict):
-    def __init__(self, input_dict):
-        super().__init__(input_dict)
-        for key, value in input_dict.items():
-            if isinstance(value, dict):
-                value = DictToAttrRecursive(value)
-            self[key] = value
-            setattr(self, key, value)
 
-    def __getattr__(self, item):
-        try:
-            return self[item]
-        except KeyError:
-            raise AttributeError(f"Attribute {item} not found")
-
-    def __setattr__(self, key, value):
-        if isinstance(value, dict):
-            value = DictToAttrRecursive(value)
-        super(DictToAttrRecursive, self).__setitem__(key, value)
-        super().__setattr__(key, value)
-
-    def __delattr__(self, item):
-        try:
-            del self[item]
-        except KeyError:
-            raise AttributeError(f"Attribute {item} not found")

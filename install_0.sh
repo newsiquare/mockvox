@@ -28,6 +28,8 @@ conda init --all
 
 # 7. 建立並啟用 Python 環境
 echo "=== 建立 Conda python3.11 環境 > tts ==="
+conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
 conda create -n tts python=3.11 -y
 conda activate tts
 

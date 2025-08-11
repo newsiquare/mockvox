@@ -16,30 +16,35 @@ bash ~/home/miniconda3/miniconda.sh -b -u -p ~/miniconda3
 # 4. 移除安裝檔
 rm ~/home/miniconda3/miniconda.sh
 
-# 5. 初始化 conda
+
+# 5.重啟
+echo "=== 重啟 Miniconda ==="
+hash -r
+
+# 6. 初始化 conda
 echo "=== 初始化 conda ==="
 source ~/miniconda3/bin/activate
 conda init --all
 
-# 6. 建立並啟用 Python 環境
+# 7. 建立並啟用 Python 環境
 echo "=== 建立 Conda python3.11 環境 > tts ==="
 conda create -n tts python=3.11 -y
 conda activate tts
 
-# 7. 下載 mockvox 專案
+# 8. 下載 mockvox 專案
 echo "=== 下載 mockvox ==="
 git clone https://github.com/mockvox/mockvox.git
 cd mockvox
 
-# 8. 安裝套件
+# 9. 安裝套件
 echo "=== 安裝套件 ==="
 pip install -e .
 echo "=== 完成套件安裝 ==="
 
-# 9. 複製環境設定檔
+# 10. 複製環境設定檔
 cp .env.sample .env
 
-# 10. 安裝 ffmpeg
+# 11. 安裝 ffmpeg
 echo "=== 安裝 ffmpeg（避免 ffprobe 問題） ==="
 sudo apt update && sudo apt install ffmpeg -y
 ffmpeg -version
